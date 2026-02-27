@@ -481,9 +481,11 @@
   });
 
   hiddenInput.addEventListener('keydown', function (e) {
+    // Backspace and Space are already handled by the global document keydown listener.
+    // We only preventDefault here to stop the browser from modifying the hidden input
+    // before the input event fires — do NOT call processKey again.
     if (e.key === 'Backspace' || e.key === ' ') {
       e.preventDefault();
-      processKey(e.key);
     }
   });
 
