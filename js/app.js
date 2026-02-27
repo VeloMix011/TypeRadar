@@ -20,6 +20,8 @@
   let mode = 'time';
   let wpmHistory = [];
   let wpmTick = 0;
+  // wordHistory: array of {input, wasCorrect, locked}
+  let wordHistory = [];
   let uiLang = 'en';
   let colorTheme = 'classic';
   let customText = 'The five boxing wizards jump quickly.';
@@ -347,7 +349,7 @@
     currentWordIndex = 0; currentInput = '';
     totalCorrectChars = 0; totalWrongChars = 0;
     correctWords = 0; wrongWords = 0;
-    wpmHistory = []; wpmTick = 0;
+    wpmHistory = []; wpmTick = 0; wordHistory = [];
     timeLeft = totalTime;
 
     document.getElementById('timer-display').textContent = mode === 'time' ? totalTime : '0';
@@ -383,19 +385,57 @@
           colorLetters();
           positionCursor();
         }, 30);
+      } else if (currentWordIndex > 0) {
+        // Try to go back to previous word
+        const prev = wordHistory[wordHistory.length - 1];
+        if (prev && !prev.locked) {
+          // Go back: restore previous word's input
+          wordHistory.pop();
+          currentWordIndex--;
+
+          // Undo stats for the word we're returning to
+          const prevWordStr = words[currentWordIndex];
+          const prevInput = prev.input;
+          const len = Math.min(prevInput.length, prevWordStr.length);
+          for (let i = 0; i < len; i++) {
+            if (prevInput[i] === prevWordStr[i]) totalCorrectChars--;
+            else totalWrongChars--;
+          }
+          totalWrongChars -= Math.max(0, prevWordStr.length - prevInput.length);
+          if (prev.wasCorrect) correctWords--;
+          else wrongWords--;
+
+          currentInput = prevInput;
+          colorLetters();
+          positionCursor();
+          updateLiveStats();
+        }
       }
       return true;
     }
 
     if (key === ' ') {
       if (currentInput.length === 0) return true;
+      const wasCorrect = (currentInput === wordStr);
+
+      // Locking rule:
+      //   wrong word  → unlocked (can go back)
+      //   correct word → locked (can't go back to it)
+      //   wrong word followed by correct word → the wrong word gets locked too
+      if (wasCorrect && wordHistory.length > 0) {
+        // Lock the previous word (whether wrong or correct) because we just proved
+        // we moved on correctly — no going back past this point.
+        wordHistory[wordHistory.length - 1].locked = true;
+      }
+      wordHistory.push({ input: currentInput, wasCorrect, locked: wasCorrect });
+
       const len = Math.min(currentInput.length, wordStr.length);
       for (let i = 0; i < len; i++) {
         if (currentInput[i] === wordStr[i]) totalCorrectChars++;
         else totalWrongChars++;
       }
       totalWrongChars += Math.max(0, wordStr.length - currentInput.length);
-      if (currentInput === wordStr) correctWords++;
+      if (wasCorrect) correctWords++;
       else wrongWords++;
       currentInput = '';
       currentWordIndex++;
