@@ -184,14 +184,12 @@
       </div>
     </div>
 
-    <!-- Custom Words -->
+    <!-- Custom Text -->
     <div class="setting-section">
-      <h3>📝 Custom Words</h3>
-      <div class="custom-input">
-        <input type="text" id="custom-words-input" placeholder="e.g. hello,world,typing">
-        <button onclick="addCustomWords()">+</button>
-      </div>
-      <div class="custom-list" id="custom-words-list"></div>
+      <h3>📝 Custom Text</h3>
+      <p style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:12px;">This text will be used in custom mode.</p>
+      <textarea id="custom-text-input" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.85rem;resize:vertical;outline:none;">The five boxing wizards jump quickly.</textarea>
+      <button onclick="saveCustomText()" style="margin-top:10px;width:100%;background:var(--accent);border:none;border-radius:8px;padding:10px;color:white;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:0.85rem;">✓ change</button>
     </div>
 
   </div>
