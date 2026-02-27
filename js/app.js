@@ -22,7 +22,7 @@
   let wpmTick = 0;
   let uiLang = 'en';
   let colorTheme = 'classic';
-  let customWords = [];
+  let customText = 'The five boxing wizards jump quickly.';
 
   // ─── DOM REFS ────────────────────────────────────────────────────────────────
   const hiddenInput = document.getElementById('hidden-input');
@@ -126,39 +126,25 @@
   }
 
   // ─── CUSTOM WORDS ────────────────────────────────────────────────────────────
-  window.addCustomWords = function () {
-    const input = document.getElementById('custom-words-input');
-    const text = input.value.trim();
+  window.saveCustomText = function () {
+    const ta = document.getElementById('custom-text-input');
+    const text = ta.value.trim();
     if (!text) return;
-    const newWords = text.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length > 0);
-    customWords = [...new Set([...customWords, ...newWords])];
-    localStorage.setItem('typeradar_custom_words', JSON.stringify(customWords));
-    updateCustomWordsList();
-    input.value = '';
+    customText = text;
+    localStorage.setItem('typeradar_custom_text', customText);
+    closeSettings();
+    if (mode === 'custom') restart();
   };
 
-  window.removeCustomWord = function (word) {
-    customWords = customWords.filter(w => w !== word);
-    localStorage.setItem('typeradar_custom_words', JSON.stringify(customWords));
-    updateCustomWordsList();
-  };
-
-  function updateCustomWordsList() {
-    const list = document.getElementById('custom-words-list');
-    list.innerHTML = '';
-    customWords.forEach(word => {
-      const item = document.createElement('div');
-      item.className = 'custom-item';
-      item.innerHTML = `<span>${word}</span><button onclick="removeCustomWord('${word}')">✕</button>`;
-      list.appendChild(item);
-    });
-  }
-
-  // ─── LOAD SAVED SETTINGS ─────────────────────────────────────────────────────
+    // ─── LOAD SAVED SETTINGS ─────────────────────────────────────────────────────
   function loadSettings() {
     try {
-      const savedWords = localStorage.getItem('typeradar_custom_words');
-      if (savedWords) customWords = JSON.parse(savedWords);
+      const savedText = localStorage.getItem('typeradar_custom_text');
+      if (savedText) {
+        customText = savedText;
+        const ta = document.getElementById('custom-text-input');
+        if (ta) ta.value = customText;
+      }
 
       const savedColorTheme = localStorage.getItem('typeradar_color_theme');
       if (savedColorTheme) {
@@ -179,8 +165,8 @@
   // ─── WORD GENERATION ─────────────────────────────────────────────────────────
   function generateWords() {
     if (mode === 'quote') return QUOTES[Math.floor(Math.random() * QUOTES.length)].split(' ');
-    if (mode === 'custom' && customWords.length > 0) {
-      return Array.from({ length: 30 }, () => customWords[Math.floor(Math.random() * customWords.length)]);
+    if (mode === 'custom') {
+      return customText.trim().split(/\s+/);
     }
     const list = WORDS[uiLang] || WORDS.en;
     const count = mode === 'words' ? 30 : 50;
@@ -446,7 +432,6 @@
   // ─── SETTINGS MODAL ──────────────────────────────────────────────────────────
   window.openSettings = function () {
     document.getElementById('settings-modal').style.display = 'flex';
-    updateCustomWordsList();
   };
 
   window.closeSettings = function () {
@@ -501,7 +486,6 @@
     loadSettings();
     buildDisplay();
     updateUILanguage();
-    updateCustomWordsList();
     setTimeout(() => { positionCursor(); focusInput(); }, 300);
     document.addEventListener('touchmove', e => {
       if (e.target.closest('.typing-container')) e.preventDefault();
