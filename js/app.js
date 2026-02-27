@@ -86,7 +86,10 @@
     document.querySelectorAll('#mode-group .config-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     const timeGroup = document.getElementById('time-group');
-    if (timeGroup) timeGroup.style.display = (m === 'quote' || m === 'custom') ? 'none' : 'flex';
+    const timerStat = document.getElementById('timer-stat');
+    const noTimer = (m === 'quote' || m === 'custom');
+    if (timeGroup) timeGroup.style.display = noTimer ? 'none' : 'flex';
+    if (timerStat) timerStat.style.display = noTimer ? 'none' : 'block';
     restart();
   };
 
