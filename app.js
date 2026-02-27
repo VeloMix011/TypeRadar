@@ -1,0 +1,519 @@
+/**
+ * TypeRadar — Main Application Logic
+ * Handles all typing test functionality, UI state, and settings.
+ */
+
+(function () {
+  // ─── STATE ──────────────────────────────────────────────────────────────────
+  let words = [];
+  let currentWordIndex = 0;
+  let currentInput = '';
+  let totalCorrectChars = 0;
+  let totalWrongChars = 0;
+  let correctWords = 0;
+  let wrongWords = 0;
+  let started = false;
+  let finished = false;
+  let timerInterval = null;
+  let timeLeft = 30;
+  let totalTime = 30;
+  let mode = 'time';
+  let wpmHistory = [];
+  let wpmTick = 0;
+  let uiLang = 'en';
+  let colorTheme = 'classic';
+  let customWords = [];
+
+  // ─── DOM REFS ────────────────────────────────────────────────────────────────
+  const hiddenInput = document.getElementById('hidden-input');
+  const typingContainer = document.getElementById('typing-container');
+
+  // ─── TRANSLATIONS ────────────────────────────────────────────────────────────
+  const TRANSLATIONS = {
+    en: {
+      time: 'time', words: 'words', quote: 'quote', custom: 'custom',
+      wpm: 'wpm', accuracy: 'accuracy',
+      clickHint: '👆 click or press any key to start typing',
+      restart: 'restart', raw: 'raw wpm', correct: 'correct words',
+      wrong: 'wrong words', total: 'total time'
+    },
+    tr: {
+      time: 'zaman', words: 'kelime', quote: 'alıntı', custom: 'özel',
+      wpm: 'wpm', accuracy: 'doğruluk',
+      clickHint: '👆 yazmaya başlamak için tıkla',
+      restart: 'yeniden başlat', raw: 'ham wpm', correct: 'doğru kelime',
+      wrong: 'yanlış kelime', total: 'toplam süre'
+    },
+    es: {
+      time: 'tiempo', words: 'palabras', quote: 'cita', custom: 'personalizado',
+      wpm: 'wpm', accuracy: 'precisión',
+      clickHint: '👆 haz clic para empezar',
+      restart: 'reiniciar', raw: 'wpm bruto', correct: 'correctas',
+      wrong: 'incorrectas', total: 'tiempo total'
+    },
+    az: {
+      time: 'vaxt', words: 'sözlər', quote: 'sitat', custom: 'xüsusi',
+      wpm: 'wpm', accuracy: 'dəqiqlik',
+      clickHint: '👆 yazmağa başlamaq üçün tıkla',
+      restart: 'yenidən başla', raw: 'xam wpm', correct: 'doğru sözlər',
+      wrong: 'yanlış sözlər', total: 'ümumi vaxt'
+    }
+  };
+
+  // ─── THEME ───────────────────────────────────────────────────────────────────
+  window.setTheme = function (el) {
+    document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
+    el.classList.add('active');
+    document.body.className = el.dataset.theme;
+    setTimeout(positionCursor, 50);
+  };
+
+  // ─── COLOR THEME ─────────────────────────────────────────────────────────────
+  window.setColorTheme = function (theme) {
+    colorTheme = theme;
+    document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+    const activeCard = Array.from(document.querySelectorAll('.theme-card')).find(
+      card => card.querySelector('.name').textContent.toLowerCase().includes(theme)
+    );
+    if (activeCard) activeCard.classList.add('active');
+    localStorage.setItem('typeradar_color_theme', theme);
+    colorLetters();
+  };
+
+  // ─── CONFIG ──────────────────────────────────────────────────────────────────
+  window.setMode = function (m, id) {
+    mode = m;
+    document.querySelectorAll('#mode-group .config-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    const timeGroup = document.getElementById('time-group');
+    if (timeGroup) timeGroup.style.display = (m === 'quote' || m === 'custom') ? 'none' : 'flex';
+    restart();
+  };
+
+  window.setTime = function (t, id) {
+    totalTime = t;
+    timeLeft = t;
+    document.querySelectorAll('#time-group .config-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.getElementById('timer-display').textContent = mode === 'time' ? t : '0';
+    restart();
+  };
+
+  // ─── UI LANGUAGE ─────────────────────────────────────────────────────────────
+  window.setUILang = function (lang, el) {
+    uiLang = lang;
+    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    el.classList.add('active');
+    updateUILanguage();
+    restart();
+  };
+
+  function updateUILanguage() {
+    const t = TRANSLATIONS[uiLang] || TRANSLATIONS.en;
+    document.getElementById('mode-time').innerHTML = `⏱ ${t.time}`;
+    document.getElementById('mode-words').innerHTML = `≡ ${t.words}`;
+    document.getElementById('mode-quote').innerHTML = `❝ ${t.quote}`;
+    document.getElementById('mode-custom').innerHTML = `✎ ${t.custom}`;
+    document.querySelectorAll('.stat-label')[0].textContent = t.wpm;
+    document.querySelectorAll('.stat-label')[1].textContent = t.accuracy;
+    document.getElementById('timer-label').textContent = t.time;
+    document.getElementById('click-hint').innerHTML = t.clickHint;
+    document.querySelector('.restart-btn').innerHTML = `↺ ${t.restart}`;
+    document.querySelectorAll('.result-detail-item')[0].querySelector('.label').textContent = t.raw;
+    document.querySelectorAll('.result-detail-item')[1].querySelector('.label').textContent = t.correct;
+    document.querySelectorAll('.result-detail-item')[2].querySelector('.label').textContent = t.wrong;
+    document.querySelectorAll('.result-detail-item')[3].querySelector('.label').textContent = t.total;
+  }
+
+  // ─── CUSTOM WORDS ────────────────────────────────────────────────────────────
+  window.addCustomWords = function () {
+    const input = document.getElementById('custom-words-input');
+    const text = input.value.trim();
+    if (!text) return;
+    const newWords = text.split(',').map(w => w.trim().toLowerCase()).filter(w => w.length > 0);
+    customWords = [...new Set([...customWords, ...newWords])];
+    localStorage.setItem('typeradar_custom_words', JSON.stringify(customWords));
+    updateCustomWordsList();
+    input.value = '';
+  };
+
+  window.removeCustomWord = function (word) {
+    customWords = customWords.filter(w => w !== word);
+    localStorage.setItem('typeradar_custom_words', JSON.stringify(customWords));
+    updateCustomWordsList();
+  };
+
+  function updateCustomWordsList() {
+    const list = document.getElementById('custom-words-list');
+    list.innerHTML = '';
+    customWords.forEach(word => {
+      const item = document.createElement('div');
+      item.className = 'custom-item';
+      item.innerHTML = `<span>${word}</span><button onclick="removeCustomWord('${word}')">✕</button>`;
+      list.appendChild(item);
+    });
+  }
+
+  // ─── LOAD SAVED SETTINGS ─────────────────────────────────────────────────────
+  function loadSettings() {
+    try {
+      const savedWords = localStorage.getItem('typeradar_custom_words');
+      if (savedWords) customWords = JSON.parse(savedWords);
+
+      const savedColorTheme = localStorage.getItem('typeradar_color_theme');
+      if (savedColorTheme) {
+        colorTheme = savedColorTheme;
+        setTimeout(() => {
+          const activeCard = Array.from(document.querySelectorAll('.theme-card')).find(
+            card => card.querySelector('.name').textContent.toLowerCase().includes(colorTheme)
+          );
+          if (activeCard) {
+            document.querySelectorAll('.theme-card').forEach(c => c.classList.remove('active'));
+            activeCard.classList.add('active');
+          }
+        }, 100);
+      }
+    } catch (e) { /* ignore storage errors */ }
+  }
+
+  // ─── WORD GENERATION ─────────────────────────────────────────────────────────
+  function generateWords() {
+    if (mode === 'quote') return QUOTES[Math.floor(Math.random() * QUOTES.length)].split(' ');
+    if (mode === 'custom' && customWords.length > 0) {
+      return Array.from({ length: 30 }, () => customWords[Math.floor(Math.random() * customWords.length)]);
+    }
+    const list = WORDS[uiLang] || WORDS.en;
+    const count = mode === 'words' ? 30 : 50;
+    return Array.from({ length: count }, () => list[Math.floor(Math.random() * list.length)]);
+  }
+
+  // ─── DISPLAY BUILDER ─────────────────────────────────────────────────────────
+  function buildDisplay() {
+    words = generateWords();
+    const inner = document.getElementById('words-inner');
+    inner.style.top = '0px';
+    inner.innerHTML = '';
+    words.forEach((word, wi) => {
+      const wordEl = document.createElement('span');
+      wordEl.className = 'word';
+      wordEl.id = 'word-' + wi;
+      word.split('').forEach((ch, ci) => {
+        const letter = document.createElement('span');
+        letter.className = 'letter';
+        letter.id = 'l-' + wi + '-' + ci;
+        letter.textContent = ch;
+        wordEl.appendChild(letter);
+      });
+      inner.appendChild(wordEl);
+    });
+  }
+
+  // ─── CURSOR ───────────────────────────────────────────────────────────────────
+  function positionCursor() {
+    const cursor = document.getElementById('cursor');
+    const display = document.getElementById('words-display');
+    const inner = document.getElementById('words-inner');
+    const wordEl = document.getElementById('word-' + currentWordIndex);
+    if (!wordEl || !display || !cursor) return;
+
+    const letters = wordEl.querySelectorAll('.letter');
+    const cRect = display.getBoundingClientRect();
+
+    const getCharPosition = () => {
+      if (currentInput.length === 0) {
+        const r = wordEl.getBoundingClientRect();
+        return { left: r.left - cRect.left, top: r.top - cRect.top };
+      } else {
+        const idx = Math.min(currentInput.length - 1, letters.length - 1);
+        const r = letters[idx].getBoundingClientRect();
+        return { left: r.left - cRect.left + r.width, top: r.top - cRect.top };
+      }
+    };
+
+    const pos = getCharPosition();
+    cursor.style.left = pos.left + 'px';
+    cursor.style.top = pos.top + 'px';
+
+    const wRect = wordEl.getBoundingClientRect();
+    const relTop = wRect.top - cRect.top;
+    const lineH = parseFloat(getComputedStyle(display).fontSize) * 2.4;
+    if (relTop > lineH * 1.5) {
+      inner.style.top = (parseInt(inner.style.top || 0) - lineH) + 'px';
+    }
+  }
+
+  // ─── LETTER ANIMATION ────────────────────────────────────────────────────────
+  function animateLetter(letterIndex, type) {
+    const wordEl = document.getElementById('word-' + currentWordIndex);
+    if (!wordEl) return;
+    const letters = wordEl.querySelectorAll('.letter');
+    if (letterIndex >= 0 && letterIndex < letters.length) {
+      const letter = letters[letterIndex];
+      letter.classList.remove('correct', 'wrong', 'deleting');
+      if (type === 'add') {
+        letter.classList.add(currentInput[letterIndex] === words[currentWordIndex][letterIndex] ? 'correct' : 'wrong');
+        letter.classList.add(`theme-${colorTheme}`);
+      } else if (type === 'delete') {
+        letter.classList.add('deleting');
+        setTimeout(() => {
+          letter.classList.remove('deleting', 'correct', 'wrong', `theme-${colorTheme}`);
+        }, 100);
+      }
+    }
+  }
+
+  function colorLetters() {
+    const wordEl = document.getElementById('word-' + currentWordIndex);
+    if (!wordEl) return;
+    const letters = wordEl.querySelectorAll('.letter');
+    const wordStr = words[currentWordIndex] || '';
+    letters.forEach(l => l.classList.remove('correct', 'wrong', `theme-${colorTheme}`));
+    for (let i = 0; i < currentInput.length && i < wordStr.length; i++) {
+      letters[i].classList.add(currentInput[i] === wordStr[i] ? 'correct' : 'wrong');
+      letters[i].classList.add(`theme-${colorTheme}`);
+    }
+  }
+
+  // ─── LIVE STATS ──────────────────────────────────────────────────────────────
+  function updateLiveStats() {
+    const elapsed = mode === 'time' ? (totalTime - timeLeft) : wpmTick;
+    const wpm = elapsed > 0 ? Math.round((correctWords / elapsed) * 60) : 0;
+    const total = totalCorrectChars + totalWrongChars;
+    const acc = total > 0 ? Math.round((totalCorrectChars / total) * 100) : 100;
+    document.getElementById('live-wpm').textContent = wpm;
+    document.getElementById('live-acc').textContent = acc + '%';
+    if (started && !finished && elapsed > 0) {
+      if (wpmHistory.length === 0 || wpmHistory[wpmHistory.length - 1] !== wpm) {
+        wpmHistory.push(wpm);
+      }
+    }
+  }
+
+  // ─── TIMER ───────────────────────────────────────────────────────────────────
+  function startTimer() {
+    if (started) return;
+    started = true;
+    document.getElementById('live-stats').classList.add('visible');
+    document.getElementById('click-hint').style.opacity = '0.3';
+    document.getElementById('timer-label').textContent = mode === 'time' ? 'time' : 'elapsed';
+    wpmTick = 0;
+    wpmHistory = [];
+    if (timerInterval) clearInterval(timerInterval);
+    timerInterval = setInterval(() => {
+      if (finished) return;
+      if (mode === 'time') {
+        timeLeft--;
+        const td = document.getElementById('timer-display');
+        td.textContent = timeLeft;
+        if (timeLeft <= 5) td.classList.add('warning');
+        if (timeLeft <= 0) { endTest(); return; }
+      } else {
+        wpmTick++;
+        document.getElementById('timer-display').textContent = wpmTick;
+      }
+      updateLiveStats();
+    }, 1000);
+  }
+
+  // ─── END TEST ────────────────────────────────────────────────────────────────
+  function endTest() {
+    if (finished) return;
+    clearInterval(timerInterval);
+    finished = true;
+    started = false;
+    hiddenInput.blur();
+
+    const elapsed = mode === 'time' ? totalTime : wpmTick;
+    const wpm = Math.round((correctWords / Math.max(elapsed, 1)) * 60);
+    const rawWpm = Math.round(((totalCorrectChars + totalWrongChars) / 5) / (Math.max(elapsed, 1) / 60));
+    const total = totalCorrectChars + totalWrongChars;
+    const acc = total > 0 ? Math.round((totalCorrectChars / total) * 100) : 100;
+
+    document.getElementById('res-wpm').textContent = wpm;
+    document.getElementById('res-acc').textContent = acc + '%';
+    document.getElementById('res-raw').textContent = rawWpm;
+    document.getElementById('res-correct').textContent = correctWords;
+    document.getElementById('res-wrong').textContent = wrongWords;
+    document.getElementById('res-time').textContent = elapsed + 's';
+
+    const chart = document.getElementById('wpm-chart');
+    chart.innerHTML = '';
+    const maxW = Math.max(...wpmHistory, 1);
+    wpmHistory.slice(-30).forEach(w => {
+      const bar = document.createElement('div');
+      bar.className = 'chart-bar';
+      bar.style.height = Math.max(4, (w / maxW) * 66) + 'px';
+      bar.title = w + ' wpm';
+      chart.appendChild(bar);
+    });
+
+    document.getElementById('test-screen').style.display = 'none';
+    document.getElementById('result-screen').style.display = 'flex';
+  }
+
+  // ─── RESTART ─────────────────────────────────────────────────────────────────
+  window.restart = function () {
+    clearInterval(timerInterval);
+    started = false; finished = false;
+    currentWordIndex = 0; currentInput = '';
+    totalCorrectChars = 0; totalWrongChars = 0;
+    correctWords = 0; wrongWords = 0;
+    wpmHistory = []; wpmTick = 0;
+    timeLeft = totalTime;
+
+    document.getElementById('timer-display').textContent = mode === 'time' ? totalTime : '0';
+    document.getElementById('timer-display').classList.remove('warning');
+    document.getElementById('live-wpm').textContent = '0';
+    document.getElementById('live-acc').textContent = '100%';
+    document.getElementById('live-stats').classList.remove('visible');
+    document.getElementById('click-hint').style.opacity = '0.6';
+    document.getElementById('result-screen').style.display = 'none';
+    document.getElementById('test-screen').style.display = 'flex';
+
+    buildDisplay();
+    setTimeout(() => {
+      positionCursor();
+      hiddenInput.value = '';
+      if (!finished) setTimeout(focusInput, 100);
+    }, 50);
+  };
+
+  // ─── KEY PROCESSING ──────────────────────────────────────────────────────────
+  function processKey(key) {
+    if (finished) return false;
+    if (!started && key !== 'Backspace' && key !== ' ') startTimer();
+
+    const wordStr = words[currentWordIndex] || '';
+
+    if (key === 'Backspace') {
+      if (currentInput.length > 0) {
+        const deleteIndex = currentInput.length - 1;
+        animateLetter(deleteIndex, 'delete');
+        setTimeout(() => {
+          currentInput = currentInput.slice(0, -1);
+          colorLetters();
+          positionCursor();
+        }, 30);
+      }
+      return true;
+    }
+
+    if (key === ' ') {
+      if (currentInput.length === 0) return true;
+      const len = Math.min(currentInput.length, wordStr.length);
+      for (let i = 0; i < len; i++) {
+        if (currentInput[i] === wordStr[i]) totalCorrectChars++;
+        else totalWrongChars++;
+      }
+      totalWrongChars += Math.max(0, wordStr.length - currentInput.length);
+      if (currentInput === wordStr) correctWords++;
+      else wrongWords++;
+      currentInput = '';
+      currentWordIndex++;
+      if ((mode === 'words' || mode === 'quote' || mode === 'custom') && currentWordIndex >= words.length) {
+        endTest();
+        return true;
+      }
+      colorLetters();
+      positionCursor();
+      updateLiveStats();
+      return true;
+    }
+
+    if (key.length === 1) {
+      if (currentInput.length >= wordStr.length + 5) return true;
+      const newIndex = currentInput.length;
+      currentInput += key;
+      setTimeout(() => {
+        animateLetter(newIndex, 'add');
+        positionCursor();
+      }, 10);
+      updateLiveStats();
+      return true;
+    }
+
+    return true;
+  }
+
+  // ─── FOCUS ───────────────────────────────────────────────────────────────────
+  window.focusInput = function () {
+    if (!finished && document.getElementById('test-screen').style.display !== 'none') {
+      hiddenInput.focus();
+      hiddenInput.click();
+    }
+  };
+
+  // ─── SETTINGS MODAL ──────────────────────────────────────────────────────────
+  window.openSettings = function () {
+    document.getElementById('settings-modal').style.display = 'flex';
+    updateCustomWordsList();
+  };
+
+  window.closeSettings = function () {
+    document.getElementById('settings-modal').style.display = 'none';
+    setTimeout(focusInput, 100);
+  };
+
+  // ─── EVENT LISTENERS ─────────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    const key = e.key;
+    if (key === 'Tab') { e.preventDefault(); restart(); return; }
+    if (key === 'Escape') {
+      e.preventDefault();
+      if (document.getElementById('settings-modal').style.display === 'flex') closeSettings();
+      else restart();
+      return;
+    }
+    const ignored = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End',
+      'PageUp','PageDown','Shift','Control','Alt','Meta','CapsLock','Insert','Delete',
+      'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'];
+    if (ignored.includes(key)) return;
+    e.preventDefault();
+    processKey(key);
+  });
+
+  hiddenInput.addEventListener('input', function () {
+    const val = this.value;
+    if (val.length === 0) return;
+    const lastChar = val[val.length - 1];
+    this.value = '';
+    if (!finished) processKey(lastChar);
+  });
+
+  hiddenInput.addEventListener('keydown', function (e) {
+    if (e.key === 'Backspace' || e.key === ' ') {
+      e.preventDefault();
+      processKey(e.key);
+    }
+  });
+
+  typingContainer.addEventListener('click', e => { e.preventDefault(); focusInput(); });
+  typingContainer.addEventListener('touchstart', e => { e.preventDefault(); focusInput(); });
+
+  document.getElementById('settings-modal').addEventListener('click', function (e) {
+    if (e.target === this) closeSettings();
+  });
+
+  // ─── INIT ────────────────────────────────────────────────────────────────────
+  window.addEventListener('load', function () {
+    loadSettings();
+    buildDisplay();
+    updateUILanguage();
+    updateCustomWordsList();
+    setTimeout(() => { positionCursor(); focusInput(); }, 300);
+    document.addEventListener('touchmove', e => {
+      if (e.target.closest('.typing-container')) e.preventDefault();
+    }, { passive: false });
+  });
+
+  // Keep input focused
+  setInterval(() => {
+    if (!finished && document.getElementById('test-screen').style.display !== 'none'
+      && document.activeElement !== hiddenInput) {
+      if (!document.activeElement || document.activeElement.tagName !== 'INPUT') focusInput();
+    }
+  }, 1000);
+
+  setTimeout(focusInput, 500);
+
+})();
