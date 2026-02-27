@@ -4,12 +4,36 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>TypeRadar — Typing Speed Test</title>
+
+  <!-- Favicon -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='none' stroke='%237c6af7' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='25' fill='none' stroke='%23f7c26a' stroke-width='4' stroke-dasharray='6 6'/%3E%3Cpath d='M50 50 L85 50' stroke='%237c6af7' stroke-width='6' stroke-linecap='round'%3E%3CanimateTransform attributeName='transform' type='rotate' from='0 50 50' to='360 50 50' dur='3s' repeatCount='indefinite'/%3E%3C/path%3E%3Ccircle cx='50' cy='50' r='8' fill='%23f7c26a'/%3E%3C/svg%3E">
+
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="style.css">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="css/styles.css">
+
+  <!-- Anti-copy / anti-devtools (optional, can be removed) -->
+  <script>
+    (function () {
+      document.addEventListener('contextmenu', e => e.preventDefault());
+      document.addEventListener('keydown', e => {
+        if (e.key === 'F12' ||
+          (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) ||
+          (e.ctrlKey && e.key === 'u')) {
+          e.preventDefault();
+        }
+      });
+      document.addEventListener('copy',  e => e.preventDefault());
+      document.addEventListener('cut',   e => e.preventDefault());
+      document.addEventListener('paste', e => e.preventDefault());
+    })();
+  </script>
 </head>
 <body id="body" class="theme-moon">
 
+<!-- ═══════════════════════════════════════════════════════ HEADER ═══════════ -->
 <header>
   <div class="logo" onclick="restart()">
     <div class="logo-icon"></div>
@@ -18,32 +42,38 @@
   <div class="header-right">
     <button class="settings-btn" onclick="openSettings()">⚙️</button>
     <div class="theme-picker">
-      <div class="theme-dot active" data-theme="theme-moon" onclick="setTheme(this)" title="Moon"></div>
-      <div class="theme-dot" data-theme="theme-forest" onclick="setTheme(this)" title="Forest"></div>
-      <div class="theme-dot" data-theme="theme-ember" onclick="setTheme(this)" title="Ember"></div>
-      <div class="theme-dot" data-theme="theme-arctic" onclick="setTheme(this)" title="Arctic"></div>
+      <div class="theme-dot active" data-theme="theme-moon"   onclick="setTheme(this)" title="Moon"></div>
+      <div class="theme-dot"        data-theme="theme-forest" onclick="setTheme(this)" title="Forest"></div>
+      <div class="theme-dot"        data-theme="theme-ember"  onclick="setTheme(this)" title="Ember"></div>
+      <div class="theme-dot"        data-theme="theme-arctic" onclick="setTheme(this)" title="Arctic"></div>
     </div>
   </div>
 </header>
 
+<!-- ════════════════════════════════════════════════════════ MAIN ════════════ -->
 <main>
+
+  <!-- ── TEST SCREEN ──────────────────────────────────────────────────────── -->
   <div id="test-screen">
+
+    <!-- Config bar -->
     <div class="config-bar">
       <div style="display:flex;gap:2px;flex-wrap:wrap;" id="mode-group">
-        <button class="config-btn active" onclick="setMode('time','mode-time')" id="mode-time">⏱ time</button>
-        <button class="config-btn" onclick="setMode('words','mode-words')" id="mode-words">≡ words</button>
-        <button class="config-btn" onclick="setMode('quote','mode-quote')" id="mode-quote">❝ quote</button>
-        <button class="config-btn" onclick="setMode('custom','mode-custom')" id="mode-custom">✎ custom</button>
+        <button class="config-btn active" onclick="setMode('time','mode-time')"     id="mode-time">⏱ time</button>
+        <button class="config-btn"        onclick="setMode('words','mode-words')"   id="mode-words">≡ words</button>
+        <button class="config-btn"        onclick="setMode('quote','mode-quote')"   id="mode-quote">❝ quote</button>
+        <button class="config-btn"        onclick="setMode('custom','mode-custom')" id="mode-custom">✎ custom</button>
       </div>
       <div class="config-sep"></div>
       <div style="display:flex;gap:2px;flex-wrap:wrap;" id="time-group">
-        <button class="config-btn" onclick="setTime(15,'t-15')" id="t-15">15s</button>
-        <button class="config-btn active" onclick="setTime(30,'t-30')" id="t-30">30s</button>
-        <button class="config-btn" onclick="setTime(60,'t-60')" id="t-60">60s</button>
-        <button class="config-btn" onclick="setTime(120,'t-120')" id="t-120">120s</button>
+        <button class="config-btn"        onclick="setTime(15,'t-15')"  id="t-15">15s</button>
+        <button class="config-btn active" onclick="setTime(30,'t-30')"  id="t-30">30s</button>
+        <button class="config-btn"        onclick="setTime(60,'t-60')"  id="t-60">60s</button>
+        <button class="config-btn"        onclick="setTime(120,'t-120')" id="t-120">120s</button>
       </div>
     </div>
 
+    <!-- Live stats -->
     <div class="live-stats" id="live-stats">
       <div class="stat-item">
         <div class="stat-label">wpm</div>
@@ -59,6 +89,7 @@
       </div>
     </div>
 
+    <!-- Typing area -->
     <div class="typing-container" id="typing-container">
       <div id="words-display">
         <div class="words-inner" id="words-inner"></div>
@@ -66,8 +97,10 @@
       </div>
     </div>
     <div class="click-hint" id="click-hint">👆 click or press any key to start typing</div>
-  </div>
 
+  </div><!-- /#test-screen -->
+
+  <!-- ── RESULT SCREEN ─────────────────────────────────────────────────────── -->
   <div id="result-screen">
     <div class="result-big">
       <div class="result-stat">
@@ -79,71 +112,79 @@
         <div class="value" id="res-acc">0%</div>
       </div>
     </div>
+
     <div id="wpm-chart"></div>
+
     <div class="result-details">
-      <div class="result-detail-item"><div class="label">raw wpm</div><div class="val" id="res-raw">0</div></div>
-      <div class="result-detail-item"><div class="label">correct words</div><div class="val good" id="res-correct">0</div></div>
-      <div class="result-detail-item"><div class="label">wrong words</div><div class="val bad" id="res-wrong">0</div></div>
-      <div class="result-detail-item"><div class="label">total time</div><div class="val" id="res-time">0s</div></div>
+      <div class="result-detail-item"><div class="label">raw wpm</div>       <div class="val"     id="res-raw">0</div></div>
+      <div class="result-detail-item"><div class="label">correct words</div> <div class="val good" id="res-correct">0</div></div>
+      <div class="result-detail-item"><div class="label">wrong words</div>   <div class="val bad"  id="res-wrong">0</div></div>
+      <div class="result-detail-item"><div class="label">total time</div>    <div class="val"     id="res-time">0s</div></div>
     </div>
+
     <button class="restart-btn" onclick="restart()">↺ restart</button>
-  </div>
+  </div><!-- /#result-screen -->
+
 </main>
 
+<!-- ══════════════════════════════════════════════════════ FOOTER ════════════ -->
 <footer>
   <kbd>Tab</kbd> restart &nbsp;·&nbsp; <kbd>Esc</kbd> reset
 </footer>
 
-<!-- Settings Modal -->
+<!-- ════════════════════════════════════════════════ SETTINGS MODAL ══════════ -->
 <div class="modal-overlay" id="settings-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeSettings()">✕</button>
     <h2>⚙️ Settings</h2>
-    
+
+    <!-- Color Theme -->
     <div class="setting-section">
       <h3>🎨 Color Theme</h3>
       <div class="theme-grid" id="color-theme-selector">
         <div class="theme-card active" onclick="setColorTheme('classic')">
-          <div class="preview" style="background: linear-gradient(90deg, #6af7b2 50%, #f76a8a 50%);"></div>
+          <div class="preview" style="background:linear-gradient(90deg,#6af7b2 50%,#f76a8a 50%);"></div>
           <div class="name">Classic</div>
         </div>
         <div class="theme-card" onclick="setColorTheme('rgb')">
-          <div class="preview" style="background: linear-gradient(90deg, #ff3b3b, #ff8c42, #ffd93b, #4caf7f, #3b7fff, #9d4cff);"></div>
+          <div class="preview" style="background:linear-gradient(90deg,#ff3b3b,#ff8c42,#ffd93b,#4caf7f,#3b7fff,#9d4cff);"></div>
           <div class="name">RGB</div>
         </div>
         <div class="theme-card" onclick="setColorTheme('matrix')">
-          <div class="preview" style="background: #0f0; box-shadow: 0 0 10px #0f0;"></div>
+          <div class="preview" style="background:#0f0;box-shadow:0 0 10px #0f0;"></div>
           <div class="name">Matrix</div>
         </div>
         <div class="theme-card" onclick="setColorTheme('neon')">
-          <div class="preview" style="background: linear-gradient(90deg, #f0f, #0ff, #f0f);"></div>
+          <div class="preview" style="background:linear-gradient(90deg,#f0f,#0ff,#f0f);"></div>
           <div class="name">Neon</div>
         </div>
         <div class="theme-card" onclick="setColorTheme('fire')">
-          <div class="preview" style="background: linear-gradient(90deg, #ff4500, #ff8c00, #ffd700);"></div>
+          <div class="preview" style="background:linear-gradient(90deg,#ff4500,#ff8c00,#ffd700);"></div>
           <div class="name">Fire</div>
         </div>
         <div class="theme-card" onclick="setColorTheme('ocean')">
-          <div class="preview" style="background: linear-gradient(90deg, #00ffff, #4a9eff, #6a5acd);"></div>
+          <div class="preview" style="background:linear-gradient(90deg,#00ffff,#4a9eff,#6a5acd);"></div>
           <div class="name">Ocean</div>
         </div>
         <div class="theme-card" onclick="setColorTheme('purple')">
-          <div class="preview" style="background: #b87aff; box-shadow: 0 0 10px #9d4cff;"></div>
+          <div class="preview" style="background:#b87aff;box-shadow:0 0 10px #9d4cff;"></div>
           <div class="name">Purple Haze</div>
         </div>
       </div>
     </div>
-    
+
+    <!-- Language -->
     <div class="setting-section">
       <h3>🌍 Language</h3>
       <div class="lang-selector">
         <button class="lang-btn active" onclick="setUILang('en', this)">🇬🇧 English</button>
-        <button class="lang-btn" onclick="setUILang('tr', this)">🇹🇷 Türkçe</button>
-        <button class="lang-btn" onclick="setUILang('es', this)">🇪🇸 Español</button>
-        <button class="lang-btn" onclick="setUILang('az', this)">🇦🇿 Azərbaycan</button>
+        <button class="lang-btn"        onclick="setUILang('tr', this)">🇹🇷 Türkçe</button>
+        <button class="lang-btn"        onclick="setUILang('es', this)">🇪🇸 Español</button>
+        <button class="lang-btn"        onclick="setUILang('az', this)">🇦🇿 Azərbaycan</button>
       </div>
     </div>
-    
+
+    <!-- Custom Words -->
     <div class="setting-section">
       <h3>📝 Custom Words</h3>
       <div class="custom-input">
@@ -152,15 +193,20 @@
       </div>
       <div class="custom-list" id="custom-words-list"></div>
     </div>
+
   </div>
 </div>
 
-<!-- Mobil için klavye butonu -->
+<!-- Mobile keyboard activator -->
 <button class="keyboard-activator" id="keyboard-btn" onclick="focusInput()">⌨️</button>
 
-<!-- Gizli input -->
-<input type="text" id="hidden-input" style="position:fixed;top:0;left:0;opacity:0;height:1px;width:1px;pointer-events:none;" inputmode="text" autocomplete="off" aria-hidden="true">
+<!-- Hidden input (captures keystrokes on mobile) -->
+<input type="text" id="hidden-input"
+  style="position:fixed;top:0;left:0;opacity:0;height:1px;width:1px;pointer-events:none;"
+  inputmode="text" autocomplete="off" aria-hidden="true">
 
-<script src="script.js"></script>
+<!-- Scripts -->
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
