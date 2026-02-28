@@ -62,31 +62,32 @@
 
     <!-- Config bar -->
     <div class="config-bar">
+      <!-- punct / numbers (always visible, slide in for time/words/custom) -->
+      <div class="config-slide-group" id="extra-group">
+        <button class="config-btn" onclick="togglePunct(this)"   id="toggle-punct">@ punctuation</button>
+        <button class="config-btn" onclick="toggleNumbers(this)" id="toggle-numbers"># numbers</button>
+      </div>
+      <div class="config-sep config-slide-sep" id="extra-sep"></div>
+
+      <!-- modes -->
       <div style="display:flex;gap:2px;flex-wrap:wrap;" id="mode-group">
-        <button class="config-btn active" onclick="setMode('time','mode-time')"     id="mode-time">◷ time</button>
-        <button class="config-btn"        onclick="setMode('words','mode-words')"   id="mode-words">∷ words</button>
-        <button class="config-btn"        onclick="setMode('quote','mode-quote')"   id="mode-quote">❝ quote</button>
-        <button class="config-btn"        onclick="setMode('custom','mode-custom')" id="mode-custom">✐ custom</button>
-        <button class="config-btn"        onclick="setMode('zen','mode-zen')"       id="mode-zen">⚗ zen</button>
+        <button class="config-btn active" onclick="setMode('time','mode-time')"     id="mode-time"><span class="btn-icon">⏱</span> time</button>
+        <button class="config-btn"        onclick="setMode('words','mode-words')"   id="mode-words"><span class="btn-icon">A</span> words</button>
+        <button class="config-btn"        onclick="setMode('quote','mode-quote')"   id="mode-quote"><span class="btn-icon">❝❝</span> quote</button>
+        <button class="config-btn"        onclick="setMode('zen','mode-zen')"       id="mode-zen"><span class="btn-icon">▲</span> zen</button>
+        <button class="config-btn"        onclick="setMode('custom','mode-custom')" id="mode-custom"><span class="btn-icon">🔧</span> custom</button>
       </div>
 
-      <!-- time + words + custom → time options -->
+      <!-- time options (slide in for time/words) -->
       <div class="config-sep config-slide-sep" id="time-sep"></div>
       <div class="config-slide-group" id="time-group">
-        <button class="config-btn"        onclick="setTime(15,'t-15')"   id="t-15">15s</button>
-        <button class="config-btn active" onclick="setTime(30,'t-30')"   id="t-30">30s</button>
-        <button class="config-btn"        onclick="setTime(60,'t-60')"   id="t-60">60s</button>
-        <button class="config-btn"        onclick="setTime(120,'t-120')" id="t-120">120s</button>
+        <button class="config-btn"        onclick="setTime(15,'t-15')"   id="t-15">15</button>
+        <button class="config-btn active" onclick="setTime(30,'t-30')"   id="t-30">30</button>
+        <button class="config-btn"        onclick="setTime(60,'t-60')"   id="t-60">60</button>
+        <button class="config-btn"        onclick="setTime(120,'t-120')" id="t-120">120</button>
       </div>
 
-      <!-- time + words + custom → punct / numbers -->
-      <div class="config-sep config-slide-sep" id="extra-sep"></div>
-      <div class="config-slide-group" id="extra-group">
-        <button class="config-btn" onclick="togglePunct(this)"   id="toggle-punct"   title="punctuation">@</button>
-        <button class="config-btn" onclick="toggleNumbers(this)" id="toggle-numbers" title="numbers">#</button>
-      </div>
-
-      <!-- quote → length options -->
+      <!-- quote length (slide in for quote) -->
       <div class="config-sep config-slide-sep" id="quote-sep"></div>
       <div class="config-slide-group" id="quote-group">
         <button class="config-btn active" onclick="setQuoteLen('all','ql-all')"       id="ql-all">all</button>
