@@ -29,6 +29,7 @@
   let useConfidence = false;
   let isZen = false;
   let totalErrors = 0;
+  let quoteLen = 'all'; // all | short | medium | long | thicc
 
   const hiddenInput = document.getElementById('hidden-input');
   const typingContainer = document.getElementById('typing-container');
@@ -81,18 +82,38 @@
   };
 
   // ─── MODE (config bar) ───────────────────────────────────────────────────────
+  function showGroup(id, show) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (show) el.classList.add('visible');
+    else el.classList.remove('visible');
+  }
+
   window.setMode = function (m, id) {
     mode = m;
     isZen = (m === 'zen');
     document.querySelectorAll('#mode-group .config-btn').forEach(function(b) { b.classList.remove('active'); });
     document.getElementById(id).classList.add('active');
-    var noTimer = (m === 'quote' || m === 'custom' || m === 'zen');
-    var timeGroup  = document.getElementById('time-group');
-    var extraSep   = document.getElementById('extra-sep');
-    var extraGroup = document.getElementById('extra-group');
-    if (timeGroup)  timeGroup.style.display  = noTimer ? 'none' : 'flex';
-    if (extraSep)   extraSep.style.display   = noTimer ? 'none' : 'block';
-    if (extraGroup) extraGroup.style.display = noTimer ? 'none' : 'flex';
+
+    var hasTimer   = (m === 'time' || m === 'words');
+    var hasPunct   = (m === 'time' || m === 'words' || m === 'custom');
+    var isQuote    = (m === 'quote');
+
+    // slide groups in/out smoothly
+    showGroup('time-group',  hasTimer);
+    showGroup('time-sep',    hasTimer);
+    showGroup('extra-group', hasPunct);
+    showGroup('extra-sep',   hasPunct);
+    showGroup('quote-group', isQuote);
+    showGroup('quote-sep',   isQuote);
+
+    restart();
+  };
+
+  window.setQuoteLen = function(len, id) {
+    quoteLen = len;
+    document.querySelectorAll('#quote-group .config-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById(id).classList.add('active');
     restart();
   };
 
@@ -108,39 +129,14 @@
 
   // ─── SPECIAL MODES (settings) ────────────────────────────────────────────────
   window.toggleSpecialMode = function (el, smode) {
-    const isActive = el.classList.contains('active');
+    var isActive = el.classList.contains('active');
     if (smode === 'blind') {
       useBlind = !isActive;
       el.classList.toggle('active', useBlind);
-      document.getElementById('typing-container').classList.toggle('blind-mode', useBlind);
+      // blind-mode class applied on typing start, not here
     } else if (smode === 'confidence') {
       useConfidence = !isActive;
       el.classList.toggle('active', useConfidence);
-    } else if (smode === 'zen') {
-      if (!isActive) {
-        isZen = true;
-        el.classList.add('active');
-        mode = 'zen';
-        document.querySelectorAll('#mode-group .config-btn').forEach(b => b.classList.remove('active'));
-        const timeGroup  = document.getElementById('time-group');
-        const extraSep   = document.getElementById('extra-sep');
-        const extraGroup = document.getElementById('extra-group');
-        if (timeGroup)  timeGroup.style.display  = 'none';
-        if (extraSep)   extraSep.style.display   = 'none';
-        if (extraGroup) extraGroup.style.display = 'none';
-      } else {
-        isZen = false;
-        el.classList.remove('active');
-        mode = 'time';
-        document.getElementById('mode-time').classList.add('active');
-        const timeGroup  = document.getElementById('time-group');
-        const extraSep   = document.getElementById('extra-sep');
-        const extraGroup = document.getElementById('extra-group');
-        if (timeGroup)  timeGroup.style.display  = 'flex';
-        if (extraSep)   extraSep.style.display   = 'block';
-        if (extraGroup) extraGroup.style.display = 'flex';
-      }
-      restart();
     }
   };
 
@@ -224,11 +220,20 @@
   var PUNCTS = [',', '.', '!', '?', ';', ':'];
 
   function generateWords() {
-    if (mode === 'quote') return QUOTES[Math.floor(Math.random() * QUOTES.length)].split(' ');
+    if (mode === 'quote') {
+      var pool = QUOTES;
+      if (quoteLen === 'short')  pool = QUOTES.filter(function(q) { return q.split(' ').length <= 8; });
+      if (quoteLen === 'medium') pool = QUOTES.filter(function(q) { var n = q.split(' ').length; return n > 8 && n <= 15; });
+      if (quoteLen === 'long')   pool = QUOTES.filter(function(q) { var n = q.split(' ').length; return n > 15 && n <= 25; });
+      if (quoteLen === 'thicc')  pool = QUOTES.filter(function(q) { return q.split(' ').length > 25; });
+      if (!pool || pool.length === 0) pool = QUOTES;
+      return pool[Math.floor(Math.random() * pool.length)].split(' ');
+    }
     if (mode === 'custom') return customText.trim().split(/\s+/);
     if (mode === 'zen') {
-      var list = WORDS[uiLang] || WORDS.en;
-      return Array.from({ length: 200 }, function() { return list[Math.floor(Math.random() * list.length)]; });
+      // Zen starts with empty display — words appear one line at a time via padding
+      var zlist = WORDS[uiLang] || WORDS.en;
+      return Array.from({ length: 60 }, function() { return zlist[Math.floor(Math.random() * zlist.length)]; });
     }
     var list2 = WORDS[uiLang] || WORDS.en;
     var count = mode === 'words' ? 30 : 50;
@@ -384,6 +389,10 @@
     started = true;
     // Apply correct layout BEFORE making stats visible — no flicker
     applyStatsLayout();
+    // Blind mode: hide letters when typing starts (visible before)
+    if (useBlind) {
+      document.getElementById('typing-container').classList.add('blind-mode');
+    }
     document.getElementById('live-stats').classList.add('visible');
     document.getElementById('click-hint').style.opacity = '0.3';
     document.getElementById('timer-label').textContent = mode === 'time' ? 'time' : 'elapsed';
@@ -587,6 +596,8 @@
     document.getElementById('click-hint').style.opacity = '0.6';
     document.getElementById('result-screen').style.display = 'none';
     document.getElementById('test-screen').style.display = 'flex';
+    // Remove blind-mode so letters are visible before typing starts
+    document.getElementById('typing-container').classList.remove('blind-mode');
 
     buildDisplay();
     setTimeout(function() {
