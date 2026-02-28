@@ -200,6 +200,33 @@ main {
 .config-btn:hover { color: var(--text); }
 .config-btn.active { color: var(--accent); background: var(--glow); }
 .config-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; align-self: center; }
+/* ─── CONFIG BAR SLIDE GROUPS ─────────────────────────────────────────────── */
+.config-slide-sep {
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  margin: 0;
+  padding: 0;
+  transition: max-width 0.3s ease, opacity 0.25s ease;
+}
+.config-slide-sep.visible {
+  max-width: 10px;
+  opacity: 1;
+}
+.config-slide-group {
+  display: flex;
+  gap: 2px;
+  overflow: hidden;
+  max-width: 0;
+  opacity: 0;
+  flex-wrap: nowrap;
+  transition: max-width 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.25s ease;
+}
+.config-slide-group.visible {
+  max-width: 400px;
+  opacity: 1;
+}
+
 
 /* ─── LIVE STATS ──────────────────────────────────────────────────────────── */
 .live-stats {
@@ -526,9 +553,13 @@ footer kbd {
   border-color: var(--accent);
 }
 .mode-icon {
-  font-size: 1.3rem;
+  font-size: 1.1rem;
   margin-bottom: 6px;
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  filter: grayscale(1);
 }
+.mode-card.active .mode-icon { color: var(--accent); }
 .mode-name {
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.8rem;
