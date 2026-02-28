@@ -95,11 +95,10 @@
     document.querySelectorAll('#mode-group .config-btn').forEach(function(b) { b.classList.remove('active'); });
     document.getElementById(id).classList.add('active');
 
-    var hasTimer   = (m === 'time' || m === 'words');
-    var hasPunct   = (m === 'time' || m === 'words' || m === 'custom');
-    var isQuote    = (m === 'quote');
+    var hasTimer = (m === 'time' || m === 'words');
+    var hasPunct = (m === 'time' || m === 'words' || m === 'custom');
+    var isQuote  = (m === 'quote');
 
-    // slide groups in/out smoothly
     showGroup('time-group',  hasTimer);
     showGroup('time-sep',    hasTimer);
     showGroup('extra-group', hasPunct);
@@ -109,6 +108,16 @@
 
     restart();
   };
+
+  // Init: show correct groups for default mode (time)
+  (function() {
+    showGroup('time-group',  true);
+    showGroup('time-sep',    true);
+    showGroup('extra-group', true);
+    showGroup('extra-sep',   true);
+    showGroup('quote-group', false);
+    showGroup('quote-sep',   false);
+  })();
 
   window.setQuoteLen = function(len, id) {
     quoteLen = len;
