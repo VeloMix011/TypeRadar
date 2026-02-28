@@ -699,6 +699,54 @@ footer kbd {
 }
 .letter.deleting { animation: deletePulse 0.1s ease-out; }
 
+/* ─── CAPS LOCK WARNING ──────────────────────────────────────────────────── */
+.caps-warning {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--accent2);
+  text-align: center;
+  margin-top: 8px;
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.caps-warning.visible { opacity: 1; }
+
+/* ─── SHARE BUTTON ────────────────────────────────────────────────────────── */
+.share-btn {
+  background: none;
+  border: 1px solid var(--border);
+  color: var(--muted);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.9rem;
+  padding: 12px 32px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.2s;
+  letter-spacing: 0.05em;
+}
+.share-btn:hover {
+  color: var(--accent2);
+  border-color: var(--accent2);
+  background: rgba(247,194,106,0.08);
+  transform: translateY(-1px);
+}
+.share-toast {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  color: var(--correct);
+  opacity: 0;
+  transition: opacity 0.3s;
+  pointer-events: none;
+}
+.share-toast.visible { opacity: 1; }
+
+/* ─── PUNCT / NUMBERS TOGGLE — active state already handled by .config-btn.active ── */
+#toggle-punct.active, #toggle-numbers.active {
+  color: var(--accent2);
+  background: rgba(247,194,106,0.1);
+}
+
 /* ─── RESPONSIVE ──────────────────────────────────────────────────────────── */
 
 /* ── DESKTOP (>900px) ── */
