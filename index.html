@@ -54,6 +54,12 @@
   </div>
 </header>
 
+<!-- ══════════════════════════════════════════════ MODE INDICATOR ════════════ -->
+<div class="mode-indicator" id="mode-indicator">
+  <div class="mode-badge" id="mode-badge"><span>mode</span>time</div>
+  <div class="mode-badge" id="time-badge"><span>duration</span>30s</div>
+</div>
+
 <!-- ════════════════════════════════════════════════════════ MAIN ════════════ -->
 <main>
 
@@ -156,6 +162,40 @@
   <div class="modal">
     <button class="modal-close" onclick="closeSettings()">✕</button>
     <h2>⚙️ Settings</h2>
+
+    <!-- Mode -->
+    <div class="setting-section">
+      <h3>⌨️ Mode</h3>
+      <div class="setting-row">
+        <button class="config-btn active" onclick="setMode('time','mode-time')"     id="mode-time">⏱ time</button>
+        <button class="config-btn"        onclick="setMode('words','mode-words')"   id="mode-words">≡ words</button>
+        <button class="config-btn"        onclick="setMode('quote','mode-quote')"   id="mode-quote">❝ quote</button>
+        <button class="config-btn"        onclick="setMode('custom','mode-custom')" id="mode-custom">✎ custom</button>
+        <button class="config-btn"        onclick="setMode('zen','mode-zen')"       id="mode-zen">∞ zen</button>
+      </div>
+    </div>
+
+    <!-- Time (only for time mode) -->
+    <div class="setting-section" id="time-section">
+      <h3>⏱ Duration</h3>
+      <div class="setting-row" id="time-group">
+        <button class="config-btn"        onclick="setTime(15,'t-15')"   id="t-15">15s</button>
+        <button class="config-btn active" onclick="setTime(30,'t-30')"   id="t-30">30s</button>
+        <button class="config-btn"        onclick="setTime(60,'t-60')"   id="t-60">60s</button>
+        <button class="config-btn"        onclick="setTime(120,'t-120')" id="t-120">120s</button>
+      </div>
+    </div>
+
+    <!-- Modifiers -->
+    <div class="setting-section" id="modifier-section">
+      <h3>🔧 Modifiers</h3>
+      <div class="setting-row">
+        <button class="config-btn toggle-btn" onclick="togglePunct(this)"      id="toggle-punct"      title="punctuation">@ punctuation</button>
+        <button class="config-btn toggle-btn" onclick="toggleNumbers(this)"    id="toggle-numbers"    title="numbers"># numbers</button>
+        <button class="config-btn toggle-btn" onclick="toggleBlind(this)"      id="toggle-blind"      title="blind mode">◉ blind</button>
+        <button class="config-btn toggle-btn" onclick="toggleConfidence(this)" id="toggle-confidence" title="confidence mode">⚡ confidence</button>
+      </div>
+    </div>
 
     <!-- Color Theme -->
     <div class="setting-section">
