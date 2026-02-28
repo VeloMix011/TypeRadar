@@ -173,52 +173,34 @@ main {
   padding-top: 2vh;
 }
 
-/* ─── CONFIG BTN (used inside settings modal) ─────────────────────────────── */
-.config-btn {
-  background: var(--surface2);
+/* ─── CONFIG BAR ──────────────────────────────────────────────────────────── */
+.config-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--surface);
   border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 6px 8px;
+  margin-bottom: 28px;
+  flex-wrap: wrap;
+  justify-content: center;
+  transition: background 0.4s, border-color 0.4s;
+}
+.config-btn {
+  background: none; border: none;
   color: var(--muted);
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.78rem;
-  padding: 7px 14px;
+  padding: 5px 12px;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.18s;
   white-space: nowrap;
 }
-.config-btn:hover { color: var(--text); border-color: var(--accent); }
-.config-btn.active { color: var(--accent); background: var(--glow); border-color: var(--accent); }
-
-/* row layout inside settings */
-.setting-row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-/* ─── MODE INDICATOR (below header, replaces config bar) ─────────────────── */
-.mode-indicator {
-  width: 100%;
-  max-width: 900px;
-  padding: 10px 24px 0;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  position: relative;
-  z-index: 10;
-  flex-wrap: wrap;
-}
-.mode-badge {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
-  color: var(--accent);
-  background: var(--glow);
-  border: 1px solid var(--accent);
-  border-radius: 20px;
-  padding: 3px 12px;
-  opacity: 0.9;
-}
-.mode-badge span { color: var(--muted); margin-right: 4px; }
+.config-btn:hover { color: var(--text); }
+.config-btn.active { color: var(--accent); background: var(--glow); }
+.config-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; align-self: center; }
 
 /* ─── LIVE STATS ──────────────────────────────────────────────────────────── */
 .live-stats {
