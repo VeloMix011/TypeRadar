@@ -27,6 +27,10 @@
   let customText = 'The five boxing wizards jump quickly.';
   let usePunct = false;
   let useNumbers = false;
+  let useBlind = false;
+  let useConfidence = false;
+  let isZen = false;
+  let totalErrors = 0; // cumulative wrong keystrokes
 
   // ─── DOM REFS ────────────────────────────────────────────────────────────────
   const hiddenInput = document.getElementById('hidden-input');
@@ -91,7 +95,8 @@
     document.getElementById(id).classList.add('active');
     const timeGroup = document.getElementById('time-group');
     const timerStat = document.getElementById('timer-stat');
-    const noTimer = (m === 'quote' || m === 'custom');
+    const noTimer = (m === 'quote' || m === 'custom' || m === 'zen');
+    isZen = (m === 'zen');
     if (timeGroup) timeGroup.style.display = noTimer ? 'none' : 'flex';
     if (timerStat) timerStat.style.display = noTimer ? 'none' : 'block';
     const extraGroup = document.getElementById('extra-group');
@@ -120,6 +125,15 @@
     useNumbers = !useNumbers;
     el.classList.toggle('active', useNumbers);
     restart();
+  };
+  window.toggleBlind = function (el) {
+    useBlind = !useBlind;
+    el.classList.toggle('active', useBlind);
+    document.getElementById('typing-container').classList.toggle('blind-mode', useBlind);
+  };
+  window.toggleConfidence = function (el) {
+    useConfidence = !useConfidence;
+    el.classList.toggle('active', useConfidence);
   };
 
   // ─── UI LANGUAGE ─────────────────────────────────────────────────────────────
@@ -193,6 +207,10 @@
   function generateWords() {
     if (mode === 'quote') return QUOTES[Math.floor(Math.random() * QUOTES.length)].split(' ');
     if (mode === 'custom') return customText.trim().split(/\s+/);
+    if (mode === 'zen') {
+      const list = WORDS[uiLang] || WORDS.en;
+      return Array.from({ length: 200 }, () => list[Math.floor(Math.random() * list.length)]);
+    }
 
     const list = WORDS[uiLang] || WORDS.en;
     const count = mode === 'words' ? 30 : 50;
@@ -387,16 +405,51 @@
     document.getElementById('res-wrong').textContent = wrongWords;
     document.getElementById('res-time').textContent = elapsed + 's';
 
-    const chart = document.getElementById('wpm-chart');
-    chart.innerHTML = '';
-    const maxW = Math.max(...wpmHistory, 1);
-    wpmHistory.slice(-30).forEach(w => {
-      const bar = document.createElement('div');
-      bar.className = 'chart-bar';
-      bar.style.height = Math.max(4, (w / maxW) * 66) + 'px';
-      bar.title = w + ' wpm';
-      chart.appendChild(bar);
-    });
+    document.getElementById('res-errors').textContent = totalErrors;
+
+    // Draw line chart on canvas
+    const canvas = document.getElementById('wpm-chart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = canvas.offsetWidth * dpr || 600 * dpr;
+    canvas.height = 100 * dpr;
+    ctx.scale(dpr, dpr);
+    const W = canvas.width / dpr;
+    const H = canvas.height / dpr;
+    ctx.clearRect(0, 0, W, H);
+
+    const data = wpmHistory.slice(-60);
+    if (data.length > 1) {
+      const maxV = Math.max(...data, 1);
+      const pad = { t: 10, b: 10, l: 4, r: 4 };
+      const chartW = W - pad.l - pad.r;
+      const chartH = H - pad.t - pad.b;
+
+      const px = i => pad.l + (i / (data.length - 1)) * chartW;
+      const py = v => pad.t + chartH - (v / maxV) * chartH;
+
+      // Fill gradient
+      const grad = ctx.createLinearGradient(0, pad.t, 0, H);
+      grad.addColorStop(0, 'rgba(124,106,247,0.35)');
+      grad.addColorStop(1, 'rgba(124,106,247,0)');
+      ctx.beginPath();
+      ctx.moveTo(px(0), py(data[0]));
+      for (let i = 1; i < data.length; i++) ctx.lineTo(px(i), py(data[i]));
+      ctx.lineTo(px(data.length - 1), H);
+      ctx.lineTo(px(0), H);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.fill();
+
+      // Line
+      ctx.beginPath();
+      ctx.moveTo(px(0), py(data[0]));
+      for (let i = 1; i < data.length; i++) ctx.lineTo(px(i), py(data[i]));
+      ctx.strokeStyle = 'rgba(124,106,247,0.9)';
+      ctx.lineWidth = 2;
+      ctx.lineJoin = 'round';
+      ctx.stroke();
+    }
 
     document.getElementById('test-screen').style.display = 'none';
     document.getElementById('result-screen').style.display = 'flex';
@@ -409,13 +462,14 @@
     currentWordIndex = 0; currentInput = '';
     totalCorrectChars = 0; totalWrongChars = 0;
     correctWords = 0; wrongWords = 0;
-    wpmHistory = []; wpmTick = 0; wordHistory = [];
+    wpmHistory = []; wpmTick = 0; wordHistory = []; totalErrors = 0;
     timeLeft = totalTime;
 
     document.getElementById('timer-display').textContent = mode === 'time' ? totalTime : '0';
     document.getElementById('timer-display').classList.remove('warning');
     document.getElementById('live-wpm').textContent = '0';
     document.getElementById('live-acc').textContent = '100%';
+    document.getElementById('live-err').textContent = '0';
     document.getElementById('live-stats').classList.remove('visible');
     document.getElementById('click-hint').style.opacity = '0.6';
     document.getElementById('result-screen').style.display = 'none';
@@ -437,6 +491,7 @@
     const wordStr = words[currentWordIndex] || '';
 
     if (key === 'Backspace') {
+      if (useConfidence) return true; // confidence mode: no going back
       if (currentInput.length > 0) {
         const deleteIndex = currentInput.length - 1;
         animateLetter(deleteIndex, 'delete');
@@ -489,6 +544,10 @@
       }
       wordHistory.push({ input: currentInput, wasCorrect, locked: wasCorrect });
 
+      // Mark word element with error class for wavy underline (feature 1)
+      const prevWordEl = document.getElementById('word-' + (currentWordIndex));
+      if (prevWordEl) prevWordEl.classList.toggle('has-error', !wasCorrect);
+
       const len = Math.min(currentInput.length, wordStr.length);
       for (let i = 0; i < len; i++) {
         if (currentInput[i] === wordStr[i]) totalCorrectChars++;
@@ -499,6 +558,25 @@
       else wrongWords++;
       currentInput = '';
       currentWordIndex++;
+      if (mode === 'zen' && currentWordIndex >= words.length - 20) {
+        // Generate more words seamlessly for zen mode
+        const list = WORDS[uiLang] || WORDS.en;
+        const more = Array.from({ length: 50 }, () => list[Math.floor(Math.random() * list.length)]);
+        more.forEach((word, i) => {
+          words.push(word);
+          const inner = document.getElementById('words-inner');
+          const wordEl = document.createElement('span');
+          wordEl.className = 'word';
+          wordEl.id = 'word-' + (words.length - 1);
+          word.split('').forEach(ch => {
+            const letter = document.createElement('span');
+            letter.className = 'letter';
+            letter.textContent = ch;
+            wordEl.appendChild(letter);
+          });
+          inner.appendChild(wordEl);
+        });
+      }
       if ((mode === 'words' || mode === 'quote' || mode === 'custom') && currentWordIndex >= words.length) {
         endTest();
         return true;
@@ -512,6 +590,11 @@
     if (key.length === 1) {
       if (currentInput.length >= wordStr.length + 5) return true;
       const newIndex = currentInput.length;
+      // Track error keystrokes
+      if (newIndex < wordStr.length && key !== wordStr[newIndex]) {
+        totalErrors++;
+        document.getElementById('live-err').textContent = totalErrors;
+      }
       currentInput += key;
       setTimeout(() => {
         animateLetter(newIndex, 'add');
