@@ -716,3 +716,27 @@ footer kbd {
   .config-btn { padding: 8px 12px; }
   .typing-container { margin-bottom: 10px; }
 }
+
+/* ─── MOBILE KEYBOARD OPEN ────────────────────────────────────────────────── */
+/* Prevent the page from jumping when soft keyboard opens */
+@media (max-width: 600px) {
+  html {
+    /* Use dvh (dynamic viewport height) so layout reacts to keyboard */
+    min-height: 100dvh;
+  }
+  body {
+    min-height: 100dvh;
+    /* Don't let the body scroll behind the keyboard */
+    overflow-anchor: none;
+  }
+  main {
+    /* Don't use justify-content: center on mobile — let content sit at top
+       so keyboard opening doesn't push it off screen */
+    justify-content: flex-start;
+    padding-top: 12px;
+  }
+  #test-screen {
+    /* Keep typing area near top so it stays visible when keyboard opens */
+    padding-top: 0;
+  }
+}
