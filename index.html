@@ -75,6 +75,11 @@
         <button class="config-btn"        onclick="setTime(60,'t-60')"  id="t-60">60s</button>
         <button class="config-btn"        onclick="setTime(120,'t-120')" id="t-120">120s</button>
       </div>
+      <div class="config-sep" id="extra-sep"></div>
+      <div style="display:flex;gap:2px;" id="extra-group">
+        <button class="config-btn" onclick="togglePunct(this)" id="toggle-punct" title="punctuation">@</button>
+        <button class="config-btn" onclick="toggleNumbers(this)" id="toggle-numbers" title="numbers">#</button>
+      </div>
     </div>
 
     <!-- Live stats -->
@@ -101,6 +106,7 @@
       </div>
     </div>
     <div class="click-hint" id="click-hint">👆 click or press any key to start typing</div>
+    <div class="caps-warning" id="caps-warning">⇪ caps lock is on</div>
 
   </div><!-- /#test-screen -->
 
@@ -127,6 +133,8 @@
     </div>
 
     <button class="restart-btn" onclick="restart()">↺ restart</button>
+    <button class="share-btn" id="share-btn" onclick="shareResult()">⬆ share result</button>
+    <div class="share-toast" id="share-toast">copied to clipboard!</div>
   </div><!-- /#result-screen -->
 
 </main>
