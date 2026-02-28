@@ -67,6 +67,7 @@
         <button class="config-btn"        onclick="setMode('words','mode-words')"   id="mode-words">≡ words</button>
         <button class="config-btn"        onclick="setMode('quote','mode-quote')"   id="mode-quote">❝ quote</button>
         <button class="config-btn"        onclick="setMode('custom','mode-custom')" id="mode-custom">✎ custom</button>
+        <button class="config-btn"        onclick="setMode('zen','mode-zen')"       id="mode-zen">🧘 zen</button>
       </div>
       <div class="config-sep"></div>
       <div style="display:flex;gap:2px;flex-wrap:wrap;" id="time-group">
@@ -134,7 +135,10 @@
       </div>
     </div>
 
-    <canvas id="wpm-chart" width="600" height="100"></canvas>
+    <div class="chart-wrapper">
+      <canvas id="wpm-chart"></canvas>
+      <div class="chart-labels" id="chart-labels"></div>
+    </div>
 
     <div class="result-details">
       <div class="result-detail-item"><div class="label">raw wpm</div>       <div class="val"     id="res-raw">0</div></div>
