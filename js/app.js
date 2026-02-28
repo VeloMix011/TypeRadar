@@ -20,7 +20,6 @@
   let mode = 'time';
   let wpmHistory = [];
   let wpmTick = 0;
-  // wordHistory: array of {input, wasCorrect, locked}
   let wordHistory = [];
   let uiLang = 'en';
   let colorTheme = 'classic';
@@ -30,7 +29,7 @@
   let useBlind = false;
   let useConfidence = false;
   let isZen = false;
-  let totalErrors = 0; // cumulative wrong keystrokes
+  let totalErrors = 0;
 
   // ─── DOM REFS ────────────────────────────────────────────────────────────────
   const hiddenInput = document.getElementById('hidden-input');
@@ -88,23 +87,111 @@
     colorLetters();
   };
 
-  // ─── CONFIG ──────────────────────────────────────────────────────────────────
+  // ─── MODE SELECTION (config bar) ────────────────────────────────────────────
   window.setMode = function (m, id) {
     mode = m;
     document.querySelectorAll('#mode-group .config-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(id).classList.add('active');
+    isZen = false;
+    const noTimer = (m === 'quote' || m === 'custom');
     const timeGroup = document.getElementById('time-group');
-    const timerStat = document.getElementById('timer-stat');
-    const noTimer = (m === 'quote' || m === 'custom' || m === 'zen');
-    isZen = (m === 'zen');
-    if (timeGroup) timeGroup.style.display = noTimer ? 'none' : 'flex';
-    if (timerStat) timerStat.style.display = noTimer ? 'none' : 'block';
+    const extraSep  = document.getElementById('extra-sep');
     const extraGroup = document.getElementById('extra-group');
-    const extraSep = document.getElementById('extra-sep');
+    if (timeGroup)  timeGroup.style.display  = noTimer ? 'none' : 'flex';
+    if (extraSep)   extraSep.style.display   = noTimer ? 'none' : 'block';
     if (extraGroup) extraGroup.style.display = noTimer ? 'none' : 'flex';
-    if (extraSep) extraSep.style.display = noTimer ? 'none' : 'block';
     restart();
   };
+
+  // ─── SPECIAL MODES (settings modal) — toggle, not exclusive ─────────────────
+  window.toggleSpecialMode = function (el, smode) {
+    const isActive = el.classList.contains('active');
+    if (smode === 'blind') {
+      useBlind = !isActive;
+      document.getElementById('typing-container').classList.toggle('blind-mode', useBlind);
+      el.classList.toggle('active', useBlind);
+    } else if (smode === 'confidence') {
+      useConfidence = !isActive;
+      el.classList.toggle('active', useConfidence);
+    } else if (smode === 'zen') {
+      // zen replaces current mode while active
+      if (!isActive) {
+        isZen = true;
+        el.classList.add('active');
+        // Hide time group & extras since zen has no timer
+        const timeGroup  = document.getElementById('time-group');
+        const extraSep   = document.getElementById('extra-sep');
+        const extraGroup = document.getElementById('extra-group');
+        if (timeGroup)  timeGroup.style.display  = 'none';
+        if (extraSep)   extraSep.style.display   = 'none';
+        if (extraGroup) extraGroup.style.display = 'none';
+        // Deactivate mode buttons visually
+        document.querySelectorAll('#mode-group .config-btn').forEach(b => b.classList.remove('active'));
+        mode = 'zen';
+      } else {
+        isZen = false;
+        el.classList.remove('active');
+        mode = 'time';
+        document.getElementById('mode-time').classList.add('active');
+        const timeGroup  = document.getElementById('time-group');
+        const extraSep   = document.getElementById('extra-sep');
+        const extraGroup = document.getElementById('extra-group');
+        if (timeGroup)  timeGroup.style.display  = 'flex';
+        if (extraSep)   extraSep.style.display   = 'block';
+        if (extraGroup) extraGroup.style.display = 'flex';
+      }
+      restart();
+    }
+  };
+    totalTime = t;
+    timeLeft = t;
+    document.querySelectorAll('#time-group .config-btn').forEach(b => b.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    document.getElementById('timer-display').textContent = mode === 'time' ? t : '0';
+    restart();
+  };
+
+  // ─── LIVE STATS VISIBILITY ────────────────────────────────────────────────────
+  // time mode  → while typing: only show timer (wpm/acc hidden)
+  // words/quote/custom → while typing: show progress counter (0/N), hide wpm/acc
+  function updateStatsVisibility(isTyping) {
+    const statWpm      = document.getElementById('stat-wpm');
+    const statAcc      = document.getElementById('stat-acc');
+    const timerStat    = document.getElementById('timer-stat');
+    const statProgress = document.getElementById('stat-progress');
+    const statErr      = document.getElementById('stat-err');
+
+    if (!isTyping) {
+      // Before typing starts — show nothing (live-stats is opacity:0 anyway)
+      if (statWpm)      statWpm.style.display      = 'block';
+      if (statAcc)      statAcc.style.display      = 'block';
+      if (timerStat)    timerStat.style.display    = 'block';
+      if (statProgress) statProgress.style.display = 'none';
+      if (statErr)      statErr.style.display      = 'block';
+      return;
+    }
+
+    if (mode === 'time') {
+      // Typing in time mode → only timer + err
+      if (statWpm)      statWpm.style.display      = 'none';
+      if (statAcc)      statAcc.style.display      = 'none';
+      if (timerStat)    timerStat.style.display    = 'block';
+      if (statProgress) statProgress.style.display = 'none';
+      if (statErr)      statErr.style.display      = 'none';
+    } else {
+      // words / quote / custom → progress counter + err, hide wpm/acc/timer
+      if (statWpm)      statWpm.style.display      = 'none';
+      if (statAcc)      statAcc.style.display      = 'none';
+      if (timerStat)    timerStat.style.display    = 'none';
+      if (statProgress) statProgress.style.display = 'block';
+      if (statErr)      statErr.style.display      = 'none';
+    }
+  }
+
+  function updateWordProgress() {
+    const el = document.getElementById('live-progress');
+    if (el) el.textContent = currentWordIndex + '/' + words.length;
+  }
 
   window.setTime = function (t, id) {
     totalTime = t;
@@ -147,10 +234,6 @@
 
   function updateUILanguage() {
     const t = TRANSLATIONS[uiLang] || TRANSLATIONS.en;
-    document.getElementById('mode-time').innerHTML = `⏱ ${t.time}`;
-    document.getElementById('mode-words').innerHTML = `≡ ${t.words}`;
-    document.getElementById('mode-quote').innerHTML = `❝ ${t.quote}`;
-    document.getElementById('mode-custom').innerHTML = `✎ ${t.custom}`;
     document.querySelectorAll('.stat-label')[0].textContent = t.wpm;
     document.querySelectorAll('.stat-label')[1].textContent = t.accuracy;
     document.getElementById('timer-label').textContent = t.time;
@@ -159,7 +242,7 @@
     document.querySelectorAll('.result-detail-item')[0].querySelector('.label').textContent = t.raw;
     document.querySelectorAll('.result-detail-item')[1].querySelector('.label').textContent = t.correct;
     document.querySelectorAll('.result-detail-item')[2].querySelector('.label').textContent = t.wrong;
-    document.querySelectorAll('.result-detail-item')[3].querySelector('.label').textContent = t.total;
+    document.querySelectorAll('.result-detail-item')[4].querySelector('.label').textContent = t.total;
   }
 
   // ─── CUSTOM WORDS ────────────────────────────────────────────────────────────
@@ -173,7 +256,7 @@
     if (mode === 'custom') restart();
   };
 
-    // ─── LOAD SAVED SETTINGS ─────────────────────────────────────────────────────
+  // ─── LOAD SAVED SETTINGS ─────────────────────────────────────────────────────
   function loadSettings() {
     try {
       const savedText = localStorage.getItem('typeradar_custom_text');
@@ -196,13 +279,13 @@
           }
         }, 100);
       }
+
+
     } catch (e) { /* ignore storage errors */ }
   }
 
   // ─── WORD GENERATION ─────────────────────────────────────────────────────────
-  // Punctuation marks inserted randomly between words
   const PUNCTS = [',', '.', '!', '?', ';', ':'];
-  const NUMBERS = ['0','1','2','3','4','5','6','7','8','9'];
 
   function generateWords() {
     if (mode === 'quote') return QUOTES[Math.floor(Math.random() * QUOTES.length)].split(' ');
@@ -218,11 +301,9 @@
 
     return base.map(word => {
       let w = word;
-      // ~20% chance to append punctuation
       if (usePunct && Math.random() < 0.2) {
         w += PUNCTS[Math.floor(Math.random() * PUNCTS.length)];
       }
-      // ~15% chance to replace word with a number (1-999)
       if (useNumbers && Math.random() < 0.15) {
         w = String(Math.floor(Math.random() * 999) + 1);
         if (usePunct && Math.random() < 0.2) w += PUNCTS[Math.floor(Math.random() * PUNCTS.length)];
@@ -250,6 +331,7 @@
       });
       inner.appendChild(wordEl);
     });
+    updateWordProgress();
   }
 
   // ─── CURSOR ───────────────────────────────────────────────────────────────────
@@ -278,11 +360,16 @@
     cursor.style.left = pos.left + 'px';
     cursor.style.top = pos.top + 'px';
 
+    // ── Monkeytype-style row scroll: when current word moves past row 1, scroll up ──
     const wRect = wordEl.getBoundingClientRect();
     const relTop = wRect.top - cRect.top;
     const lineH = parseFloat(getComputedStyle(display).fontSize) * 2.4;
-    if (relTop > lineH * 1.5) {
-      inner.style.top = (parseInt(inner.style.top || 0) - lineH) + 'px';
+
+    // If the current word is on the 3rd row or beyond, shift inner up by one row
+    // This creates the effect of text sliding up and disappearing
+    if (relTop >= lineH * 2) {
+      const currentTop = parseInt(inner.style.top || 0);
+      inner.style.top = (currentTop - lineH) + 'px';
     }
   }
 
@@ -326,6 +413,7 @@
     const acc = total > 0 ? Math.round((totalCorrectChars / total) * 100) : 100;
     document.getElementById('live-wpm').textContent = wpm;
     document.getElementById('live-acc').textContent = acc + '%';
+    updateWordProgress();
     if (started && !finished && elapsed > 0) {
       if (wpmHistory.length === 0 || wpmHistory[wpmHistory.length - 1] !== wpm) {
         wpmHistory.push(wpm);
@@ -342,6 +430,10 @@
     document.getElementById('timer-label').textContent = mode === 'time' ? 'time' : 'elapsed';
     wpmTick = 0;
     wpmHistory = [];
+
+    // Update stats visibility as soon as typing starts
+    updateStatsVisibility(true);
+
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
       if (finished) return;
@@ -359,7 +451,6 @@
     }, 1000);
   }
 
-  // ─── END TEST ────────────────────────────────────────────────────────────────
   // ─── SHARE RESULT ────────────────────────────────────────────────────────────
   window.shareResult = function () {
     const wpm = document.getElementById('res-wpm').textContent;
@@ -372,7 +463,6 @@
       toast.classList.add('visible');
       setTimeout(() => toast.classList.remove('visible'), 2000);
     }).catch(() => {
-      // fallback for browsers without clipboard API
       const ta = document.createElement('textarea');
       ta.value = text;
       document.body.appendChild(ta);
@@ -385,6 +475,7 @@
     });
   };
 
+  // ─── END TEST ────────────────────────────────────────────────────────────────
   function endTest() {
     if (finished) return;
     clearInterval(timerInterval);
@@ -404,7 +495,6 @@
     document.getElementById('res-correct').textContent = correctWords;
     document.getElementById('res-wrong').textContent = wrongWords;
     document.getElementById('res-time').textContent = elapsed + 's';
-
     document.getElementById('res-errors').textContent = totalErrors;
 
     // Draw line chart on canvas
@@ -428,7 +518,6 @@
       const px = i => pad.l + (i / (data.length - 1)) * chartW;
       const py = v => pad.t + chartH - (v / maxV) * chartH;
 
-      // Fill gradient
       const grad = ctx.createLinearGradient(0, pad.t, 0, H);
       grad.addColorStop(0, 'rgba(124,106,247,0.35)');
       grad.addColorStop(1, 'rgba(124,106,247,0)');
@@ -441,7 +530,6 @@
       ctx.fillStyle = grad;
       ctx.fill();
 
-      // Line
       ctx.beginPath();
       ctx.moveTo(px(0), py(data[0]));
       for (let i = 1; i < data.length; i++) ctx.lineTo(px(i), py(data[i]));
@@ -475,6 +563,9 @@
     document.getElementById('result-screen').style.display = 'none';
     document.getElementById('test-screen').style.display = 'flex';
 
+    // Reset stats visibility for pre-typing state
+    updateStatsVisibility(false);
+
     buildDisplay();
     setTimeout(() => {
       positionCursor();
@@ -491,7 +582,7 @@
     const wordStr = words[currentWordIndex] || '';
 
     if (key === 'Backspace') {
-      if (useConfidence) return true; // confidence mode: no going back
+      if (useConfidence) return true;
       if (currentInput.length > 0) {
         const deleteIndex = currentInput.length - 1;
         animateLetter(deleteIndex, 'delete');
@@ -501,14 +592,11 @@
           positionCursor();
         }, 30);
       } else if (currentWordIndex > 0) {
-        // Try to go back to previous word
         const prev = wordHistory[wordHistory.length - 1];
         if (prev && !prev.locked) {
-          // Go back: restore previous word's input
           wordHistory.pop();
           currentWordIndex--;
 
-          // Undo stats for the word we're returning to
           const prevWordStr = words[currentWordIndex];
           const prevInput = prev.input;
           const len = Math.min(prevInput.length, prevWordStr.length);
@@ -533,18 +621,11 @@
       if (currentInput.length === 0) return true;
       const wasCorrect = (currentInput === wordStr);
 
-      // Locking rule:
-      //   wrong word  → unlocked (can go back)
-      //   correct word → locked (can't go back to it)
-      //   wrong word followed by correct word → the wrong word gets locked too
       if (wasCorrect && wordHistory.length > 0) {
-        // Lock the previous word (whether wrong or correct) because we just proved
-        // we moved on correctly — no going back past this point.
         wordHistory[wordHistory.length - 1].locked = true;
       }
       wordHistory.push({ input: currentInput, wasCorrect, locked: wasCorrect });
 
-      // Mark word element with error class for wavy underline (feature 1)
       const prevWordEl = document.getElementById('word-' + (currentWordIndex));
       if (prevWordEl) prevWordEl.classList.toggle('has-error', !wasCorrect);
 
@@ -558,11 +639,11 @@
       else wrongWords++;
       currentInput = '';
       currentWordIndex++;
+
       if (mode === 'zen' && currentWordIndex >= words.length - 20) {
-        // Generate more words seamlessly for zen mode
         const list = WORDS[uiLang] || WORDS.en;
         const more = Array.from({ length: 50 }, () => list[Math.floor(Math.random() * list.length)]);
-        more.forEach((word, i) => {
+        more.forEach(word => {
           words.push(word);
           const inner = document.getElementById('words-inner');
           const wordEl = document.createElement('span');
@@ -577,6 +658,7 @@
           inner.appendChild(wordEl);
         });
       }
+
       if ((mode === 'words' || mode === 'quote' || mode === 'custom') && currentWordIndex >= words.length) {
         endTest();
         return true;
@@ -590,7 +672,6 @@
     if (key.length === 1) {
       if (currentInput.length >= wordStr.length + 5) return true;
       const newIndex = currentInput.length;
-      // Track error keystrokes
       if (newIndex < wordStr.length && key !== wordStr[newIndex]) {
         totalErrors++;
         document.getElementById('live-err').textContent = totalErrors;
@@ -626,9 +707,7 @@
   };
 
   // ─── EVENT LISTENERS ─────────────────────────────────────────────────────────
-  // ─── CAPS LOCK DETECTION ────────────────────────────────────────────────────
   document.addEventListener('keydown', e => {
-    // Detect caps lock via getModifierState
     const capsOn = e.getModifierState && e.getModifierState('CapsLock');
     const warning = document.getElementById('caps-warning');
     if (warning) warning.classList.toggle('visible', !!capsOn);
@@ -665,9 +744,6 @@
   });
 
   hiddenInput.addEventListener('keydown', function (e) {
-    // Backspace and Space are already handled by the global document keydown listener.
-    // We only preventDefault here to stop the browser from modifying the hidden input
-    // before the input event fires — do NOT call processKey again.
     if (e.key === 'Backspace' || e.key === ' ') {
       e.preventDefault();
     }
@@ -681,27 +757,18 @@
   });
 
   // ─── MOBILE KEYBOARD FIX ─────────────────────────────────────────────────────
-  // When the soft keyboard opens on mobile, the visual viewport shrinks.
-  // We scroll the typing container into the visible area so users can always see it.
   function handleVisualViewport() {
     const vv = window.visualViewport;
     if (!vv) return;
-
     const container = document.getElementById('typing-container');
-    const testScreen = document.getElementById('test-screen');
-    if (!container || !testScreen) return;
-
+    if (!container) return;
     const keyboardHeight = window.innerHeight - vv.height;
-
     if (keyboardHeight > 100) {
-      // Keyboard is open — push main content up so typing area stays visible
       document.body.style.paddingBottom = keyboardHeight + 'px';
-      // Scroll the typing container into view smoothly
       setTimeout(() => {
         container.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 50);
     } else {
-      // Keyboard closed — restore
       document.body.style.paddingBottom = '';
     }
     positionCursor();
@@ -712,19 +779,18 @@
     loadSettings();
     buildDisplay();
     updateUILanguage();
+    updateStatsVisibility(false);
     setTimeout(() => { positionCursor(); focusInput(); }, 300);
     document.addEventListener('touchmove', e => {
       if (e.target.closest('.typing-container')) e.preventDefault();
     }, { passive: false });
 
-    // Visual Viewport API — fires when keyboard opens/closes on mobile
     if (window.visualViewport) {
       window.visualViewport.addEventListener('resize', handleVisualViewport);
       window.visualViewport.addEventListener('scroll', handleVisualViewport);
     }
   });
 
-  // Keep input focused
   setInterval(() => {
     if (!finished && document.getElementById('test-screen').style.display !== 'none'
       && document.activeElement !== hiddenInput) {
