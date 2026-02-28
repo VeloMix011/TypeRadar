@@ -1,6 +1,5 @@
 /**
  * TypeRadar — Word Lists & Quotes
- * Contains all word bank data and quote collections.
  */
 
 const WORDS = {
@@ -123,12 +122,44 @@ const WORDS = {
 };
 
 const QUOTES = [
+  // ── short (≤8 words) ──────────────────────────────────────────────────────
+  "Be yourself everyone else is taken.",
+  "Stay hungry stay foolish.",
+  "Dream big work hard.",
+  "Less talk more action.",
+  "Do what you love.",
+  "Make it simple but significant.",
+  "Simplicity is the ultimate sophistication.",
+  "Code is poetry written in logic.",
+  "Think different act bold.",
+  "Done is better than perfect.",
+  // ── medium (9–15 words) ───────────────────────────────────────────────────
   "The only way to do great work is to love what you do.",
   "In the middle of every difficulty lies opportunity.",
   "Life is what happens when you are busy making other plans.",
   "The future belongs to those who believe in the beauty of their dreams.",
   "It does not matter how slowly you go as long as you do not stop.",
-  "Success is not final failure is not fatal it is the courage to continue that counts.",
   "The only impossible journey is the one you never begin.",
-  "Your time is limited so dont waste it living someone else life."
+  "Your time is limited so dont waste it living someone else life.",
+  "In three words I can sum up everything about life it goes on.",
+  "You miss one hundred percent of the shots you never take.",
+  "Whether you think you can or think you cannot you are right.",
+  "What you get by achieving your goals is not as important as who you become.",
+  "The best time to plant a tree was twenty years ago the second best time is now.",
+  // ── long (16–25 words) ────────────────────────────────────────────────────
+  "Success is not final failure is not fatal it is the courage to continue that counts when everything feels impossible.",
+  "The difference between ordinary and extraordinary is that little extra effort you put in every single day without exception.",
+  "It always seems impossible until it is done and then you wonder why it took you so long to finally begin.",
+  "If you want to live a happy life tie it to a goal not to people or things around you that change.",
+  "Strive not to be a success but rather to be of value to those around you and to the world you live in.",
+  "Twenty years from now you will be more disappointed by the things you did not do than by the ones you did so explore.",
+  "The secret of getting ahead is getting started and breaking your complex overwhelming tasks into small manageable actionable steps every morning.",
+  // ── thicc (>25 words) ─────────────────────────────────────────────────────
+  "I have not failed I have just found ten thousand ways that will not work and each one brings me closer to the solution that will finally change everything around me.",
+  "The greatest glory in living lies not in never falling but in rising every time you fall because resilience is the true foundation of all great achievement in this world.",
+  "It does not matter how many times you get knocked down all that matters is how many times you get up and keep pushing forward with everything you have inside you.",
+  "First they ignore you then they laugh at you then they fight you then you win and when you win you realize the struggle itself was the entire point all along.",
+  "The brick walls are not there to keep us out they are there to give us a chance to show how badly we want something and how far we will go to get it.",
+  "If you can dream it you can do it always remember that this whole thing was started with a dream and a mouse and the belief that imagination and hard work have absolutely no limits whatsoever.",
+  "Believe you can and you are halfway there the other half is showing up every single day putting in the work staying consistent even when the results are slow and the path is unclear and long."
 ];
