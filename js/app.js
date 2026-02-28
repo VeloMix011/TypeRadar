@@ -729,8 +729,9 @@
   };
   window.closeSettings = function () {
     document.getElementById('settings-modal').style.display = 'none';
-    var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-    if (!isTouchDevice) setTimeout(function(){ focusInput(false); }, 100);
+    if (!(('ontouchstart' in window) || navigator.maxTouchPoints > 0)) {
+      setTimeout(function(){ hiddenInput.focus(); }, 100);
+    }
   };
 
   // ─── EVENTS ──────────────────────────────────────────────────────────────────
@@ -772,8 +773,16 @@
     if (e.key === 'Backspace' || e.key === ' ') e.preventDefault();
   });
 
-  typingContainer.addEventListener('click', function(e) { e.preventDefault(); focusInput(true); });
-  typingContainer.addEventListener('touchstart', function(e) { e.preventDefault(); focusInput(true); });
+  // Desktop click
+  typingContainer.addEventListener('click', function(e) {
+    e.preventDefault();
+    if (!finished) hiddenInput.focus();
+  });
+  // Mobile tap — focus must happen synchronously inside touchend (user gesture)
+  typingContainer.addEventListener('touchend', function(e) {
+    e.preventDefault();
+    if (!finished) hiddenInput.focus();
+  });
 
   document.getElementById('settings-modal').addEventListener('click', function (e) {
     if (e.target === this) closeSettings();
@@ -800,7 +809,10 @@
     buildDisplay();
     updateUILanguage();
     updateStatsVisibility(false);
-    setTimeout(function() { positionCursor(); focusInput(false); }, 300);
+    positionCursor();
+    if (!(('ontouchstart' in window) || navigator.maxTouchPoints > 0)) {
+      setTimeout(function(){ hiddenInput.focus(); }, 300);
+    }
     document.addEventListener('touchmove', function(e) {
       if (e.target.closest('.typing-container')) e.preventDefault();
     }, { passive: false });
@@ -811,16 +823,14 @@
   });
 
   // Desktop only: re-focus if user accidentally clicks away
-  // On mobile (touch device) we never auto-focus — keyboard only opens on explicit typing area tap
-  var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-  if (!isTouchDevice) {
+  if (!(('ontouchstart' in window) || navigator.maxTouchPoints > 0)) {
     setInterval(function() {
       if (!finished && document.getElementById('test-screen').style.display !== 'none'
         && document.activeElement !== hiddenInput) {
-        focusInput();
+        hiddenInput.focus();
       }
-    }, 1000);
-    setTimeout(focusInput, 500);
+    }, 2000);
+    setTimeout(function(){ hiddenInput.focus(); }, 400);
   }
 
 })();
