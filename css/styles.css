@@ -143,7 +143,10 @@ header {
 .theme-dot[data-theme="theme-moon"]   { background: #7c6af7; }
 .theme-dot[data-theme="theme-forest"] { background: #5ebb7a; }
 .theme-dot[data-theme="theme-ember"]  { background: #f77b4a; }
-.theme-dot[data-theme="theme-arctic"] { background: #4a6cf7; }
+.theme-dot[data-theme="theme-arctic"] { background: #f0f4ff; border-color: #c0c8e8; }
+
+/* Active state: use a dark outline that works on all dot colors */
+.theme-dot.active { border-color: var(--text) !important; box-shadow: 0 0 0 1.5px var(--text); }
 
 .settings-btn {
   background: none; border: none;
