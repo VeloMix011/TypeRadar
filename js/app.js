@@ -524,6 +524,33 @@
     if (e.target === this) closeSettings();
   });
 
+  // ─── MOBILE KEYBOARD FIX ─────────────────────────────────────────────────────
+  // When the soft keyboard opens on mobile, the visual viewport shrinks.
+  // We scroll the typing container into the visible area so users can always see it.
+  function handleVisualViewport() {
+    const vv = window.visualViewport;
+    if (!vv) return;
+
+    const container = document.getElementById('typing-container');
+    const testScreen = document.getElementById('test-screen');
+    if (!container || !testScreen) return;
+
+    const keyboardHeight = window.innerHeight - vv.height;
+
+    if (keyboardHeight > 100) {
+      // Keyboard is open — push main content up so typing area stays visible
+      document.body.style.paddingBottom = keyboardHeight + 'px';
+      // Scroll the typing container into view smoothly
+      setTimeout(() => {
+        container.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 50);
+    } else {
+      // Keyboard closed — restore
+      document.body.style.paddingBottom = '';
+    }
+    positionCursor();
+  }
+
   // ─── INIT ────────────────────────────────────────────────────────────────────
   window.addEventListener('load', function () {
     loadSettings();
@@ -533,6 +560,12 @@
     document.addEventListener('touchmove', e => {
       if (e.target.closest('.typing-container')) e.preventDefault();
     }, { passive: false });
+
+    // Visual Viewport API — fires when keyboard opens/closes on mobile
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener('resize', handleVisualViewport);
+      window.visualViewport.addEventListener('scroll', handleVisualViewport);
+    }
   });
 
   // Keep input focused
