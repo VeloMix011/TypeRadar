@@ -60,26 +60,40 @@
   <!-- ── TEST SCREEN ──────────────────────────────────────────────────────── -->
   <div id="test-screen">
 
-    <!-- Config bar — modes + time options + punct/numbers -->
+    <!-- Config bar -->
     <div class="config-bar">
       <div style="display:flex;gap:2px;flex-wrap:wrap;" id="mode-group">
-        <button class="config-btn active" onclick="setMode('time','mode-time')"     id="mode-time">⏱ time</button>
-        <button class="config-btn"        onclick="setMode('words','mode-words')"   id="mode-words">≡ words</button>
+        <button class="config-btn active" onclick="setMode('time','mode-time')"     id="mode-time">◷ time</button>
+        <button class="config-btn"        onclick="setMode('words','mode-words')"   id="mode-words">∷ words</button>
         <button class="config-btn"        onclick="setMode('quote','mode-quote')"   id="mode-quote">❝ quote</button>
-        <button class="config-btn"        onclick="setMode('custom','mode-custom')" id="mode-custom">✎ custom</button>
-        <button class="config-btn"        onclick="setMode('zen','mode-zen')"       id="mode-zen">🧘 zen</button>
+        <button class="config-btn"        onclick="setMode('custom','mode-custom')" id="mode-custom">✐ custom</button>
+        <button class="config-btn"        onclick="setMode('zen','mode-zen')"       id="mode-zen">⚗ zen</button>
       </div>
-      <div class="config-sep"></div>
-      <div style="display:flex;gap:2px;flex-wrap:wrap;" id="time-group">
+
+      <!-- time + words + custom → time options -->
+      <div class="config-sep config-slide-sep" id="time-sep"></div>
+      <div class="config-slide-group" id="time-group">
         <button class="config-btn"        onclick="setTime(15,'t-15')"   id="t-15">15s</button>
         <button class="config-btn active" onclick="setTime(30,'t-30')"   id="t-30">30s</button>
         <button class="config-btn"        onclick="setTime(60,'t-60')"   id="t-60">60s</button>
         <button class="config-btn"        onclick="setTime(120,'t-120')" id="t-120">120s</button>
       </div>
-      <div class="config-sep" id="extra-sep"></div>
-      <div style="display:flex;gap:2px;" id="extra-group">
+
+      <!-- time + words + custom → punct / numbers -->
+      <div class="config-sep config-slide-sep" id="extra-sep"></div>
+      <div class="config-slide-group" id="extra-group">
         <button class="config-btn" onclick="togglePunct(this)"   id="toggle-punct"   title="punctuation">@</button>
         <button class="config-btn" onclick="toggleNumbers(this)" id="toggle-numbers" title="numbers">#</button>
+      </div>
+
+      <!-- quote → length options -->
+      <div class="config-sep config-slide-sep" id="quote-sep"></div>
+      <div class="config-slide-group" id="quote-group">
+        <button class="config-btn active" onclick="setQuoteLen('all','ql-all')"       id="ql-all">all</button>
+        <button class="config-btn"        onclick="setQuoteLen('short','ql-short')"   id="ql-short">short</button>
+        <button class="config-btn"        onclick="setQuoteLen('medium','ql-medium')" id="ql-medium">medium</button>
+        <button class="config-btn"        onclick="setQuoteLen('long','ql-long')"     id="ql-long">long</button>
+        <button class="config-btn"        onclick="setQuoteLen('thicc','ql-thicc')"   id="ql-thicc">thicc</button>
       </div>
     </div>
 
@@ -164,33 +178,29 @@
 <div class="modal-overlay" id="settings-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeSettings()">✕</button>
-    <h2>⚙️ Settings</h2>
+    <h2>◈ Settings</h2>
 
     <!-- ── Special Modes ── -->
     <div class="setting-section">
-      <h3>⚡ Special Modes</h3>
+      <h3>◈ Special Modes</h3>
       <div class="mode-grid" id="special-mode-selector">
         <div class="mode-card" data-smode="blind" onclick="toggleSpecialMode(this,'blind')">
-          <div class="mode-icon">◉</div>
+          <div class="mode-icon">◌</div>
           <div class="mode-name">blind</div>
           <div class="mode-desc">Letters hidden while typing</div>
         </div>
         <div class="mode-card" data-smode="confidence" onclick="toggleSpecialMode(this,'confidence')">
-          <div class="mode-icon">⚡</div>
+          <div class="mode-icon">⌫</div>
           <div class="mode-name">confidence</div>
           <div class="mode-desc">No backspace allowed</div>
         </div>
-        <div class="mode-card" data-smode="zen" onclick="toggleSpecialMode(this,'zen')">
-          <div class="mode-icon">🧘</div>
-          <div class="mode-name">zen</div>
-          <div class="mode-desc">Endless, no timer</div>
-        </div>
+
       </div>
     </div>
 
     <!-- Color Theme -->
     <div class="setting-section">
-      <h3>🎨 Color Theme</h3>
+      <h3>◈ Color Theme</h3>
       <div class="theme-grid" id="color-theme-selector">
         <div class="theme-card active" onclick="setColorTheme('classic')">
           <div class="preview" style="background:linear-gradient(90deg,#6af7b2 50%,#f76a8a 50%);"></div>
@@ -225,7 +235,7 @@
 
     <!-- Language -->
     <div class="setting-section">
-      <h3>🌍 Language</h3>
+      <h3>◈ Language</h3>
       <div class="lang-selector">
         <button class="lang-btn active" onclick="setUILang('en', this)">🇬🇧 English</button>
         <button class="lang-btn"        onclick="setUILang('tr', this)">🇹🇷 Türkçe</button>
@@ -236,7 +246,7 @@
 
     <!-- Custom Text -->
     <div class="setting-section">
-      <h3>📝 Custom Text</h3>
+      <h3>◈ Custom Text</h3>
       <p style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:12px;">This text will be used in custom mode.</p>
       <textarea id="custom-text-input" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.85rem;resize:vertical;outline:none;">The five boxing wizards jump quickly.</textarea>
       <button onclick="saveCustomText()" style="margin-top:10px;width:100%;background:var(--accent);border:none;border-radius:8px;padding:10px;color:white;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:0.85rem;">✓ change</button>
