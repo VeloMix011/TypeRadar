@@ -714,10 +714,12 @@
   }
 
   // ─── FOCUS ───────────────────────────────────────────────────────────────────
-  window.focusInput = function () {
+  window.focusInput = function (fromTypingArea) {
+    // On touch devices, only open keyboard when user taps the typing area directly
+    var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if (isTouchDevice && !fromTypingArea) return;
     if (!finished && document.getElementById('test-screen').style.display !== 'none') {
       hiddenInput.focus();
-      hiddenInput.click();
     }
   };
 
@@ -727,7 +729,8 @@
   };
   window.closeSettings = function () {
     document.getElementById('settings-modal').style.display = 'none';
-    setTimeout(focusInput, 100);
+    var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+    if (!isTouchDevice) setTimeout(function(){ focusInput(false); }, 100);
   };
 
   // ─── EVENTS ──────────────────────────────────────────────────────────────────
@@ -769,8 +772,8 @@
     if (e.key === 'Backspace' || e.key === ' ') e.preventDefault();
   });
 
-  typingContainer.addEventListener('click', function(e) { e.preventDefault(); focusInput(); });
-  typingContainer.addEventListener('touchstart', function(e) { e.preventDefault(); focusInput(); });
+  typingContainer.addEventListener('click', function(e) { e.preventDefault(); focusInput(true); });
+  typingContainer.addEventListener('touchstart', function(e) { e.preventDefault(); focusInput(true); });
 
   document.getElementById('settings-modal').addEventListener('click', function (e) {
     if (e.target === this) closeSettings();
@@ -797,7 +800,7 @@
     buildDisplay();
     updateUILanguage();
     updateStatsVisibility(false);
-    setTimeout(function() { positionCursor(); focusInput(); }, 300);
+    setTimeout(function() { positionCursor(); focusInput(false); }, 300);
     document.addEventListener('touchmove', function(e) {
       if (e.target.closest('.typing-container')) e.preventDefault();
     }, { passive: false });
@@ -807,13 +810,17 @@
     }
   });
 
-  setInterval(function() {
-    if (!finished && document.getElementById('test-screen').style.display !== 'none'
-      && document.activeElement !== hiddenInput) {
-      if (!document.activeElement || document.activeElement.tagName !== 'INPUT') focusInput();
-    }
-  }, 1000);
-
-  setTimeout(focusInput, 500);
+  // Desktop only: re-focus if user accidentally clicks away
+  // On mobile (touch device) we never auto-focus — keyboard only opens on explicit typing area tap
+  var isTouchDevice = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+  if (!isTouchDevice) {
+    setInterval(function() {
+      if (!finished && document.getElementById('test-screen').style.display !== 'none'
+        && document.activeElement !== hiddenInput) {
+        focusInput();
+      }
+    }, 1000);
+    setTimeout(focusInput, 500);
+  }
 
 })();
