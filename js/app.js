@@ -82,18 +82,14 @@
 
   // ─── MODE (config bar) ───────────────────────────────────────────────────────
   window.setMode = function (m, id) {
-    if (isZen) {
-      isZen = false;
-      const zenCard = document.querySelector('[data-smode="zen"]');
-      if (zenCard) zenCard.classList.remove('active');
-    }
     mode = m;
-    document.querySelectorAll('#mode-group .config-btn').forEach(b => b.classList.remove('active'));
+    isZen = (m === 'zen');
+    document.querySelectorAll('#mode-group .config-btn').forEach(function(b) { b.classList.remove('active'); });
     document.getElementById(id).classList.add('active');
-    const noTimer = (m === 'quote' || m === 'custom');
-    const timeGroup  = document.getElementById('time-group');
-    const extraSep   = document.getElementById('extra-sep');
-    const extraGroup = document.getElementById('extra-group');
+    var noTimer = (m === 'quote' || m === 'custom' || m === 'zen');
+    var timeGroup  = document.getElementById('time-group');
+    var extraSep   = document.getElementById('extra-sep');
+    var extraGroup = document.getElementById('extra-group');
     if (timeGroup)  timeGroup.style.display  = noTimer ? 'none' : 'flex';
     if (extraSep)   extraSep.style.display   = noTimer ? 'none' : 'block';
     if (extraGroup) extraGroup.style.display = noTimer ? 'none' : 'flex';
@@ -336,28 +332,22 @@
   }
 
   // ─── STATS VISIBILITY ────────────────────────────────────────────────────────
-  function updateStatsVisibility(isTyping) {
+  // Called once when typing starts - shows only the relevant stat immediately
+  function applyStatsLayout() {
     var statWpm      = document.getElementById('stat-wpm');
     var statAcc      = document.getElementById('stat-acc');
     var timerStat    = document.getElementById('timer-stat');
     var statProgress = document.getElementById('stat-progress');
     var statErr      = document.getElementById('stat-err');
-
-    if (!isTyping) {
-      if (statWpm)      statWpm.style.display      = 'block';
-      if (statAcc)      statAcc.style.display      = 'block';
-      if (timerStat)    timerStat.style.display    = 'block';
-      if (statProgress) statProgress.style.display = 'none';
-      if (statErr)      statErr.style.display      = 'block';
-      return;
-    }
     if (mode === 'time') {
+      // time mode: only countdown
       if (statWpm)      statWpm.style.display      = 'none';
       if (statAcc)      statAcc.style.display      = 'none';
       if (timerStat)    timerStat.style.display    = 'block';
       if (statProgress) statProgress.style.display = 'none';
       if (statErr)      statErr.style.display      = 'none';
     } else {
+      // words/quote/custom/zen: word progress
       if (statWpm)      statWpm.style.display      = 'none';
       if (statAcc)      statAcc.style.display      = 'none';
       if (timerStat)    timerStat.style.display    = 'none';
@@ -365,6 +355,8 @@
       if (statErr)      statErr.style.display      = 'none';
     }
   }
+  // Legacy alias kept to avoid breaking any remaining calls
+  function updateStatsVisibility() { applyStatsLayout(); }
 
   function updateWordProgress() {
     var el = document.getElementById('live-progress');
@@ -390,12 +382,13 @@
   function startTimer() {
     if (started) return;
     started = true;
+    // Apply correct layout BEFORE making stats visible — no flicker
+    applyStatsLayout();
     document.getElementById('live-stats').classList.add('visible');
     document.getElementById('click-hint').style.opacity = '0.3';
     document.getElementById('timer-label').textContent = mode === 'time' ? 'time' : 'elapsed';
     wpmTick = 0;
     wpmHistory = [];
-    updateStatsVisibility(true);
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(function() {
       if (finished) return;
@@ -459,42 +452,117 @@
     document.getElementById('res-errors').textContent = totalErrors;
     document.getElementById('res-time').textContent = elapsed + 's';
 
+    // ── MonkeyType-style WPM chart ────────────────────────────────────────────
     var canvas = document.getElementById('wpm-chart');
-    var ctx = canvas.getContext('2d');
+    var wrapper = canvas.parentElement;
     var dpr = window.devicePixelRatio || 1;
-    canvas.width = (canvas.offsetWidth || 600) * dpr;
-    canvas.height = 100 * dpr;
+    var W_css = wrapper.offsetWidth || 600;
+    var H_css = 140;
+    canvas.style.width  = W_css + 'px';
+    canvas.style.height = H_css + 'px';
+    canvas.width  = W_css * dpr;
+    canvas.height = H_css * dpr;
+    var ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
-    var W = canvas.width / dpr;
-    var H = canvas.height / dpr;
+    var W = W_css, H = H_css;
     ctx.clearRect(0, 0, W, H);
-    var data = wpmHistory.slice(-60);
+
+    var data = wpmHistory.length > 0 ? wpmHistory : [wpm];
+    var maxV = Math.max.apply(null, data.concat([10]));
+    maxV = Math.ceil(maxV / 10) * 10; // round up to nearest 10
+
+    var pad = { t: 12, b: 28, l: 36, r: 16 };
+    var cW = W - pad.l - pad.r;
+    var cH = H - pad.t - pad.b;
+
+    var px = function(i) {
+      return pad.l + (data.length <= 1 ? cW / 2 : (i / (data.length - 1)) * cW);
+    };
+    var py = function(v) { return pad.t + cH - (v / maxV) * cH; };
+
+    // Grid lines & Y labels
+    ctx.font = '10px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+    var gridCount = 4;
+    for (var g = 0; g <= gridCount; g++) {
+      var gVal = Math.round((maxV / gridCount) * g);
+      var gY = py(gVal);
+      ctx.beginPath();
+      ctx.moveTo(pad.l, gY);
+      ctx.lineTo(W - pad.r, gY);
+      ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(255,255,255,0.3)';
+      ctx.fillText(gVal, pad.l - 6, gY + 3.5);
+    }
+
+    // X labels (seconds)
+    ctx.textAlign = 'center';
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    var xLabelCount = Math.min(data.length, 6);
+    for (var xi = 0; xi < xLabelCount; xi++) {
+      var xIdx = Math.round((xi / (xLabelCount - 1)) * (data.length - 1));
+      if (isNaN(xIdx)) xIdx = 0;
+      ctx.fillText(xIdx + 's', px(xIdx), H - 6);
+    }
+
     if (data.length > 1) {
-      var maxV = Math.max.apply(null, data.concat([1]));
-      var pad = { t: 10, b: 10, l: 4, r: 4 };
-      var cW = W - pad.l - pad.r;
-      var cH = H - pad.t - pad.b;
-      var px = function(i) { return pad.l + (i / (data.length - 1)) * cW; };
-      var py = function(v) { return pad.t + cH - (v / maxV) * cH; };
-      var grad = ctx.createLinearGradient(0, pad.t, 0, H);
-      grad.addColorStop(0, 'rgba(124,106,247,0.35)');
-      grad.addColorStop(1, 'rgba(124,106,247,0)');
+      // Smooth bezier fill
+      var grad = ctx.createLinearGradient(0, pad.t, 0, H - pad.b);
+      grad.addColorStop(0, 'rgba(124,106,247,0.28)');
+      grad.addColorStop(1, 'rgba(124,106,247,0.03)');
       ctx.beginPath();
       ctx.moveTo(px(0), py(data[0]));
-      for (var i = 1; i < data.length; i++) ctx.lineTo(px(i), py(data[i]));
-      ctx.lineTo(px(data.length - 1), H);
-      ctx.lineTo(px(0), H);
+      for (var fi = 1; fi < data.length; fi++) {
+        var cpx1 = px(fi - 0.5);
+        var cpy1 = py(data[fi - 1]);
+        var cpx2 = px(fi - 0.5);
+        var cpy2 = py(data[fi]);
+        ctx.bezierCurveTo(cpx1, cpy1, cpx2, cpy2, px(fi), py(data[fi]));
+      }
+      ctx.lineTo(px(data.length - 1), H - pad.b);
+      ctx.lineTo(px(0), H - pad.b);
       ctx.closePath();
       ctx.fillStyle = grad;
       ctx.fill();
+
+      // Smooth stroke
       ctx.beginPath();
       ctx.moveTo(px(0), py(data[0]));
-      for (var j = 1; j < data.length; j++) ctx.lineTo(px(j), py(data[j]));
-      ctx.strokeStyle = 'rgba(124,106,247,0.9)';
-      ctx.lineWidth = 2;
+      for (var si = 1; si < data.length; si++) {
+        var sx1 = px(si - 0.5), sy1 = py(data[si - 1]);
+        var sx2 = px(si - 0.5), sy2 = py(data[si]);
+        ctx.bezierCurveTo(sx1, sy1, sx2, sy2, px(si), py(data[si]));
+      }
+      ctx.strokeStyle = 'rgba(124,106,247,1)';
+      ctx.lineWidth = 2.5;
       ctx.lineJoin = 'round';
+      ctx.lineCap = 'round';
       ctx.stroke();
     }
+
+    // Dot at each second
+    for (var di = 0; di < data.length; di++) {
+      ctx.beginPath();
+      ctx.arc(px(di), py(data[di]), 3, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(124,106,247,1)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(px(di), py(data[di]), 1.5, 0, Math.PI * 2);
+      ctx.fillStyle = '#fff';
+      ctx.fill();
+    }
+
+    // Final WPM dot highlighted
+    ctx.beginPath();
+    ctx.arc(px(data.length - 1), py(data[data.length - 1]), 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(124,106,247,0.3)';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(px(data.length - 1), py(data[data.length - 1]), 3, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(124,106,247,1)';
+    ctx.fill();
 
     document.getElementById('test-screen').style.display = 'none';
     document.getElementById('result-screen').style.display = 'flex';
@@ -520,7 +588,6 @@
     document.getElementById('result-screen').style.display = 'none';
     document.getElementById('test-screen').style.display = 'flex';
 
-    updateStatsVisibility(false);
     buildDisplay();
     setTimeout(function() {
       positionCursor();
