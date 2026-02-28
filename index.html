@@ -60,7 +60,7 @@
   <!-- ── TEST SCREEN ──────────────────────────────────────────────────────── -->
   <div id="test-screen">
 
-    <!-- Config bar -->
+    <!-- Config bar — modes + time options + punct/numbers -->
     <div class="config-bar">
       <div style="display:flex;gap:2px;flex-wrap:wrap;" id="mode-group">
         <button class="config-btn active" onclick="setMode('time','mode-time')"     id="mode-time">⏱ time</button>
@@ -70,35 +70,40 @@
       </div>
       <div class="config-sep"></div>
       <div style="display:flex;gap:2px;flex-wrap:wrap;" id="time-group">
-        <button class="config-btn"        onclick="setTime(15,'t-15')"  id="t-15">15s</button>
-        <button class="config-btn active" onclick="setTime(30,'t-30')"  id="t-30">30s</button>
-        <button class="config-btn"        onclick="setTime(60,'t-60')"  id="t-60">60s</button>
+        <button class="config-btn"        onclick="setTime(15,'t-15')"   id="t-15">15s</button>
+        <button class="config-btn active" onclick="setTime(30,'t-30')"   id="t-30">30s</button>
+        <button class="config-btn"        onclick="setTime(60,'t-60')"   id="t-60">60s</button>
         <button class="config-btn"        onclick="setTime(120,'t-120')" id="t-120">120s</button>
       </div>
       <div class="config-sep" id="extra-sep"></div>
       <div style="display:flex;gap:2px;" id="extra-group">
-        <button class="config-btn" onclick="togglePunct(this)" id="toggle-punct" title="punctuation">@</button>
+        <button class="config-btn" onclick="togglePunct(this)"   id="toggle-punct"   title="punctuation">@</button>
         <button class="config-btn" onclick="toggleNumbers(this)" id="toggle-numbers" title="numbers">#</button>
-        <button class="config-btn" onclick="toggleBlind(this)" id="toggle-blind" title="blind mode">◉</button>
-        <button class="config-btn" onclick="toggleConfidence(this)" id="toggle-confidence" title="confidence mode">⚡</button>
       </div>
     </div>
 
-    <!-- Live stats -->
+    <!-- Live stats: during typing only show relevant info -->
     <div class="live-stats" id="live-stats">
-      <div class="stat-item">
+      <!-- wpm + acc: hidden while typing in time mode, shown in words/quote/custom -->
+      <div class="stat-item" id="stat-wpm">
         <div class="stat-label">wpm</div>
         <div class="stat-value" id="live-wpm">0</div>
       </div>
-      <div class="stat-item">
+      <div class="stat-item" id="stat-acc">
         <div class="stat-label">accuracy</div>
         <div class="stat-value" id="live-acc">100%</div>
       </div>
+      <!-- timer / word counter -->
       <div class="stat-item" id="timer-stat">
         <div class="stat-label" id="timer-label">time</div>
         <div class="stat-value" id="timer-display">30</div>
       </div>
-      <div class="stat-item">
+      <!-- word progress (words / quote / custom mode) -->
+      <div class="stat-item" id="stat-progress" style="display:none;">
+        <div class="stat-label">words</div>
+        <div class="stat-value" id="live-progress">0/0</div>
+      </div>
+      <div class="stat-item" id="stat-err">
         <div class="stat-label">err</div>
         <div class="stat-value" id="live-err" style="color:var(--wrong);">0</div>
       </div>
@@ -135,7 +140,7 @@
       <div class="result-detail-item"><div class="label">raw wpm</div>       <div class="val"     id="res-raw">0</div></div>
       <div class="result-detail-item"><div class="label">correct words</div> <div class="val good" id="res-correct">0</div></div>
       <div class="result-detail-item"><div class="label">wrong words</div>   <div class="val bad"  id="res-wrong">0</div></div>
-      <div class="result-detail-item"><div class="label">errors</div>          <div class="val bad"  id="res-errors">0</div></div>
+      <div class="result-detail-item"><div class="label">errors</div>        <div class="val bad"  id="res-errors">0</div></div>
       <div class="result-detail-item"><div class="label">total time</div>    <div class="val"     id="res-time">0s</div></div>
     </div>
 
@@ -156,6 +161,28 @@
   <div class="modal">
     <button class="modal-close" onclick="closeSettings()">✕</button>
     <h2>⚙️ Settings</h2>
+
+    <!-- ── Special Modes ── -->
+    <div class="setting-section">
+      <h3>⚡ Special Modes</h3>
+      <div class="mode-grid" id="special-mode-selector">
+        <div class="mode-card" data-smode="blind" onclick="toggleSpecialMode(this,'blind')">
+          <div class="mode-icon">◉</div>
+          <div class="mode-name">blind</div>
+          <div class="mode-desc">Letters hidden while typing</div>
+        </div>
+        <div class="mode-card" data-smode="confidence" onclick="toggleSpecialMode(this,'confidence')">
+          <div class="mode-icon">⚡</div>
+          <div class="mode-name">confidence</div>
+          <div class="mode-desc">No backspace allowed</div>
+        </div>
+        <div class="mode-card" data-smode="zen" onclick="toggleSpecialMode(this,'zen')">
+          <div class="mode-icon">🧘</div>
+          <div class="mode-name">zen</div>
+          <div class="mode-desc">Endless, no timer</div>
+        </div>
+      </div>
+    </div>
 
     <!-- Color Theme -->
     <div class="setting-section">
