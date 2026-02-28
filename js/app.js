@@ -110,10 +110,33 @@
     totalTime = t;
     timeLeft = t;
     document.querySelectorAll('#time-group .config-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById(id).classList.add('active');
+    const activeBtn = document.getElementById(id);
+    if (activeBtn) activeBtn.classList.add('active');
     document.getElementById('timer-display').textContent = mode === 'time' ? t : '0';
+    const timeBadge = document.getElementById('time-badge');
+    if (timeBadge) timeBadge.innerHTML = '<span>duration</span>' + t + 's';
     restart();
   };
+
+  // ─── TIMER STAT LABEL HELPER ────────────────────────────────────────────────
+  function updateTimerStatLabel() {
+    const timerStat = document.getElementById('timer-stat');
+    const timerLabel = document.getElementById('timer-label');
+    const timerDisplay = document.getElementById('timer-display');
+    if (!timerStat) return;
+    if (mode === 'time') {
+      timerStat.style.display = 'block';
+      timerLabel.textContent = 'time';
+      timerDisplay.textContent = timeLeft;
+    } else if (mode === 'words' || mode === 'custom') {
+      timerStat.style.display = 'block';
+      timerLabel.textContent = 'words';
+      timerDisplay.textContent = '0/' + (words.length || '?');
+    } else {
+      // quote, zen — hide timer stat
+      timerStat.style.display = 'none';
+    }
+  }
 
   // ─── PUNCT & NUMBERS TOGGLE ─────────────────────────────────────────────────
   window.togglePunct = function (el) {
@@ -342,6 +365,11 @@
     document.getElementById('timer-label').textContent = mode === 'time' ? 'time' : 'elapsed';
     wpmTick = 0;
     wpmHistory = [];
+    // Initialize timer/progress display
+    if (mode === 'words' || mode === 'custom') {
+      const td = document.getElementById('timer-display');
+      if (td) td.textContent = '0/' + words.length;
+    }
     if (timerInterval) clearInterval(timerInterval);
     timerInterval = setInterval(() => {
       if (finished) return;
@@ -476,6 +504,7 @@
     document.getElementById('test-screen').style.display = 'flex';
 
     buildDisplay();
+    updateTimerStatLabel();
     setTimeout(() => {
       positionCursor();
       hiddenInput.value = '';
@@ -584,6 +613,11 @@
       colorLetters();
       positionCursor();
       updateLiveStats();
+      // Update word progress for words/custom mode
+      if (mode === 'words' || mode === 'custom') {
+        const timerDisplay = document.getElementById('timer-display');
+        if (timerDisplay) timerDisplay.textContent = currentWordIndex + '/' + words.length;
+      }
       return true;
     }
 
