@@ -145,7 +145,6 @@ header {
 .theme-dot[data-theme="theme-ember"]  { background: #f77b4a; }
 .theme-dot[data-theme="theme-arctic"] { background: #f0f4ff; border-color: #c0c8e8; }
 
-/* Active state: use a dark outline that works on all dot colors */
 .theme-dot.active { border-color: var(--text) !important; box-shadow: 0 0 0 1.5px var(--text); }
 
 .settings-btn {
@@ -257,16 +256,18 @@ main {
 .words-inner {
   position: absolute;
   width: 100%;
-  transition: top 0.12s ease;
+  transition: top 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   top: 0;
   will-change: top;
 }
 .word { display: inline-block; margin-right: 0.55em; position: relative; }
+
+/* ── Letter base — supports fly-up animation on row scroll ── */
 .letter {
   position: relative;
-  transition: all 0.1s cubic-bezier(0.2, 0.9, 0.3, 1.2);
   display: inline-block;
   font-weight: 400;
+  transition: color 0.08s ease, opacity 0.08s ease;
 }
 
 .typing-container::after {
@@ -277,6 +278,18 @@ main {
   background: linear-gradient(to top, var(--bg), transparent);
   z-index: 4;
   pointer-events: none;
+}
+
+/* Top fade — letters fly up and vanish through this */
+.typing-container::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 0;
+  height: 48px;
+  background: linear-gradient(to bottom, var(--surface) 30%, transparent);
+  z-index: 4;
+  pointer-events: none;
+  border-radius: 16px 16px 0 0;
 }
 
 /* ─── CURSOR ──────────────────────────────────────────────────────────────── */
@@ -375,20 +388,9 @@ main {
 #wpm-chart {
   width: 100%;
   max-width: 600px;
-  height: 70px;
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
+  height: 100px;
+  border-radius: 8px;
 }
-.chart-bar {
-  flex: 1;
-  background: var(--accent);
-  border-radius: 3px 3px 0 0;
-  min-height: 4px;
-  opacity: 0.5;
-  transition: opacity 0.2s;
-}
-.chart-bar:hover { opacity: 1; }
 
 /* ─── RESTART BUTTON ──────────────────────────────────────────────────────── */
 .restart-btn {
@@ -487,6 +489,50 @@ footer kbd {
   padding-bottom: 5px;
 }
 
+/* ─── MODE GRID (in settings) ────────────────────────────────────────────── */
+.mode-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 4px;
+}
+.mode-card {
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 14px 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: center;
+}
+.mode-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--accent);
+}
+.mode-card.active {
+  background: var(--glow);
+  border-color: var(--accent);
+}
+.mode-icon {
+  font-size: 1.3rem;
+  margin-bottom: 6px;
+}
+.mode-name {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  color: var(--text);
+  font-weight: 500;
+}
+.mode-desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--muted);
+  margin-top: 4px;
+  line-height: 1.3;
+}
+.mode-card.active .mode-name { color: var(--accent); }
+
+/* ─── THEME GRID ──────────────────────────────────────────────────────────── */
 .theme-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
@@ -741,7 +787,7 @@ footer kbd {
 }
 .share-toast.visible { opacity: 1; }
 
-/* ─── PUNCT / NUMBERS TOGGLE — active state already handled by .config-btn.active ── */
+/* ─── PUNCT / NUMBERS TOGGLE ─────────────────────────────────────────────── */
 #toggle-punct.active, #toggle-numbers.active {
   color: var(--accent2);
   background: rgba(247,194,106,0.1);
@@ -751,7 +797,6 @@ footer kbd {
 .blind-mode .letter { color: transparent !important; text-shadow: none !important; animation: none !important; }
 .blind-mode .letter.correct,
 .blind-mode .letter.wrong  { color: transparent !important; }
-/* keep cursor visible */
 .blind-mode .cursor-line { opacity: 1; }
 
 /* ─── WRONG WORD UNDERLINE ────────────────────────────────────────────────── */
@@ -760,14 +805,6 @@ footer kbd {
   text-decoration-color: var(--wrong);
   text-decoration-style: wavy;
   text-underline-offset: 3px;
-}
-
-/* ─── RESULT CHART (canvas) ───────────────────────────────────────────────── */
-#wpm-chart {
-  width: 100%;
-  max-width: 600px;
-  height: 100px;
-  border-radius: 8px;
 }
 
 /* ─── ZEN / CONFIDENCE / BLIND toggle active color ───────────────────────── */
@@ -780,12 +817,10 @@ footer kbd {
 
 /* ── DESKTOP (>900px) ── */
 @media (min-width: 901px) {
-  body {
-    min-height: 100vh;
-  }
+  body { min-height: 100vh; }
   main {
     justify-content: center;
-    min-height: calc(100vh - 130px); /* header + footer space */
+    min-height: calc(100vh - 130px);
   }
   #words-display { font-size: 1.45rem; }
   .live-stats { gap: 36px; }
@@ -800,21 +835,18 @@ footer kbd {
   .live-stats { gap: 28px; }
   .stat-value { font-size: 1.6rem; }
   .config-btn { padding: 5px 10px; font-size: 0.76rem; }
+  .mode-grid { grid-template-columns: repeat(4, 1fr); }
 }
 
 /* ── MOBILE (≤600px) ── */
 @media (max-width: 600px) {
-
-  /* Layout — content sticks near top so keyboard doesn't push it off screen */
   html, body {
     min-height: 100dvh;
     overflow-anchor: none;
   }
   body { overflow-x: hidden; }
 
-  header {
-    padding: 14px 16px 0;
-  }
+  header { padding: 14px 16px 0; }
   .logo { font-size: 1.25rem; }
   .logo-icon { width: 28px; height: 28px; }
 
@@ -824,7 +856,6 @@ footer kbd {
     padding-top: 10px;
   }
 
-  /* Config bar */
   .config-bar {
     padding: 5px 6px;
     margin-bottom: 16px;
@@ -832,7 +863,6 @@ footer kbd {
   }
   .config-btn { padding: 5px 8px; font-size: 0.68rem; }
 
-  /* Live stats */
   .live-stats {
     gap: 20px;
     margin-bottom: 12px;
@@ -841,7 +871,6 @@ footer kbd {
   .stat-value { font-size: 1.3rem; }
   .stat-label { font-size: 0.58rem; }
 
-  /* Typing area — compact but readable */
   .typing-container { padding: 14px 12px; }
   #words-display {
     font-size: 1.1rem;
@@ -850,10 +879,8 @@ footer kbd {
   }
   .cursor-line { height: 1.35em; }
 
-  /* Click hint */
   .click-hint { font-size: 0.65rem; margin-top: 14px; }
 
-  /* Result screen */
   .result-big { gap: 20px; }
   .result-stat .value { font-size: 2.8rem; }
   .result-stat.secondary .value { font-size: 1.8rem; }
@@ -863,14 +890,11 @@ footer kbd {
   #wpm-chart { height: 50px; }
   .restart-btn { padding: 10px 24px; font-size: 0.82rem; }
 
-  /* Settings modal */
   .modal { padding: 24px 18px; border-radius: 18px; }
   .theme-grid { grid-template-columns: repeat(2, 1fr); gap: 8px; }
+  .mode-grid { grid-template-columns: repeat(2, 1fr); }
 
-  /* Footer — hide on mobile to save space */
   footer { display: none; }
-
-  /* Floating keyboard button */
   .keyboard-activator { display: flex; }
 }
 
