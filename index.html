@@ -79,6 +79,8 @@
       <div style="display:flex;gap:2px;" id="extra-group">
         <button class="config-btn" onclick="togglePunct(this)" id="toggle-punct" title="punctuation">@</button>
         <button class="config-btn" onclick="toggleNumbers(this)" id="toggle-numbers" title="numbers">#</button>
+        <button class="config-btn" onclick="toggleBlind(this)" id="toggle-blind" title="blind mode">◉</button>
+        <button class="config-btn" onclick="toggleConfidence(this)" id="toggle-confidence" title="confidence mode">⚡</button>
       </div>
     </div>
 
@@ -95,6 +97,10 @@
       <div class="stat-item" id="timer-stat">
         <div class="stat-label" id="timer-label">time</div>
         <div class="stat-value" id="timer-display">30</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-label">err</div>
+        <div class="stat-value" id="live-err" style="color:var(--wrong);">0</div>
       </div>
     </div>
 
@@ -123,12 +129,13 @@
       </div>
     </div>
 
-    <div id="wpm-chart"></div>
+    <canvas id="wpm-chart" width="600" height="100"></canvas>
 
     <div class="result-details">
       <div class="result-detail-item"><div class="label">raw wpm</div>       <div class="val"     id="res-raw">0</div></div>
       <div class="result-detail-item"><div class="label">correct words</div> <div class="val good" id="res-correct">0</div></div>
       <div class="result-detail-item"><div class="label">wrong words</div>   <div class="val bad"  id="res-wrong">0</div></div>
+      <div class="result-detail-item"><div class="label">errors</div>          <div class="val bad"  id="res-errors">0</div></div>
       <div class="result-detail-item"><div class="label">total time</div>    <div class="val"     id="res-time">0s</div></div>
     </div>
 
