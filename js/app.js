@@ -25,6 +25,8 @@
   let uiLang = 'en';
   let colorTheme = 'classic';
   let customText = 'The five boxing wizards jump quickly.';
+  let usePunct = false;
+  let useNumbers = false;
 
   // ─── DOM REFS ────────────────────────────────────────────────────────────────
   const hiddenInput = document.getElementById('hidden-input');
@@ -92,6 +94,10 @@
     const noTimer = (m === 'quote' || m === 'custom');
     if (timeGroup) timeGroup.style.display = noTimer ? 'none' : 'flex';
     if (timerStat) timerStat.style.display = noTimer ? 'none' : 'block';
+    const extraGroup = document.getElementById('extra-group');
+    const extraSep = document.getElementById('extra-sep');
+    if (extraGroup) extraGroup.style.display = noTimer ? 'none' : 'flex';
+    if (extraSep) extraSep.style.display = noTimer ? 'none' : 'block';
     restart();
   };
 
@@ -101,6 +107,18 @@
     document.querySelectorAll('#time-group .config-btn').forEach(b => b.classList.remove('active'));
     document.getElementById(id).classList.add('active');
     document.getElementById('timer-display').textContent = mode === 'time' ? t : '0';
+    restart();
+  };
+
+  // ─── PUNCT & NUMBERS TOGGLE ─────────────────────────────────────────────────
+  window.togglePunct = function (el) {
+    usePunct = !usePunct;
+    el.classList.toggle('active', usePunct);
+    restart();
+  };
+  window.toggleNumbers = function (el) {
+    useNumbers = !useNumbers;
+    el.classList.toggle('active', useNumbers);
     restart();
   };
 
@@ -168,14 +186,31 @@
   }
 
   // ─── WORD GENERATION ─────────────────────────────────────────────────────────
+  // Punctuation marks inserted randomly between words
+  const PUNCTS = [',', '.', '!', '?', ';', ':'];
+  const NUMBERS = ['0','1','2','3','4','5','6','7','8','9'];
+
   function generateWords() {
     if (mode === 'quote') return QUOTES[Math.floor(Math.random() * QUOTES.length)].split(' ');
-    if (mode === 'custom') {
-      return customText.trim().split(/\s+/);
-    }
+    if (mode === 'custom') return customText.trim().split(/\s+/);
+
     const list = WORDS[uiLang] || WORDS.en;
     const count = mode === 'words' ? 30 : 50;
-    return Array.from({ length: count }, () => list[Math.floor(Math.random() * list.length)]);
+    const base = Array.from({ length: count }, () => list[Math.floor(Math.random() * list.length)]);
+
+    return base.map(word => {
+      let w = word;
+      // ~20% chance to append punctuation
+      if (usePunct && Math.random() < 0.2) {
+        w += PUNCTS[Math.floor(Math.random() * PUNCTS.length)];
+      }
+      // ~15% chance to replace word with a number (1-999)
+      if (useNumbers && Math.random() < 0.15) {
+        w = String(Math.floor(Math.random() * 999) + 1);
+        if (usePunct && Math.random() < 0.2) w += PUNCTS[Math.floor(Math.random() * PUNCTS.length)];
+      }
+      return w;
+    });
   }
 
   // ─── DISPLAY BUILDER ─────────────────────────────────────────────────────────
@@ -307,6 +342,31 @@
   }
 
   // ─── END TEST ────────────────────────────────────────────────────────────────
+  // ─── SHARE RESULT ────────────────────────────────────────────────────────────
+  window.shareResult = function () {
+    const wpm = document.getElementById('res-wpm').textContent;
+    const acc = document.getElementById('res-acc').textContent;
+    const time = document.getElementById('res-time').textContent;
+    const modeLabel = mode === 'time' ? totalTime + 's' : mode;
+    const text = `TypeRadar result\n⌨️ ${wpm} wpm  ✓ ${acc} accuracy\nmode: ${modeLabel} | time: ${time}\ntyperadar.com`;
+    navigator.clipboard.writeText(text).then(() => {
+      const toast = document.getElementById('share-toast');
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2000);
+    }).catch(() => {
+      // fallback for browsers without clipboard API
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      const toast = document.getElementById('share-toast');
+      toast.classList.add('visible');
+      setTimeout(() => toast.classList.remove('visible'), 2000);
+    });
+  };
+
   function endTest() {
     if (finished) return;
     clearInterval(timerInterval);
@@ -483,6 +543,19 @@
   };
 
   // ─── EVENT LISTENERS ─────────────────────────────────────────────────────────
+  // ─── CAPS LOCK DETECTION ────────────────────────────────────────────────────
+  document.addEventListener('keydown', e => {
+    // Detect caps lock via getModifierState
+    const capsOn = e.getModifierState && e.getModifierState('CapsLock');
+    const warning = document.getElementById('caps-warning');
+    if (warning) warning.classList.toggle('visible', !!capsOn);
+  });
+  document.addEventListener('keyup', e => {
+    const capsOn = e.getModifierState && e.getModifierState('CapsLock');
+    const warning = document.getElementById('caps-warning');
+    if (warning) warning.classList.toggle('visible', !!capsOn);
+  });
+
   document.addEventListener('keydown', e => {
     const key = e.key;
     if (key === 'Tab') { e.preventDefault(); restart(); return; }
