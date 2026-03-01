@@ -164,9 +164,13 @@
   // ─── UI LANGUAGE ─────────────────────────────────────────────────────────────
   window.setUILang = function (lang, el) {
     uiLang = lang;
-    document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.lang-btn').forEach(function(b) { b.classList.remove('active'); });
     el.classList.add('active');
+    // Update indicator above typing area
+    var ind = document.getElementById('lang-indicator-text');
+    if (ind) ind.textContent = el.textContent.trim();
     updateUILanguage();
+    closeSettings();
     restart();
   };
 
@@ -305,21 +309,24 @@
     if (currentInput.length === 0) {
       // Current word empty — find where it starts
       if (mode === 'zen') {
-        // Look at last letter of current word (shouldn't happen), or end of prev word
+        // After space/enter: position after last letter of prev word
         var prevZenWord = currentWordIndex > 0 ? document.getElementById('word-' + (currentWordIndex - 1)) : null;
         if (prevZenWord) {
           var prevZenLetters = prevZenWord.querySelectorAll('.zen-letter');
           if (prevZenLetters.length > 0) {
             var pzl = prevZenLetters[prevZenLetters.length - 1];
             var pzlr = pzl.getBoundingClientRect();
-            // after last letter + one char-width gap
             var charW = pzlr.width;
             pos = { left: pzlr.left - cRect.left + pzlr.width + charW * 0.7, top: pzlr.top - cRect.top };
           } else {
-            pos = { left: 0, top: 0 };
+            // prev word empty (just entered) — use inner top-left
+            var innerRect = inner.getBoundingClientRect();
+            pos = { left: innerRect.left - cRect.left, top: innerRect.top - cRect.top };
           }
         } else {
-          pos = { left: 0, top: 0 };
+          // Very first word — top-left of inner
+          var innerRect2 = inner.getBoundingClientRect();
+          pos = { left: innerRect2.left - cRect.left, top: innerRect2.top - cRect.top };
         }
       } else {
         var r0 = wordEl.getBoundingClientRect();
@@ -336,9 +343,7 @@
       }
     }
     cursor.style.left = pos.left + 'px';
-    // Add words-inner scroll offset so cursor stays with the text
-    var innerOffset = parseInt(inner.style.top || 0);
-    cursor.style.top = (pos.top + innerOffset) + 'px';
+    cursor.style.top = pos.top + 'px';
 
     // Scroll up when word reaches 3rd row (not in zen — zen never scrolls)
     if (mode !== 'zen') {
