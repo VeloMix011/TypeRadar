@@ -655,13 +655,12 @@
           }
         }, 100);
       }
-      const savedBgTheme = localStorage.getItem('typeradar_bg_theme');
+      // v2: always moon by default. Saved theme only respected if set after this version.
+      const savedBgTheme = localStorage.getItem('typeradar_bg_theme_v2');
       if (savedBgTheme && THEMES[savedBgTheme]) {
         currentBgTheme = savedBgTheme;
       } else {
-        // No saved theme — force moon (dark) as default and save it
         currentBgTheme = 'moon';
-        localStorage.setItem('typeradar_bg_theme', 'moon');
       }
       applyThemeVars(currentBgTheme);
       const savedFont = localStorage.getItem('typeradar_font');
