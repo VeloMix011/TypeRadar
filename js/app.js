@@ -659,6 +659,10 @@
       const savedBgTheme = localStorage.getItem('typeradar_bg_theme');
       if (savedBgTheme && THEMES[savedBgTheme]) {
         currentBgTheme = savedBgTheme;
+      } else {
+        // No saved theme — force moon (dark) as default and save it
+        currentBgTheme = 'moon';
+        localStorage.setItem('typeradar_bg_theme', 'moon');
       }
       applyThemeVars(currentBgTheme);
       const savedFont = localStorage.getItem('typeradar_font');
@@ -666,7 +670,9 @@
         const fontObj = FONTS.find(f => f.name === savedFont);
         if (fontObj) { loadGoogleFont(fontObj); applyFont(savedFont); }
       }
-    } catch(e) {}
+    } catch(e) {
+      applyThemeVars('moon');
+    }
   }
 
   // ─── WORD GENERATION ──────────────────────────────────────────────────────────
