@@ -393,15 +393,18 @@
       if (timerStat)    timerStat.style.display    = 'none';
       if (statProgress) statProgress.style.display = 'block';
       if (statErr)      statErr.style.display      = 'none';
-      // Label shows just the count, no /total
-      var lbl = document.getElementById('live-progress');
-      if (lbl) lbl.textContent = '0';
+      var lbl2 = document.getElementById('live-progress');
+      if (lbl2) lbl2.textContent = '0';
+      var lbl3 = document.querySelector('#stat-progress .stat-label');
+      if (lbl3) lbl3.style.visibility = 'hidden';
     } else {
       if (statWpm)      statWpm.style.display      = 'none';
       if (statAcc)      statAcc.style.display      = 'none';
       if (timerStat)    timerStat.style.display    = 'none';
       if (statProgress) statProgress.style.display = 'block';
       if (statErr)      statErr.style.display      = 'none';
+      var lbl4 = document.querySelector('#stat-progress .stat-label');
+      if (lbl4) lbl4.style.visibility = 'visible';
     }
   }
   // Legacy alias kept to avoid breaking any remaining calls
@@ -415,6 +418,9 @@
   function updateZenCount() {
     var el = document.getElementById('live-progress');
     if (el) el.textContent = correctWords;
+    // Hide "words" label in zen — show nothing
+    var lbl = document.querySelector('#stat-progress .stat-label');
+    if (lbl) lbl.style.visibility = 'hidden';
   }
 
   function updateLiveStats() {
@@ -746,15 +752,14 @@
     if (key === ' ') {
       if (mode === 'zen') {
         if (currentInput.length === 0) return true;
-        // Commit word, start new one
-        correctWords++; // count every completed word in zen
+        correctWords++;
         currentInput = '';
         currentWordIndex++;
-        var inner = document.getElementById('words-inner');
-        var newWordEl = document.createElement('span');
-        newWordEl.className = 'word';
-        newWordEl.id = 'word-' + currentWordIndex;
-        inner.appendChild(newWordEl);
+        var zenSpaceInner = document.getElementById('words-inner');
+        var zenSpaceWord = document.createElement('span');
+        zenSpaceWord.className = 'word';
+        zenSpaceWord.id = 'word-' + currentWordIndex;
+        zenSpaceInner.appendChild(zenSpaceWord);
         updateZenCount();
         positionCursor();
         return true;
@@ -876,48 +881,32 @@
       else restart();
       return;
     }
-    // Zen end: Shift+Enter on desktop, Enter on mobile
-    // Zen new line: Enter on desktop (scroll up, continue)
+    // Zen: Enter = new line (PC), Shift+Enter = finish (PC), Enter = finish (mobile)
     if (key === 'Enter') {
       var isTouchDev = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
       if (mode === 'zen' && started) {
         e.preventDefault();
         if (isTouchDev || e.shiftKey) {
-          // End zen
           endTest();
         } else {
-          // New line — commit current word if any, then force a visual line break
+          // Commit current word if typed
           if (currentInput.length > 0) {
             correctWords++;
             currentInput = '';
             currentWordIndex++;
-            var innerEl = document.getElementById('words-inner');
-            var newW = document.createElement('span');
-            newW.className = 'word';
-            newW.id = 'word-' + currentWordIndex;
-            innerEl.appendChild(newW);
+            var zenInner = document.getElementById('words-inner');
+            var wSpan = document.createElement('span');
+            wSpan.className = 'word';
+            wSpan.id = 'word-' + currentWordIndex;
+            zenInner.appendChild(wSpan);
             updateZenCount();
           }
-          // Insert a full-width line-break span to force next words onto new visual row
-          var brSpan = document.createElement('span');
-          brSpan.className = 'zen-linebreak';
-          brSpan.style.cssText = 'display:block;width:100%;height:0;';
-          var innerEl2 = document.getElementById('words-inner');
-          innerEl2.appendChild(brSpan);
-          // Then start fresh word after the break
-          currentInput = '';
-          currentWordIndex++;
-          var innerEl3 = document.getElementById('words-inner');
-          var nextW = document.createElement('span');
-          nextW.className = 'word';
-          nextW.id = 'word-' + currentWordIndex;
-          innerEl3.appendChild(nextW);
-          // Scroll: shift inner up by one line height
-          var display = document.getElementById('words-display');
-          var lineH = parseFloat(getComputedStyle(display).fontSize) * 2.4;
-          var inner = document.getElementById('words-inner');
-          var curTop = parseInt(inner.style.top || 0);
-          inner.style.top = (curTop - lineH) + 'px';
+          // Scroll exactly one line up
+          var zenDisplay = document.getElementById('words-display');
+          var zenLineH = parseFloat(getComputedStyle(zenDisplay).fontSize) * 2.4;
+          var zenInner2 = document.getElementById('words-inner');
+          var zenTop = parseInt(zenInner2.style.top || 0);
+          zenInner2.style.top = (zenTop - zenLineH) + 'px';
           positionCursor();
         }
         return;
