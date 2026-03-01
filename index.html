@@ -20,7 +20,6 @@
       var moon = ['#0d0d0f','#141417','#1c1c21','#2a2a32','#e8e8f0','#555566','#7c6af7','#f7c26a','#6af7b2','#f76a8a','#7c6af7'];
       var saved = null;
       try { saved = localStorage.getItem('typeradar_bg_theme_v2'); } catch(e) {}
-      // We don't have THEMES here yet — just apply moon immediately, app.js will override with saved theme
       var t = moon;
       var r = document.documentElement;
       r.style.setProperty('--bg',       t[0]);
@@ -35,14 +34,12 @@
       r.style.setProperty('--wrong',    t[9]);
       r.style.setProperty('--cursor',   t[10]);
       r.style.setProperty('--glow',     'rgba(124,106,247,0.18)');
-      // Clear any old body class themes
       document.addEventListener('DOMContentLoaded', function() { document.body.className = ''; });
     })();
   </script>
 
-  <!-- Google AdSense -->
-  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1285670749929409"
-     crossorigin="anonymous"></script>
+  <!-- Ad Network -->
+  <script src="https://pl28824333.effectivegatecpm.com/f0/cb/81/f0cb81b8f8ed7e71a5edbc04cb56e4f6.js"></script>
 
   <script>
     (function () {
@@ -339,9 +336,6 @@
 <!-- Scripts -->
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
-
-<!-- Ad Network -->
-<script src="https://pl28824333.effectivegatecpm.com/f0/cb/81/f0cb81b8f8ed7e71a5edbc04cb56e4f6.js"></script>
 
 </body>
 </html>
