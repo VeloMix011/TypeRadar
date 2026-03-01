@@ -30,6 +30,8 @@
   let isZen = false;
   let totalErrors = 0;
   let quoteLen = 'all'; // all | short | medium | long | thicc
+  let soundEffect = 'off';
+  var audioCtx = null;
 
   const hiddenInput = document.getElementById('hidden-input');
   const typingContainer = document.getElementById('typing-container');
@@ -126,6 +128,82 @@
       if (dd) dd.classList.remove('open');
     }
   });
+
+
+  // ─── SOUND ENGINE ────────────────────────────────────────────────────────────
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+
+  function playSound(type) {
+    if (type === 'off') return;
+    try {
+      var ctx = getAudioCtx();
+      var now = ctx.currentTime;
+      var osc, gain, buf, src;
+
+      if (type === 'click') {
+        buf = ctx.createBuffer(1, ctx.sampleRate * 0.04, ctx.sampleRate);
+        var d = buf.getChannelData(0);
+        for (var i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ctx.sampleRate * 0.008));
+        src = ctx.createBufferSource(); src.buffer = buf;
+        var f = ctx.createBiquadFilter(); f.type = 'highpass'; f.frequency.value = 1000;
+        src.connect(f); f.connect(ctx.destination); src.start();
+
+      } else if (type === 'pop') {
+        osc = ctx.createOscillator(); gain = ctx.createGain();
+        osc.frequency.setValueAtTime(800, now);
+        osc.frequency.exponentialRampToValueAtTime(200, now + 0.06);
+        gain.gain.setValueAtTime(0.4, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.06);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now); osc.stop(now + 0.06);
+
+      } else if (type === 'beep') {
+        osc = ctx.createOscillator(); gain = ctx.createGain();
+        osc.frequency.value = 880; osc.type = 'sine';
+        gain.gain.setValueAtTime(0.15, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now); osc.stop(now + 0.08);
+
+      } else if (type === 'typewriter') {
+        buf = ctx.createBuffer(1, ctx.sampleRate * 0.03, ctx.sampleRate);
+        var td = buf.getChannelData(0);
+        for (var j = 0; j < td.length; j++) td[j] = (Math.random() * 2 - 1) * Math.exp(-j / (ctx.sampleRate * 0.005));
+        src = ctx.createBufferSource(); src.buffer = buf;
+        var tf = ctx.createBiquadFilter(); tf.type = 'bandpass'; tf.frequency.value = 3000; tf.Q.value = 0.5;
+        src.connect(tf); tf.connect(ctx.destination); src.start();
+
+      } else if (type === 'pentatonic') {
+        var notes = [261.63, 293.66, 329.63, 392.00, 440.00, 523.25];
+        var freq = notes[Math.floor(Math.random() * notes.length)];
+        osc = ctx.createOscillator(); gain = ctx.createGain();
+        osc.frequency.value = freq; osc.type = 'triangle';
+        gain.gain.setValueAtTime(0.2, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now); osc.stop(now + 0.12);
+
+      } else {
+        // sine / sawtooth / square / triangle waveforms
+        osc = ctx.createOscillator(); gain = ctx.createGain();
+        osc.type = type; osc.frequency.value = 600;
+        gain.gain.setValueAtTime(0.1, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.07);
+        osc.connect(gain); gain.connect(ctx.destination);
+        osc.start(now); osc.stop(now + 0.07);
+      }
+    } catch(e) {}
+  }
+
+  window.setSound = function(type, el) {
+    soundEffect = type;
+    document.querySelectorAll('.sound-btn').forEach(function(b){ b.classList.remove('active'); });
+    el.classList.add('active');
+    if (type !== 'off') playSound(type); // preview
+  };
 
   // ─── THEME ───────────────────────────────────────────────────────────────────
   window.setTheme = function (el) {
@@ -771,6 +849,7 @@
   function processKey(key) {
     if (finished) return false;
     if (!started && key !== 'Backspace' && key !== ' ') startTimer();
+    if (key !== 'Backspace' && key !== ' ') playSound(soundEffect);
 
     var wordStr = words[currentWordIndex] || '';
 
