@@ -353,7 +353,7 @@ main {
 /* ─── CURSOR ──────────────────────────────────────────────────────────────── */
 .cursor-line {
   display: inline-block;
-  width: 2.5px; height: 1.5em;
+  width: 2.5px; height: 1.3em;
   background: var(--cursor);
   position: absolute;
   border-radius: 2px;
@@ -362,7 +362,7 @@ main {
   pointer-events: none;
   z-index: 5;
   transition: left 0.08s cubic-bezier(0.1, 0.8, 0.2, 1), top 0.12s ease, background 0.4s;
-  transform: translateY(2px);
+  transform: translateY(0.1em);
 }
 
 /* ─── CLICK HINT ──────────────────────────────────────────────────────────── */
