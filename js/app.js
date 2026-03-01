@@ -96,7 +96,6 @@
     currentFont = fontName;
     const wordsDisplay = document.getElementById('words-display');
     if (wordsDisplay) wordsDisplay.style.fontFamily = `'${fontName}', monospace`;
-    // update line height ref
     setTimeout(updateLineH, 100);
     try { localStorage.setItem('typeradar_font', fontName); } catch(e) {}
   }
@@ -196,7 +195,6 @@
     if (dd) dd.classList.remove('open');
     var s = document.getElementById('lang-search');
     if (s) s.value = '';
-    // Auto-pick a suitable font for non-latin scripts
     if (['ar','fa','he'].includes(code)) {
       if (!loadedFonts.has('Noto Naskh Arabic')) { selectFont('Noto Naskh Arabic'); }
     }
@@ -282,14 +280,11 @@
   };
 
   // ─── THEME DEFINITIONS ────────────────────────────────────────────────────────
-  // Each theme: [bg, surface, surface2, border, text, muted, accent, accent2, correct, wrong, cursor]
   const THEMES = {
-    // ── TypeRadar originals ──
     'moon':        ['#0d0d0f','#141417','#1c1c21','#2a2a32','#e8e8f0','#555566','#7c6af7','#f7c26a','#6af7b2','#f76a8a','#7c6af7'],
     'forest':      ['#0c110e','#131a15','#1a241d','#243028','#d4e8d8','#4a6152','#5ebb7a','#b5e87d','#7de8b5','#e87d7d','#5ebb7a'],
     'ember':       ['#0f0c0a','#181310','#221a16','#342520','#f0ddd4','#6b4c40','#f77b4a','#f7c26a','#f7c26a','#f75a6a','#f77b4a'],
     'arctic':      ['#f5f7fb','#eef1f7','#e4e8f2','#d0d5e8','#1a1d2e','#9099bb','#4a6cf7','#f7884a','#2ab87a','#e83d5a','#4a6cf7'],
-    // ── MonkeyType inspired ──
     'dark':        ['#323437','#2c2e31','#3a3c40','#4a4c50','#d1d0c5','#646669','#e2b714','#ca4754','#e2b714','#ca4754','#e2b714'],
     'light':       ['#e1e1e3','#d5d5d7','#cacaca','#b8b8ba','#323437','#aaaaac','#e2b714','#ca4754','#46c263','#ca4754','#e2b714'],
     'serika dark': ['#323437','#2c2e31','#3a3c40','#4a4c50','#d1d0c5','#646669','#e2b714','#d79922','#e2b714','#ca4754','#e2b714'],
@@ -439,7 +434,7 @@
     'metropolis':  ['#1e2430','#262c38','#2e3444','#38404e','#d0d8e8','#5868a0','#7890d8','#d8a870','#78d8a8','#e87878','#7890d8'],
   };
 
-  let currentBgTheme = 'moon'; // background theme key
+  let currentBgTheme = 'moon';
 
   function applyThemeVars(themeKey) {
     const t = THEMES[themeKey];
@@ -456,7 +451,6 @@
     root.style.setProperty('--correct', t[8]);
     root.style.setProperty('--wrong',   t[9]);
     root.style.setProperty('--cursor',  t[10]);
-    // glow from accent
     var hex = t[6].replace('#','');
     var r = parseInt(hex.substring(0,2),16);
     var g = parseInt(hex.substring(2,4),16);
@@ -464,25 +458,21 @@
     root.style.setProperty('--glow', `rgba(${r},${g},${b},0.18)`);
   }
 
-  // Apply default dark theme immediately — before any localStorage overrides
   applyThemeVars(currentBgTheme);
 
   window.setTheme = function(el) {
-    // Legacy: header theme dots still work as bg theme shortcuts
     document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
     el.classList.add('active');
-    // Map dot themes to our new theme keys
     var map = { 'theme-moon':'moon', 'theme-forest':'forest', 'theme-ember':'ember', 'theme-arctic':'arctic' };
     var key = map[el.dataset.theme] || 'moon';
     currentBgTheme = key;
-    // Remove body class - we use CSS vars now
     document.body.className = '';
     applyThemeVars(key);
-    // Sync the settings theme grid
     document.querySelectorAll('#bg-theme-selector .theme-card').forEach(c => c.classList.remove('active'));
     var card = document.querySelector(`#bg-theme-selector .theme-card[data-theme="${key}"]`);
     if (card) card.classList.add('active');
-    try { localStorage.setItem('typeradar_bg_theme', key); } catch(e) {}
+    // ✅ FIX: use v2 key so it matches what loadSettings() reads
+    try { localStorage.setItem('typeradar_bg_theme_v2', key); } catch(e) {}
     setTimeout(positionCursor, 50);
   };
 
@@ -493,14 +483,14 @@
     document.querySelectorAll('#bg-theme-selector .theme-card').forEach(c => c.classList.remove('active'));
     var card = document.querySelector(`#bg-theme-selector .theme-card[data-theme="${key}"]`);
     if (card) card.classList.add('active');
-    // Sync header dots if applicable
     document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
     var dotMap = { moon:'theme-moon', forest:'theme-forest', ember:'theme-ember', arctic:'theme-arctic' };
     if (dotMap[key]) {
       var dot = document.querySelector(`.theme-dot[data-theme="${dotMap[key]}"]`);
       if (dot) dot.classList.add('active');
     }
-    try { localStorage.setItem('typeradar_bg_theme', key); } catch(e) {}
+    // ✅ FIX: use v2 key so it matches what loadSettings() reads
+    try { localStorage.setItem('typeradar_bg_theme_v2', key); } catch(e) {}
     setTimeout(positionCursor, 50);
   };
 
@@ -511,7 +501,6 @@
     grid.innerHTML = keys.map(key => {
       const t = THEMES[key];
       var isActive = key === currentBgTheme ? ' active' : '';
-      // Small color swatch + name, dark card background always
       return `<div class="theme-card${isActive}" data-theme="${key}" onclick="setBgTheme('${key}')">
         <span class="btp-dot" style="background:${t[0]};border:2px solid ${t[6]};"></span>
         <span class="btp-accent" style="color:${t[6]}">${key}</span>
@@ -636,7 +625,6 @@
   // ─── LOAD SETTINGS ────────────────────────────────────────────────────────────
   function loadSettings() {
     try {
-      // Clear legacy body class themes
       document.body.className = '';
       const savedText = localStorage.getItem('typeradar_custom_text');
       if (savedText) {
@@ -655,7 +643,7 @@
           }
         }, 100);
       }
-      // v2: always moon by default. Saved theme only respected if set after this version.
+      // Always default to moon; only override if user explicitly saved a theme
       const savedBgTheme = localStorage.getItem('typeradar_bg_theme_v2');
       if (savedBgTheme && THEMES[savedBgTheme]) {
         currentBgTheme = savedBgTheme;
@@ -776,7 +764,6 @@
             pos = { left: 0, top: 0 };
           }
         } else {
-          // Very first character in zen — position at start of inner
           var innerRect = inner.getBoundingClientRect();
           pos = { left: innerRect.left - cRect.left, top: innerRect.top - cRect.top };
           if (pos.top < 0) pos.top = 0;
@@ -799,7 +786,6 @@
     cursor.style.left = pos.left + 'px';
     cursor.style.top = pos.top + 'px';
 
-    // Scroll up when cursor passes 3rd line
     if (lineH2 > 0 && pos.top >= lineH2 * 2.1) {
       var currentTop2 = parseInt(inner.style.top || 0);
       inner.style.top = (currentTop2 - lineH2) + 'px';
@@ -985,7 +971,6 @@
     document.getElementById('res-errors').textContent = totalErrors;
     document.getElementById('res-time').textContent = elapsed + 's';
 
-    // WPM Chart
     var canvas = document.getElementById('wpm-chart');
     var wrapper = canvas.parentElement;
     var dpr = window.devicePixelRatio || 1;
@@ -1123,7 +1108,6 @@
 
     var wordStr = words[currentWordIndex] || '';
 
-    // ── BACKSPACE ──
     if (key === 'Backspace') {
       if (useConfidence) return true;
 
@@ -1134,7 +1118,6 @@
           currentInput = currentInput.slice(0, -1);
           positionCursor();
         } else if (currentWordIndex > 0) {
-          // Go back to previous word in zen
           var inner = document.getElementById('words-inner');
           var emptyWord = document.getElementById('word-' + currentWordIndex);
           if (emptyWord) inner.removeChild(emptyWord);
@@ -1182,7 +1165,6 @@
       return true;
     }
 
-    // ── SPACE ──
     if (key === ' ') {
       if (mode === 'zen') {
         if (currentInput.length === 0) return true;
@@ -1226,14 +1208,12 @@
       return true;
     }
 
-    // ── REGULAR CHARACTER ──
     if (key.length === 1) {
       if (mode === 'zen') {
         var wordEl2 = document.getElementById('word-' + currentWordIndex);
         if (!wordEl2) return true;
         var letter = document.createElement('span');
         letter.className = 'letter zen-letter';
-        // Apply color theme to zen letters too
         letter.classList.add('correct', 'theme-' + colorTheme);
         letter.textContent = key;
         wordEl2.appendChild(letter);
@@ -1294,7 +1274,6 @@
   });
 
   document.addEventListener('keydown', function(e) {
-    // Don't intercept keys when settings modal is open and user is typing in inputs
     if (document.getElementById('settings-modal').style.display === 'flex') {
       if (e.key === 'Escape') { closeSettings(); e.preventDefault(); }
       return;
@@ -1308,14 +1287,12 @@
       var isTouchDev = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
       if (mode === 'zen') {
         e.preventDefault();
-        // Mobile: Enter finishes. Desktop: ONLY Shift+Enter finishes. Plain Enter = nothing.
         if (isTouchDev) {
           if (started) endTest();
           else if (currentInput.length > 0) { startTimer(); endTest(); }
         } else if (e.shiftKey) {
           if (started) endTest();
         }
-        // Plain Enter on desktop: do nothing (just prevent default above)
         return;
       }
     }
