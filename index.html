@@ -194,71 +194,108 @@
 <div class="modal-overlay" id="settings-modal">
   <div class="modal">
     <button class="modal-close" onclick="closeSettings()">✕</button>
-    <h2>◈ Settings</h2>
+    <h2 class="modal-title">settings</h2>
 
-    <!-- ── Special Modes ── -->
-    <div class="setting-section">
-      <h3>◈ Special Modes</h3>
-      <div class="mode-grid" id="special-mode-selector">
-        <div class="mode-card" data-smode="blind" onclick="toggleSpecialMode(this,'blind')">
-          <div class="mode-icon">◌</div>
-          <div class="mode-name">blind</div>
-          <div class="mode-desc">Letters hidden while typing</div>
+    <div class="settings-grid">
+
+      <!-- ── Left column ── -->
+      <div class="settings-col">
+
+        <!-- Special Modes -->
+        <div class="setting-section">
+          <h3>special modes</h3>
+          <div class="mode-grid" id="special-mode-selector">
+            <div class="mode-card" data-smode="blind" onclick="toggleSpecialMode(this,'blind')">
+              <div class="mode-icon">◌</div>
+              <div class="mode-name">blind</div>
+              <div class="mode-desc">letters hidden while typing</div>
+            </div>
+            <div class="mode-card" data-smode="confidence" onclick="toggleSpecialMode(this,'confidence')">
+              <div class="mode-icon">⌫</div>
+              <div class="mode-name">confidence</div>
+              <div class="mode-desc">no backspace allowed</div>
+            </div>
+          </div>
         </div>
-        <div class="mode-card" data-smode="confidence" onclick="toggleSpecialMode(this,'confidence')">
-          <div class="mode-icon">⌫</div>
-          <div class="mode-name">confidence</div>
-          <div class="mode-desc">No backspace allowed</div>
+
+        <!-- Sound Effects -->
+        <div class="setting-section">
+          <h3>sound on keypress</h3>
+          <div class="sound-grid" id="sound-selector">
+            <button class="sound-btn active" onclick="setSound('off',this)">off</button>
+            <button class="sound-btn" onclick="setSound('click',this)">click</button>
+            <button class="sound-btn" onclick="setSound('pop',this)">pop</button>
+            <button class="sound-btn" onclick="setSound('beep',this)">beep</button>
+            <button class="sound-btn" onclick="setSound('typewriter',this)">typewriter</button>
+            <button class="sound-btn" onclick="setSound('sine',this)">sine</button>
+            <button class="sound-btn" onclick="setSound('sawtooth',this)">sawtooth</button>
+            <button class="sound-btn" onclick="setSound('square',this)">square</button>
+            <button class="sound-btn" onclick="setSound('triangle',this)">triangle</button>
+            <button class="sound-btn" onclick="setSound('pentatonic',this)">pentatonic</button>
+          </div>
+        </div>
+
+        <!-- Custom Text -->
+        <div class="setting-section">
+          <h3>custom text</h3>
+          <textarea id="custom-text-input" rows="4" placeholder="type your custom text here..."></textarea>
+          <button class="save-btn" onclick="saveCustomText()">✓ save</button>
+        </div>
+
+      </div>
+
+      <!-- ── Right column ── -->
+      <div class="settings-col">
+
+        <!-- Color Theme -->
+        <div class="setting-section">
+          <h3>color theme</h3>
+          <div class="theme-grid" id="color-theme-selector">
+            <div class="theme-card active" onclick="setColorTheme('classic')">
+              <div class="preview" style="background:linear-gradient(90deg,#6af7b2 50%,#f76a8a 50%);"></div>
+              <div class="name">classic</div>
+            </div>
+            <div class="theme-card" onclick="setColorTheme('rgb')">
+              <div class="preview" style="background:linear-gradient(90deg,#ff3b3b,#ff8c42,#ffd93b,#4caf7f,#3b7fff,#9d4cff);"></div>
+              <div class="name">rgb</div>
+            </div>
+            <div class="theme-card" onclick="setColorTheme('matrix')">
+              <div class="preview" style="background:#0f0;box-shadow:0 0 10px #0f0;"></div>
+              <div class="name">matrix</div>
+            </div>
+            <div class="theme-card" onclick="setColorTheme('neon')">
+              <div class="preview" style="background:linear-gradient(90deg,#f0f,#0ff,#f0f);"></div>
+              <div class="name">neon</div>
+            </div>
+            <div class="theme-card" onclick="setColorTheme('fire')">
+              <div class="preview" style="background:linear-gradient(90deg,#ff4500,#ff8c00,#ffd700);"></div>
+              <div class="name">fire</div>
+            </div>
+            <div class="theme-card" onclick="setColorTheme('ocean')">
+              <div class="preview" style="background:linear-gradient(90deg,#00ffff,#4a9eff,#6a5acd);"></div>
+              <div class="name">ocean</div>
+            </div>
+            <div class="theme-card" onclick="setColorTheme('purple')">
+              <div class="preview" style="background:linear-gradient(90deg,#b87aff,#6a3aff);"></div>
+              <div class="name">purple</div>
+            </div>
+            <div class="theme-card" onclick="setColorTheme('rose')">
+              <div class="preview" style="background:linear-gradient(90deg,#ff6b9d,#ff9a8b);"></div>
+              <div class="name">rose</div>
+            </div>
+            <div class="theme-card" onclick="setColorTheme('mint')">
+              <div class="preview" style="background:linear-gradient(90deg,#00f5d4,#00bbf9);"></div>
+              <div class="name">mint</div>
+            </div>
+            <div class="theme-card" onclick="setColorTheme('gold')">
+              <div class="preview" style="background:linear-gradient(90deg,#ffd700,#ff8c00);"></div>
+              <div class="name">gold</div>
+            </div>
+          </div>
         </div>
 
       </div>
     </div>
-
-    <!-- Color Theme -->
-    <div class="setting-section">
-      <h3>◈ Color Theme</h3>
-      <div class="theme-grid" id="color-theme-selector">
-        <div class="theme-card active" onclick="setColorTheme('classic')">
-          <div class="preview" style="background:linear-gradient(90deg,#6af7b2 50%,#f76a8a 50%);"></div>
-          <div class="name">Classic</div>
-        </div>
-        <div class="theme-card" onclick="setColorTheme('rgb')">
-          <div class="preview" style="background:linear-gradient(90deg,#ff3b3b,#ff8c42,#ffd93b,#4caf7f,#3b7fff,#9d4cff);"></div>
-          <div class="name">RGB</div>
-        </div>
-        <div class="theme-card" onclick="setColorTheme('matrix')">
-          <div class="preview" style="background:#0f0;box-shadow:0 0 10px #0f0;"></div>
-          <div class="name">Matrix</div>
-        </div>
-        <div class="theme-card" onclick="setColorTheme('neon')">
-          <div class="preview" style="background:linear-gradient(90deg,#f0f,#0ff,#f0f);"></div>
-          <div class="name">Neon</div>
-        </div>
-        <div class="theme-card" onclick="setColorTheme('fire')">
-          <div class="preview" style="background:linear-gradient(90deg,#ff4500,#ff8c00,#ffd700);"></div>
-          <div class="name">Fire</div>
-        </div>
-        <div class="theme-card" onclick="setColorTheme('ocean')">
-          <div class="preview" style="background:linear-gradient(90deg,#00ffff,#4a9eff,#6a5acd);"></div>
-          <div class="name">Ocean</div>
-        </div>
-        <div class="theme-card" onclick="setColorTheme('purple')">
-          <div class="preview" style="background:#b87aff;box-shadow:0 0 10px #9d4cff;"></div>
-          <div class="name">Purple Haze</div>
-        </div>
-      </div>
-    </div>
-
-
-
-    <!-- Custom Text -->
-    <div class="setting-section">
-      <h3>◈ Custom Text</h3>
-      <p style="font-family:'JetBrains Mono',monospace;font-size:0.75rem;color:var(--muted);margin-bottom:12px;">This text will be used in custom mode.</p>
-      <textarea id="custom-text-input" rows="3" style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:0.85rem;resize:vertical;outline:none;">The five boxing wizards jump quickly.</textarea>
-      <button onclick="saveCustomText()" style="margin-top:10px;width:100%;background:var(--accent);border:none;border-radius:8px;padding:10px;color:white;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:0.85rem;">✓ change</button>
-    </div>
-
   </div>
 </div>
 
