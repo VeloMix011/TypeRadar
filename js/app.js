@@ -728,88 +728,83 @@
   }
 
   // ─── CURSOR ───────────────────────────────────────────────────────────────────
-  // Uses offsetLeft/offsetTop traversal so padding/scroll changes don't affect it.
-  // `ancestor` should be the element that has position:relative (words-display).
-  function getOffsetRelativeTo(el, ancestor) {
-    var left = 0, top = 0;
-    var node = el;
-    while (node && node !== ancestor) {
-      left += node.offsetLeft;
-      top  += node.offsetTop;
-      node  = node.offsetParent;
-    }
-    return { left: left, top: top };
-  }
-
+  // Cursor is a child of #words-inner (position:relative).
+  // Letter offsets are relative to their parent word span, which is relative to
+  // words-inner — so: left = word.offsetLeft + letter.offsetLeft + letter.offsetWidth
   function positionCursor() {
-    var cursor  = document.getElementById('cursor');
-    var display = document.getElementById('words-display');
-    var inner   = document.getElementById('words-inner');
-    var wordEl  = document.getElementById('word-' + currentWordIndex);
-    if (!wordEl || !display || !cursor || !inner) return;
+    var cursor = document.getElementById('cursor');
+    var inner  = document.getElementById('words-inner');
+    var wordEl = document.getElementById('word-' + currentWordIndex);
+    if (!wordEl || !inner || !cursor) return;
 
     updateLineH();
+
+    // Vertical offset: center cursor within the line-height leading
+    // lineH2 = actual line height in px; cursor height ≈ 1em = fontSize
+    var display = document.getElementById('words-display');
+    var fontSize = display ? parseFloat(getComputedStyle(display).fontSize) : lineH2 / 2.4;
+    var vOffset = (lineH2 - fontSize) / 2;  // centers 1em cursor in lineH2 row
 
     var letters = mode === 'zen'
       ? wordEl.querySelectorAll('.zen-letter')
       : wordEl.querySelectorAll('.letter');
-
-    // inner's current top offset (negative when scrolled)
-    var innerTopPx = parseInt(inner.style.top || '0', 10);
 
     var left, top;
 
     if (currentInput.length === 0) {
       if (mode === 'zen') {
         if (letters.length > 0) {
-          var zl  = letters[letters.length - 1];
-          var zlO = getOffsetRelativeTo(zl, display);
-          left = zlO.left + zl.offsetWidth;
-          top  = zlO.top  + innerTopPx;
+          var zl = letters[letters.length - 1];
+          left = wordEl.offsetLeft + zl.offsetLeft + zl.offsetWidth;
+          top  = wordEl.offsetTop  + zl.offsetTop;
         } else if (currentWordIndex > 0) {
           var prevW = document.getElementById('word-' + (currentWordIndex - 1));
           if (prevW) {
             var pletters = prevW.querySelectorAll('.zen-letter');
             if (pletters.length > 0) {
-              var pl  = pletters[pletters.length - 1];
-              var plO = getOffsetRelativeTo(pl, display);
-              left = plO.left + pl.offsetWidth + 10;
-              top  = plO.top  + innerTopPx;
+              var pl = pletters[pletters.length - 1];
+              left = prevW.offsetLeft + pl.offsetLeft + pl.offsetWidth + 10;
+              top  = prevW.offsetTop  + pl.offsetTop;
             } else {
-              var wO2 = getOffsetRelativeTo(wordEl, display);
-              left = wO2.left; top = wO2.top + innerTopPx;
+              left = wordEl.offsetLeft; top = wordEl.offsetTop;
             }
           } else {
-            left = 0; top = innerTopPx;
+            left = 0; top = 0;
           }
         } else {
-          left = 0; top = innerTopPx;
+          left = 0; top = 0;
         }
       } else {
-        var wO = getOffsetRelativeTo(wordEl, display);
-        left = wO.left;
-        top  = wO.top + innerTopPx;
+        // Before any input: cursor sits left of first letter
+        if (letters.length > 0) {
+          var fl = letters[0];
+          left = wordEl.offsetLeft + fl.offsetLeft;
+          top  = wordEl.offsetTop  + fl.offsetTop;
+        } else {
+          left = wordEl.offsetLeft;
+          top  = wordEl.offsetTop;
+        }
       }
     } else {
       if (letters.length > 0) {
         var idx = Math.min(currentInput.length - 1, letters.length - 1);
-        var lO  = getOffsetRelativeTo(letters[idx], display);
-        left = lO.left + letters[idx].offsetWidth;
-        top  = lO.top  + innerTopPx;
+        var lt  = letters[idx];
+        left = wordEl.offsetLeft + lt.offsetLeft + lt.offsetWidth;
+        top  = wordEl.offsetTop  + lt.offsetTop;
       } else {
-        var wOb = getOffsetRelativeTo(wordEl, display);
-        left = wOb.left;
-        top  = wOb.top + innerTopPx;
+        left = wordEl.offsetLeft;
+        top  = wordEl.offsetTop;
       }
     }
 
     cursor.style.left = left + 'px';
-    cursor.style.top  = top  + 'px';
+    cursor.style.top  = (top + vOffset) + 'px';
 
     // Scroll down one line when cursor reaches 3rd line
     if (lineH2 > 0 && top >= lineH2 * 2.1) {
-      inner.style.top  = (innerTopPx - lineH2) + 'px';
-      cursor.style.top = (top - lineH2) + 'px';
+      var currentTop = parseInt(inner.style.top || '0', 10);
+      inner.style.top  = (currentTop - lineH2) + 'px';
+      cursor.style.top = (top - lineH2 + vOffset) + 'px';
     }
   }
 
