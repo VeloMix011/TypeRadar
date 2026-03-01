@@ -37,7 +37,8 @@
   var lineH2 = 0;
 
   // Flag to prevent double-processing of Backspace/Space
-  let processingKey = false;
+  // We use a timestamp: if < 20ms since last processed, skip
+  let lastKeyTime = 0;
 
   const hiddenInput = document.getElementById('hidden-input');
   const typingContainer = document.getElementById('typing-container');
@@ -727,70 +728,88 @@
   }
 
   // ─── CURSOR ───────────────────────────────────────────────────────────────────
+  // Uses offsetLeft/offsetTop traversal so padding/scroll changes don't affect it.
+  // `ancestor` should be the element that has position:relative (words-display).
+  function getOffsetRelativeTo(el, ancestor) {
+    var left = 0, top = 0;
+    var node = el;
+    while (node && node !== ancestor) {
+      left += node.offsetLeft;
+      top  += node.offsetTop;
+      node  = node.offsetParent;
+    }
+    return { left: left, top: top };
+  }
+
   function positionCursor() {
-    var cursor = document.getElementById('cursor');
+    var cursor  = document.getElementById('cursor');
     var display = document.getElementById('words-display');
-    var inner = document.getElementById('words-inner');
-    var wordEl = document.getElementById('word-' + currentWordIndex);
-    if (!wordEl || !display || !cursor) return;
+    var inner   = document.getElementById('words-inner');
+    var wordEl  = document.getElementById('word-' + currentWordIndex);
+    if (!wordEl || !display || !cursor || !inner) return;
 
     updateLineH();
 
     var letters = mode === 'zen'
       ? wordEl.querySelectorAll('.zen-letter')
       : wordEl.querySelectorAll('.letter');
-    var cRect = display.getBoundingClientRect();
-    var pos;
+
+    // inner's current top offset (negative when scrolled)
+    var innerTopPx = parseInt(inner.style.top || '0', 10);
+
+    var left, top;
 
     if (currentInput.length === 0) {
       if (mode === 'zen') {
         if (letters.length > 0) {
-          var zl = letters[letters.length - 1];
-          var zlr = zl.getBoundingClientRect();
-          pos = { left: zlr.left - cRect.left + zlr.width, top: zlr.top - cRect.top };
+          var zl  = letters[letters.length - 1];
+          var zlO = getOffsetRelativeTo(zl, display);
+          left = zlO.left + zl.offsetWidth;
+          top  = zlO.top  + innerTopPx;
         } else if (currentWordIndex > 0) {
           var prevW = document.getElementById('word-' + (currentWordIndex - 1));
           if (prevW) {
             var pletters = prevW.querySelectorAll('.zen-letter');
             if (pletters.length > 0) {
-              var pl = pletters[pletters.length - 1];
-              var plr = pl.getBoundingClientRect();
-              pos = { left: plr.left - cRect.left + plr.width + 10, top: plr.top - cRect.top };
+              var pl  = pletters[pletters.length - 1];
+              var plO = getOffsetRelativeTo(pl, display);
+              left = plO.left + pl.offsetWidth + 10;
+              top  = plO.top  + innerTopPx;
             } else {
-              var wr2 = wordEl.getBoundingClientRect();
-              pos = { left: wr2.left - cRect.left, top: wr2.top - cRect.top };
+              var wO2 = getOffsetRelativeTo(wordEl, display);
+              left = wO2.left; top = wO2.top + innerTopPx;
             }
           } else {
-            pos = { left: 0, top: 0 };
+            left = 0; top = innerTopPx;
           }
         } else {
-          var innerRect = inner.getBoundingClientRect();
-          pos = { left: innerRect.left - cRect.left, top: innerRect.top - cRect.top };
-          if (pos.top < 0) pos.top = 0;
+          left = 0; top = innerTopPx;
         }
       } else {
-        var r0 = wordEl.getBoundingClientRect();
-        pos = { left: r0.left - cRect.left, top: r0.top - cRect.top };
+        var wO = getOffsetRelativeTo(wordEl, display);
+        left = wO.left;
+        top  = wO.top + innerTopPx;
       }
     } else {
       if (letters.length > 0) {
         var idx = Math.min(currentInput.length - 1, letters.length - 1);
-        var r1 = letters[idx].getBoundingClientRect();
-        pos = { left: r1.left - cRect.left + r1.width, top: r1.top - cRect.top };
+        var lO  = getOffsetRelativeTo(letters[idx], display);
+        left = lO.left + letters[idx].offsetWidth;
+        top  = lO.top  + innerTopPx;
       } else {
-        var r0b = wordEl.getBoundingClientRect();
-        pos = { left: r0b.left - cRect.left, top: r0b.top - cRect.top };
+        var wOb = getOffsetRelativeTo(wordEl, display);
+        left = wOb.left;
+        top  = wOb.top + innerTopPx;
       }
     }
 
-    cursor.style.left = pos.left + 'px';
-    cursor.style.top = pos.top + 'px';
+    cursor.style.left = left + 'px';
+    cursor.style.top  = top  + 'px';
 
-    if (lineH2 > 0 && pos.top >= lineH2 * 2.1) {
-      var currentTop2 = parseInt(inner.style.top || 0);
-      inner.style.top = (currentTop2 - lineH2) + 'px';
-      pos.top -= lineH2;
-      cursor.style.top = pos.top + 'px';
+    // Scroll down one line when cursor reaches 3rd line
+    if (lineH2 > 0 && top >= lineH2 * 2.1) {
+      inner.style.top  = (innerTopPx - lineH2) + 'px';
+      cursor.style.top = (top - lineH2) + 'px';
     }
   }
 
@@ -1057,7 +1076,7 @@
     correctWords = 0; wrongWords = 0;
     wpmHistory = []; wpmTick = 0; wordHistory = []; totalErrors = 0;
     timeLeft = totalTime;
-    processingKey = false;
+    lastKeyTime = 0;
 
     document.getElementById('timer-display').textContent = mode === 'time' ? totalTime : '0';
     document.getElementById('timer-display').classList.remove('warning');
@@ -1308,10 +1327,8 @@
     if (key === 'Backspace' || key === ' ') {
       e.preventDefault();
       if (!finished) {
-        processingKey = true;
+        lastKeyTime = Date.now();
         processKey(key);
-        // Reset flag after a tick so the input handler sees it
-        setTimeout(() => { processingKey = false; }, 0);
       }
       return;
     }
@@ -1322,36 +1339,36 @@
     if (!finished) processKey(key);
   });
 
-  // ─── HIDDEN INPUT — only handles chars that document keydown didn't catch ─────
-  // On mobile, document keydown may not fire for all keys, so we keep this
-  hiddenInput.addEventListener('input', function() {
+  // ─── HIDDEN INPUT ─────────────────────────────────────────────────────────────
+  // `input` event fires on mobile when the OS keyboard inserts/deletes a character.
+  // On desktop this fires too, but timestamp check prevents double-processing.
+  // We intentionally do NOT add a separate `keydown` on hiddenInput —
+  // that caused double-fire because document keydown already handled it.
+  hiddenInput.addEventListener('input', function(e) {
+    if (finished) return;
+    // If a document keydown just fired within 30ms, skip (desktop dedup)
+    if (Date.now() - lastKeyTime < 30) return;
+
+    // inputType tells us what happened (works on modern mobile Chrome/Safari)
+    var itype = e.inputType || '';
+
+    if (itype === 'deleteContentBackward' || itype === 'deleteWordBackward') {
+      this.value = '';
+      lastKeyTime = Date.now();
+      processKey('Backspace');
+      return;
+    }
+
     var val = this.value;
-    if (val.length === 0) return;
+    if (!val || val.length === 0) return;
     var lastChar = val[val.length - 1];
     this.value = '';
-    // Only process if not already handled by document keydown
-    if (!processingKey && !finished) {
-      processKey(lastChar);
-    }
-  });
+    lastKeyTime = Date.now();
 
-  // Backspace on hidden input — only fires on mobile where document keydown misses it
-  hiddenInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Backspace') {
-      e.preventDefault();
-      if (!processingKey && !finished) {
-        processingKey = true;
-        processKey('Backspace');
-        setTimeout(() => { processingKey = false; }, 0);
-      }
-    }
-    if (e.key === ' ') {
-      e.preventDefault();
-      if (!processingKey && !finished) {
-        processingKey = true;
-        processKey(' ');
-        setTimeout(() => { processingKey = false; }, 0);
-      }
+    if (lastChar === ' ') {
+      processKey(' ');
+    } else {
+      processKey(lastChar);
     }
   });
 
