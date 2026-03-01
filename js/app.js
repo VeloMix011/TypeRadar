@@ -295,44 +295,50 @@
     var wordEl = document.getElementById('word-' + currentWordIndex);
     if (!wordEl || !display || !cursor) return;
 
-    var letters = wordEl.querySelectorAll('.letter');
+    // In zen, letters use .zen-letter class
+    var letters = mode === 'zen'
+      ? wordEl.querySelectorAll('.zen-letter')
+      : wordEl.querySelectorAll('.letter');
     var cRect = display.getBoundingClientRect();
     var pos;
 
     if (currentInput.length === 0) {
-      var r0 = wordEl.getBoundingClientRect();
-      // Empty span has no dimensions — position at inner's top-left
-      if (r0.width === 0 && r0.height === 0) {
-        if (mode === 'zen' && currentWordIndex > 0) {
-          // After a space: position after last letter of prev word
-          var prevWord = document.getElementById('word-' + (currentWordIndex - 1));
-          if (prevWord) {
-            var prevLetters = prevWord.querySelectorAll('.letter');
-            if (prevLetters.length > 0) {
-              var lastLetter = prevLetters[prevLetters.length - 1];
-              var lr = lastLetter.getBoundingClientRect();
-              var spaceW = parseFloat(getComputedStyle(lastLetter).width) * 0.6;
-              pos = { left: lr.left - cRect.left + lr.width + spaceW, top: lr.top - cRect.top };
-            } else {
-              pos = { left: 0, top: 0 };
-            }
+      // Current word empty — find where it starts
+      if (mode === 'zen') {
+        // Look at last letter of current word (shouldn't happen), or end of prev word
+        var prevZenWord = currentWordIndex > 0 ? document.getElementById('word-' + (currentWordIndex - 1)) : null;
+        if (prevZenWord) {
+          var prevZenLetters = prevZenWord.querySelectorAll('.zen-letter');
+          if (prevZenLetters.length > 0) {
+            var pzl = prevZenLetters[prevZenLetters.length - 1];
+            var pzlr = pzl.getBoundingClientRect();
+            // after last letter + one char-width gap
+            var charW = pzlr.width;
+            pos = { left: pzlr.left - cRect.left + pzlr.width + charW * 0.7, top: pzlr.top - cRect.top };
           } else {
             pos = { left: 0, top: 0 };
           }
         } else {
-          // First word, nothing typed yet — top-left of inner
           pos = { left: 0, top: 0 };
         }
       } else {
+        var r0 = wordEl.getBoundingClientRect();
         pos = { left: r0.left - cRect.left, top: r0.top - cRect.top };
       }
     } else {
-      var idx = Math.min(currentInput.length - 1, letters.length - 1);
-      var r1 = letters[idx].getBoundingClientRect();
-      pos = { left: r1.left - cRect.left + r1.width, top: r1.top - cRect.top };
+      if (letters.length > 0) {
+        var idx = Math.min(currentInput.length - 1, letters.length - 1);
+        var r1 = letters[idx].getBoundingClientRect();
+        pos = { left: r1.left - cRect.left + r1.width, top: r1.top - cRect.top };
+      } else {
+        var r0b = wordEl.getBoundingClientRect();
+        pos = { left: r0b.left - cRect.left, top: r0b.top - cRect.top };
+      }
     }
     cursor.style.left = pos.left + 'px';
-    cursor.style.top = pos.top + 'px';
+    // Add words-inner scroll offset so cursor stays with the text
+    var innerOffset = parseInt(inner.style.top || 0);
+    cursor.style.top = (pos.top + innerOffset) + 'px';
 
     // Scroll up when word reaches 3rd row (not in zen — zen never scrolls)
     if (mode !== 'zen') {
@@ -889,13 +895,15 @@
     // Zen: Enter = new line (PC), Shift+Enter = finish (PC), Enter = finish (mobile)
     if (key === 'Enter') {
       var isTouchDev = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
-      if (mode === 'zen' && started) {
+      if (mode === 'zen') {
         e.preventDefault();
+        if (!started && currentInput.length > 0) startTimer();
         if (isTouchDev || e.shiftKey) {
-          endTest();
+          if (started) endTest();
         } else {
-          // Commit current word if typed
+          // Commit current word if typed, then new line
           if (currentInput.length > 0) {
+            if (!started) startTimer();
             correctWords++;
             currentInput = '';
             currentWordIndex++;
@@ -906,7 +914,7 @@
             zenInner.appendChild(wSpan);
             updateZenCount();
           }
-          // Scroll exactly one line up
+          // Scroll one line up regardless
           var zenDisplay = document.getElementById('words-display');
           var zenLineH = parseFloat(getComputedStyle(zenDisplay).fontSize) * 2.4;
           var zenInner2 = document.getElementById('words-inner');
