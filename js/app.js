@@ -301,7 +301,26 @@
 
     if (currentInput.length === 0) {
       var r0 = wordEl.getBoundingClientRect();
-      pos = { left: r0.left - cRect.left, top: r0.top - cRect.top };
+      // In zen, empty word span has no size — use previous word's end position
+      if (mode === 'zen' && r0.width === 0 && currentWordIndex > 0) {
+        var prevWord = document.getElementById('word-' + (currentWordIndex - 1));
+        if (prevWord) {
+          var prevLetters = prevWord.querySelectorAll('.letter');
+          if (prevLetters.length > 0) {
+            var lastLetter = prevLetters[prevLetters.length - 1];
+            var lr = lastLetter.getBoundingClientRect();
+            // One space-width after last letter
+            var spaceW = parseFloat(getComputedStyle(lastLetter).width) * 0.6;
+            pos = { left: lr.left - cRect.left + lr.width + spaceW, top: lr.top - cRect.top };
+          } else {
+            pos = { left: r0.left - cRect.left, top: r0.top - cRect.top };
+          }
+        } else {
+          pos = { left: r0.left - cRect.left, top: r0.top - cRect.top };
+        }
+      } else {
+        pos = { left: r0.left - cRect.left, top: r0.top - cRect.top };
+      }
     } else {
       var idx = Math.min(currentInput.length - 1, letters.length - 1);
       var r1 = letters[idx].getBoundingClientRect();
@@ -310,13 +329,15 @@
     cursor.style.left = pos.left + 'px';
     cursor.style.top = pos.top + 'px';
 
-    // Scroll up when word reaches 3rd row
-    var wRect = wordEl.getBoundingClientRect();
-    var relTop = wRect.top - cRect.top;
-    var lineH = parseFloat(getComputedStyle(display).fontSize) * 2.4;
-    if (relTop >= lineH * 2) {
-      var currentTop = parseInt(inner.style.top || 0);
-      inner.style.top = (currentTop - lineH) + 'px';
+    // Scroll up when word reaches 3rd row (not in zen — zen never scrolls)
+    if (mode !== 'zen') {
+      var wRect = wordEl.getBoundingClientRect();
+      var relTop = wRect.top - cRect.top;
+      var lineH = parseFloat(getComputedStyle(display).fontSize) * 2.4;
+      if (relTop >= lineH * 2) {
+        var currentTop = parseInt(inner.style.top || 0);
+        inner.style.top = (currentTop - lineH) + 'px';
+      }
     }
   }
 
@@ -856,14 +877,50 @@
       return;
     }
     // Zen end: Shift+Enter on desktop, Enter on mobile
+    // Zen new line: Enter on desktop (scroll up, continue)
     if (key === 'Enter') {
       var isTouchDev = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
       if (mode === 'zen' && started) {
+        e.preventDefault();
         if (isTouchDev || e.shiftKey) {
-          e.preventDefault();
+          // End zen
           endTest();
-          return;
+        } else {
+          // New line — commit current word if any, then force a visual line break
+          if (currentInput.length > 0) {
+            correctWords++;
+            currentInput = '';
+            currentWordIndex++;
+            var innerEl = document.getElementById('words-inner');
+            var newW = document.createElement('span');
+            newW.className = 'word';
+            newW.id = 'word-' + currentWordIndex;
+            innerEl.appendChild(newW);
+            updateZenCount();
+          }
+          // Insert a full-width line-break span to force next words onto new visual row
+          var brSpan = document.createElement('span');
+          brSpan.className = 'zen-linebreak';
+          brSpan.style.cssText = 'display:block;width:100%;height:0;';
+          var innerEl2 = document.getElementById('words-inner');
+          innerEl2.appendChild(brSpan);
+          // Then start fresh word after the break
+          currentInput = '';
+          currentWordIndex++;
+          var innerEl3 = document.getElementById('words-inner');
+          var nextW = document.createElement('span');
+          nextW.className = 'word';
+          nextW.id = 'word-' + currentWordIndex;
+          innerEl3.appendChild(nextW);
+          // Scroll: shift inner up by one line height
+          var display = document.getElementById('words-display');
+          var lineH = parseFloat(getComputedStyle(display).fontSize) * 2.4;
+          var inner = document.getElementById('words-inner');
+          var curTop = parseInt(inner.style.top || 0);
+          inner.style.top = (curTop - lineH) + 'px';
+          positionCursor();
         }
+        return;
       }
     }
     var ignored = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End',
