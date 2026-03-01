@@ -62,6 +62,71 @@
     }
   };
 
+
+  // ─── LANGUAGE LIST ───────────────────────────────────────────────────────────
+  var LANGS = [
+    {code:'en',name:'english'},{code:'tr',name:'türkçe'},{code:'az',name:'azərbaycan'},
+    {code:'es',name:'español'},{code:'de',name:'deutsch'},{code:'fr',name:'français'},
+    {code:'it',name:'italiano'},{code:'pt',name:'português'},{code:'ru',name:'русский'},
+    {code:'ja',name:'日本語'},{code:'ko',name:'한국어'},{code:'zh',name:'中文'},
+    {code:'ar',name:'العربية'},{code:'hi',name:'हिन्दी'},{code:'nl',name:'nederlands'},
+    {code:'pl',name:'polski'},{code:'sv',name:'svenska'},{code:'no',name:'norsk'},
+    {code:'da',name:'dansk'},{code:'fi',name:'suomi'},{code:'cs',name:'čeština'},
+    {code:'ro',name:'română'},{code:'hu',name:'magyar'},{code:'el',name:'ελληνικά'},
+    {code:'id',name:'indonesia'},{code:'vi',name:'tiếng việt'},{code:'th',name:'ภาษาไทย'},
+    {code:'uk',name:'українська'},{code:'fa',name:'فارسی'},{code:'he',name:'עברית'}
+  ];
+
+  function buildLangList(filter) {
+    var list = document.getElementById('lang-list');
+    if (!list) return;
+    var items = filter
+      ? LANGS.filter(function(l){ return l.name.toLowerCase().includes(filter.toLowerCase()) || l.code.includes(filter.toLowerCase()); })
+      : LANGS;
+    list.innerHTML = items.map(function(l) {
+      return '<div class="lang-item' + (l.code === uiLang ? ' active' : '') + '" onclick="pickLang(\'' + l.code + '\',\'' + l.name + '\')">'
+        + '<span class="lang-check">✓</span>'
+        + '<span>' + l.name + '</span>'
+        + '</div>';
+    }).join('');
+  }
+
+  window.toggleLangDropdown = function() {
+    var dd = document.getElementById('lang-dropdown');
+    if (!dd) return;
+    var isOpen = dd.classList.contains('open');
+    if (isOpen) {
+      dd.classList.remove('open');
+    } else {
+      dd.classList.add('open');
+      buildLangList('');
+      setTimeout(function(){ var s = document.getElementById('lang-search'); if(s) s.focus(); }, 50);
+    }
+  };
+
+  window.filterLangs = function(val) { buildLangList(val); };
+
+  window.pickLang = function(code, name) {
+    uiLang = code;
+    var ind = document.getElementById('lang-indicator-text');
+    if (ind) ind.textContent = name;
+    var dd = document.getElementById('lang-dropdown');
+    if (dd) dd.classList.remove('open');
+    var s = document.getElementById('lang-search');
+    if (s) s.value = '';
+    updateUILanguage();
+    restart();
+  };
+
+  // Close dropdown on outside click
+  document.addEventListener('click', function(e) {
+    var wrap = document.getElementById('lang-dropdown-wrap');
+    if (wrap && !wrap.contains(e.target)) {
+      var dd = document.getElementById('lang-dropdown');
+      if (dd) dd.classList.remove('open');
+    }
+  });
+
   // ─── THEME ───────────────────────────────────────────────────────────────────
   window.setTheme = function (el) {
     document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
@@ -163,15 +228,8 @@
 
   // ─── UI LANGUAGE ─────────────────────────────────────────────────────────────
   window.setUILang = function (lang, el) {
-    uiLang = lang;
-    document.querySelectorAll('.lang-btn').forEach(function(b) { b.classList.remove('active'); });
-    el.classList.add('active');
-    // Update indicator above typing area
-    var ind = document.getElementById('lang-indicator-text');
-    if (ind) ind.textContent = el.textContent.trim();
-    updateUILanguage();
-    closeSettings();
-    restart();
+    var name = el ? el.textContent.trim() : lang;
+    pickLang(lang, name);
   };
 
   function updateUILanguage() {
@@ -309,24 +367,33 @@
     if (currentInput.length === 0) {
       // Current word empty — find where it starts
       if (mode === 'zen') {
-        // After space/enter: position after last letter of prev word
-        var prevZenWord = currentWordIndex > 0 ? document.getElementById('word-' + (currentWordIndex - 1)) : null;
-        if (prevZenWord) {
-          var prevZenLetters = prevZenWord.querySelectorAll('.zen-letter');
-          if (prevZenLetters.length > 0) {
-            var pzl = prevZenLetters[prevZenLetters.length - 1];
-            var pzlr = pzl.getBoundingClientRect();
-            var charW = pzlr.width;
-            pos = { left: pzlr.left - cRect.left + pzlr.width + charW * 0.7, top: pzlr.top - cRect.top };
+        // Find the current word's position — it exists and may have letters or be empty
+        // If empty, find end of previous word
+        var allZenLetters = wordEl.querySelectorAll('.zen-letter');
+        if (allZenLetters.length > 0) {
+          // Should not happen (currentInput=0 but letters exist) — use last letter
+          var zl = allZenLetters[allZenLetters.length - 1];
+          var zlr = zl.getBoundingClientRect();
+          pos = { left: zlr.left - cRect.left + zlr.width, top: zlr.top - cRect.top };
+        } else if (currentWordIndex > 0) {
+          var prevW = document.getElementById('word-' + (currentWordIndex - 1));
+          if (prevW) {
+            var pletters = prevW.querySelectorAll('.zen-letter');
+            if (pletters.length > 0) {
+              var pl = pletters[pletters.length - 1];
+              var plr = pl.getBoundingClientRect();
+              // add one space width
+              pos = { left: plr.left - cRect.left + plr.width + plr.width * 0.8, top: plr.top - cRect.top };
+            } else {
+              var wr = wordEl.getBoundingClientRect();
+              pos = { left: wr.left - cRect.left, top: wr.top - cRect.top };
+            }
           } else {
-            // prev word empty (just entered) — use inner top-left
-            var innerRect = inner.getBoundingClientRect();
-            pos = { left: innerRect.left - cRect.left, top: innerRect.top - cRect.top };
+            pos = { left: 0, top: 0 };
           }
         } else {
-          // Very first word — top-left of inner
-          var innerRect2 = inner.getBoundingClientRect();
-          pos = { left: innerRect2.left - cRect.left, top: innerRect2.top - cRect.top };
+          // Very first position
+          pos = { left: 0, top: 0 };
         }
       } else {
         var r0 = wordEl.getBoundingClientRect();
@@ -345,15 +412,13 @@
     cursor.style.left = pos.left + 'px';
     cursor.style.top = pos.top + 'px';
 
-    // Scroll up when word reaches 3rd row (not in zen — zen never scrolls)
-    if (mode !== 'zen') {
-      var wRect = wordEl.getBoundingClientRect();
-      var relTop = wRect.top - cRect.top;
-      var lineH = parseFloat(getComputedStyle(display).fontSize) * 2.4;
-      if (relTop >= lineH * 2) {
-        var currentTop = parseInt(inner.style.top || 0);
-        inner.style.top = (currentTop - lineH) + 'px';
-      }
+    // Scroll up when cursor reaches 3rd row (works for all modes including zen)
+    if (pos.top >= lineH2 * 2) {
+      var currentTop2 = parseInt(inner.style.top || 0);
+      inner.style.top = (currentTop2 - lineH2) + 'px';
+      // Recalculate pos after scroll
+      pos.top -= lineH2;
+      cursor.style.top = pos.top + 'px';
     }
   }
 
