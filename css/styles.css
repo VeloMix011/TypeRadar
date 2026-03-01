@@ -1,4 +1,4 @@
-/* ─── CSS VARIABLES / THEMES ──────────────────────────────────────────────── */
+/* ─── CSS VARIABLES ───────────────────────────────────────────────────────── */
 :root {
   --bg: #0d0d0f;
   --surface: #141417;
@@ -13,22 +13,10 @@
   --cursor: #7c6af7;
   --glow: rgba(124, 106, 247, 0.18);
 }
-
-.theme-forest {
-  --bg: #0c110e; --surface: #131a15; --surface2: #1a241d; --border: #243028;
-  --text: #d4e8d8; --muted: #4a6152; --accent: #5ebb7a; --accent2: #b5e87d;
-  --correct: #7de8b5; --wrong: #e87d7d; --cursor: #5ebb7a; --glow: rgba(94,187,122,0.15);
-}
-.theme-ember {
-  --bg: #0f0c0a; --surface: #181310; --surface2: #221a16; --border: #342520;
-  --text: #f0ddd4; --muted: #6b4c40; --accent: #f77b4a; --accent2: #f7c26a;
-  --correct: #f7c26a; --wrong: #f75a6a; --cursor: #f77b4a; --glow: rgba(247,123,74,0.15);
-}
-.theme-arctic {
-  --bg: #f5f7fb; --surface: #eef1f7; --surface2: #e4e8f2; --border: #d0d5e8;
-  --text: #1a1d2e; --muted: #9099bb; --accent: #4a6cf7; --accent2: #f7884a;
-  --correct: #2ab87a; --wrong: #e83d5a; --cursor: #4a6cf7; --glow: rgba(74,108,247,0.12);
-}
+/* Legacy body classes kept for graceful fallback — vars override these */
+.theme-forest { --bg:#0c110e;--surface:#131a15;--surface2:#1a241d;--border:#243028;--text:#d4e8d8;--muted:#4a6152;--accent:#5ebb7a;--accent2:#b5e87d;--correct:#7de8b5;--wrong:#e87d7d;--cursor:#5ebb7a;--glow:rgba(94,187,122,0.15); }
+.theme-ember  { --bg:#0f0c0a;--surface:#181310;--surface2:#221a16;--border:#342520;--text:#f0ddd4;--muted:#6b4c40;--accent:#f77b4a;--accent2:#f7c26a;--correct:#f7c26a;--wrong:#f75a6a;--cursor:#f77b4a;--glow:rgba(247,123,74,0.15); }
+.theme-arctic { --bg:#f5f7fb;--surface:#eef1f7;--surface2:#e4e8f2;--border:#d0d5e8;--text:#1a1d2e;--muted:#9099bb;--accent:#4a6cf7;--accent2:#f7884a;--correct:#2ab87a;--wrong:#e83d5a;--cursor:#4a6cf7;--glow:rgba(74,108,247,0.12); }
 
 /* ─── RESET ───────────────────────────────────────────────────────────────── */
 * {
@@ -410,6 +398,40 @@ footer kbd {
 }
 .sound-btn:hover { color: var(--text); border-color: var(--text); }
 .sound-btn.active { color: var(--accent); border-color: var(--accent); background: var(--glow); }
+
+/* ─── BG THEME GRID (MonkeyType-style) ───────────────────────────────────── */
+#bg-theme-selector {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 5px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 4px 2px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--border) transparent;
+}
+#bg-theme-selector::-webkit-scrollbar { width: 4px; }
+#bg-theme-selector::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+#bg-theme-selector .theme-card {
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex; align-items: center; justify-content: center;
+}
+#bg-theme-selector .theme-card:hover { transform: translateY(-1px); border-color: var(--accent) !important; }
+#bg-theme-selector .theme-card.active { border-color: var(--accent) !important; box-shadow: 0 0 0 2px var(--accent); }
+.bg-theme-preview { display: flex; align-items: center; }
+.btp-accent {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.7rem;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90px;
+}
 
 /* ─── COLOR THEME GRID ────────────────────────────────────────────────────── */
 .theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(72px, 1fr)); gap: 8px; }
