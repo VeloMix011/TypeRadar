@@ -36,6 +36,9 @@
   var audioCtx = null;
   var lineH2 = 0;
 
+  // Flag to prevent double-processing of Backspace/Space
+  let processingKey = false;
+
   const hiddenInput = document.getElementById('hidden-input');
   const typingContainer = document.getElementById('typing-container');
 
@@ -347,7 +350,7 @@
     'goldilocks':  ['#1a1408','#241c0e','#2e2414','#3a2e1a','#f0e0b0','#806840','#e8c840','#e09020','#a8e050','#e05030','#e8c840'],
     'dollar':      ['#0a1a0e','#101e14','#16261a','#1e3022','#c0d8c0','#406848','#50b060','#88c048','#70d870','#e07060','#50b060'],
     'dms':         ['#1a1a2e','#16213e','#0f3460','#1a4080','#e0e8f8','#5070a8','#4a90e2','#e25c4a','#50d0a8','#e24a4a','#4a90e2'],
-    'lil dragon':  ['#1a1025','#22163a','#2c1e4e','#382862','#e8d0f8','#7850b8','#a870e8','#e870a8','#70e8a8','#f85080','#a870e8'],
+    'lil dragon':  ['#1a1025','#22153a','#2c1e4e','#382862','#e8d0f8','#7850b8','#a870e8','#e870a8','#70e8a8','#f85080','#a870e8'],
     'blueberry light':['#e8eef8','#dce5f5','#d0daf0','#b8cae5','#1a2540','#5070a8','#3a6ac0','#c84a70','#2a9050','#d83a3a','#3a6ac0'],
     'witch girl (dark)':['#0e0618','#140c22','#1c1230','#261a42','#e0c8f8','#6a40a8','#b050d8','#e068b0','#60d890','#f04870','#b050d8'],
     'repose light':['#f8f4f0','#f0eae4','#e8dfd8','#d8ccc4','#28201c','#9a8880','#6a5a98','#c8604a','#50985a','#c83a2e','#6a5a98'],
@@ -370,7 +373,7 @@
     'anti hero':   ['#1c1c1c','#242424','#2c2c2c','#383838','#f0f0f0','#707070','#ff3333','#ff8833','#33ff88','#ff3333','#ff3333'],
     'aurora':      ['#0a1628','#0e1e38','#14284a','#1c3460','#a0c8f8','#3868b0','#5590e0','#a060e0','#60d8a0','#f06080','#5590e0'],
     'spiderman':   ['#0e1626','#141e34','#1a2840','#203050','#e0e8f8','#4a6898','#3a70d8','#e82020','#60d870','#f82020','#3a70d8'],
-    'red dragon':  ['#1a0808','#280e0e','#381418','#481c20','#f0c8c0','#a06060','#e83030','#f06820','#e8a030','#ff3030','#e83030'],
+    'red dragon':  ['#1a0808','#240e10','#2e1418','#3a1c20','#f0d0d0','#a07070','#e84040','#f09040','#a0e040','#ff2020','#e84040'],
     'voc':         ['#1a2820','#20302a','#283c32','#30483c','#c8e0d0','#5a8070','#70b890','#e8c050','#80e0a0','#f07060','#70b890'],
     'dark magic girl':['#1a0e2a','#241438','#2e1c48','#3a2460','#f0d0e8','#8850b8','#c868e0','#e880b8','#70e8a8','#f06080','#c868e0'],
     'tron orange': ['#0a0e0e','#101616','#181e1e','#202828','#e8d0a0','#607068','#ff8c00','#ff6000','#ffa020','#ff3000','#ff8c00'],
@@ -471,7 +474,6 @@
     document.querySelectorAll('#bg-theme-selector .theme-card').forEach(c => c.classList.remove('active'));
     var card = document.querySelector(`#bg-theme-selector .theme-card[data-theme="${key}"]`);
     if (card) card.classList.add('active');
-    // ✅ FIX: use v2 key so it matches what loadSettings() reads
     try { localStorage.setItem('typeradar_bg_theme_v2', key); } catch(e) {}
     setTimeout(positionCursor, 50);
   };
@@ -489,7 +491,6 @@
       var dot = document.querySelector(`.theme-dot[data-theme="${dotMap[key]}"]`);
       if (dot) dot.classList.add('active');
     }
-    // ✅ FIX: use v2 key so it matches what loadSettings() reads
     try { localStorage.setItem('typeradar_bg_theme_v2', key); } catch(e) {}
     setTimeout(positionCursor, 50);
   };
@@ -643,7 +644,6 @@
           }
         }, 100);
       }
-      // Always default to moon; only override if user explicitly saved a theme
       const savedBgTheme = localStorage.getItem('typeradar_bg_theme_v2');
       if (savedBgTheme && THEMES[savedBgTheme]) {
         currentBgTheme = savedBgTheme;
@@ -1057,6 +1057,7 @@
     correctWords = 0; wrongWords = 0;
     wpmHistory = []; wpmTick = 0; wordHistory = []; totalErrors = 0;
     timeLeft = totalTime;
+    processingKey = false;
 
     document.getElementById('timer-display').textContent = mode === 'time' ? totalTime : '0';
     document.getElementById('timer-display').classList.remove('warning');
@@ -1273,6 +1274,7 @@
     if (warning) warning.classList.toggle('visible', !!capsOn);
   });
 
+  // ─── MAIN KEYDOWN — handles ALL key routing including Backspace/Space ─────────
   document.addEventListener('keydown', function(e) {
     if (document.getElementById('settings-modal').style.display === 'flex') {
       if (e.key === 'Escape') { closeSettings(); e.preventDefault(); }
@@ -1301,20 +1303,56 @@
       'PageUp','PageDown','Shift','Control','Alt','Meta','CapsLock','Insert','Delete',
       'Enter','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'];
     if (ignored.includes(key)) return;
+
+    // For Backspace and Space: process here and prevent hiddenInput from also firing
+    if (key === 'Backspace' || key === ' ') {
+      e.preventDefault();
+      if (!finished) {
+        processingKey = true;
+        processKey(key);
+        // Reset flag after a tick so the input handler sees it
+        setTimeout(() => { processingKey = false; }, 0);
+      }
+      return;
+    }
+
+    // For printable characters: let the hidden input's `input` event handle it
+    // (we preventDefault to stop double-fire on desktop)
     e.preventDefault();
-    processKey(key);
+    if (!finished) processKey(key);
   });
 
+  // ─── HIDDEN INPUT — only handles chars that document keydown didn't catch ─────
+  // On mobile, document keydown may not fire for all keys, so we keep this
   hiddenInput.addEventListener('input', function() {
     var val = this.value;
     if (val.length === 0) return;
     var lastChar = val[val.length - 1];
     this.value = '';
-    if (!finished) processKey(lastChar);
+    // Only process if not already handled by document keydown
+    if (!processingKey && !finished) {
+      processKey(lastChar);
+    }
   });
+
+  // Backspace on hidden input — only fires on mobile where document keydown misses it
   hiddenInput.addEventListener('keydown', function(e) {
-    if (e.key === 'Backspace') { e.preventDefault(); if (!finished) processKey('Backspace'); }
-    if (e.key === ' ') { e.preventDefault(); if (!finished) processKey(' '); }
+    if (e.key === 'Backspace') {
+      e.preventDefault();
+      if (!processingKey && !finished) {
+        processingKey = true;
+        processKey('Backspace');
+        setTimeout(() => { processingKey = false; }, 0);
+      }
+    }
+    if (e.key === ' ') {
+      e.preventDefault();
+      if (!processingKey && !finished) {
+        processingKey = true;
+        processKey(' ');
+        setTimeout(() => { processingKey = false; }, 0);
+      }
+    }
   });
 
   typingContainer.addEventListener('click', function(e) {
