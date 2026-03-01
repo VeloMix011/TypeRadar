@@ -843,9 +843,9 @@
     if (hint) {
       var isTouchDev2 = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
       if (mode === 'zen') {
-        hint.textContent = isTouchDev2
-          ? '👆 tap to start — enter to finish'
-          : '👆 click or press any key to start — shift+enter to finish';
+        hint.innerHTML = isTouchDev2
+          ? '👆 tap to start typing &nbsp;·&nbsp; <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:0.65rem;color:var(--text)">Enter</kbd> finish'
+          : '👆 click or press any key to start &nbsp;·&nbsp; <kbd style="background:var(--surface2);border:1px solid var(--border);border-radius:4px;padding:1px 6px;font-size:0.65rem;color:var(--text)">Shift+Enter</kbd> to finish';
       } else {
         hint.textContent = isTouchDev2 ? '👆 tap to start typing' : '👆 click or press any key to start typing';
       }
@@ -1065,27 +1065,14 @@
       var isTouchDev = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
       if (mode === 'zen') {
         e.preventDefault();
-        if (!started && currentInput.length > 0) startTimer();
-        if (isTouchDev || e.shiftKey) {
+        // Mobile: Enter finishes. Desktop: ONLY Shift+Enter finishes. Plain Enter = nothing.
+        if (isTouchDev) {
           if (started) endTest();
-        } else {
-          if (currentInput.length > 0) {
-            if (!started) startTimer();
-            correctWords++;
-            currentInput = '';
-            currentWordIndex++;
-            var zenInner = document.getElementById('words-inner');
-            var wSpan = document.createElement('span');
-            wSpan.className = 'word';
-            wSpan.id = 'word-' + currentWordIndex;
-            zenInner.appendChild(wSpan);
-            updateZenCount();
-          }
-          var zenInner2 = document.getElementById('words-inner');
-          var zenTop = parseInt(zenInner2.style.top || 0);
-          zenInner2.style.top = (zenTop - lineH2) + 'px';
-          positionCursor();
+          else if (currentInput.length > 0) { startTimer(); endTest(); }
+        } else if (e.shiftKey) {
+          if (started) endTest();
         }
+        // Plain Enter on desktop: do nothing (just prevent default above)
         return;
       }
     }
