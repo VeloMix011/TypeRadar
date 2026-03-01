@@ -14,6 +14,32 @@
   <!-- Styles -->
   <link rel="stylesheet" href="css/styles.css">
 
+  <!-- Apply theme IMMEDIATELY — before any JS loads, prevents white flash -->
+  <script>
+    (function() {
+      var moon = ['#0d0d0f','#141417','#1c1c21','#2a2a32','#e8e8f0','#555566','#7c6af7','#f7c26a','#6af7b2','#f76a8a','#7c6af7'];
+      var saved = null;
+      try { saved = localStorage.getItem('typeradar_bg_theme_v2'); } catch(e) {}
+      // We don't have THEMES here yet — just apply moon immediately, app.js will override with saved theme
+      var t = moon;
+      var r = document.documentElement;
+      r.style.setProperty('--bg',       t[0]);
+      r.style.setProperty('--surface',  t[1]);
+      r.style.setProperty('--surface2', t[2]);
+      r.style.setProperty('--border',   t[3]);
+      r.style.setProperty('--text',     t[4]);
+      r.style.setProperty('--muted',    t[5]);
+      r.style.setProperty('--accent',   t[6]);
+      r.style.setProperty('--accent2',  t[7]);
+      r.style.setProperty('--correct',  t[8]);
+      r.style.setProperty('--wrong',    t[9]);
+      r.style.setProperty('--cursor',   t[10]);
+      r.style.setProperty('--glow',     'rgba(124,106,247,0.18)');
+      // Clear any old body class themes
+      document.addEventListener('DOMContentLoaded', function() { document.body.className = ''; });
+    })();
+  </script>
+
   <!-- Google AdSense -->
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1285670749929409"
      crossorigin="anonymous"></script>
