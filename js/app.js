@@ -511,11 +511,10 @@
     grid.innerHTML = keys.map(key => {
       const t = THEMES[key];
       var isActive = key === currentBgTheme ? ' active' : '';
-      return `<div class="theme-card${isActive}" data-theme="${key}" onclick="setBgTheme('${key}')"
-        style="background:${t[0]};border-color:${t[3]};">
-        <div class="bg-theme-preview">
-          <span class="btp-accent" style="color:${t[6]}">${key.length > 10 ? key.substring(0,9)+'…' : key}</span>
-        </div>
+      // Small color swatch + name, dark card background always
+      return `<div class="theme-card${isActive}" data-theme="${key}" onclick="setBgTheme('${key}')">
+        <span class="btp-dot" style="background:${t[0]};border:2px solid ${t[6]};"></span>
+        <span class="btp-accent" style="color:${t[6]}">${key}</span>
       </div>`;
     }).join('');
   }
