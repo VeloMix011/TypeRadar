@@ -301,22 +301,27 @@
 
     if (currentInput.length === 0) {
       var r0 = wordEl.getBoundingClientRect();
-      // In zen, empty word span has no size — use previous word's end position
-      if (mode === 'zen' && r0.width === 0 && currentWordIndex > 0) {
-        var prevWord = document.getElementById('word-' + (currentWordIndex - 1));
-        if (prevWord) {
-          var prevLetters = prevWord.querySelectorAll('.letter');
-          if (prevLetters.length > 0) {
-            var lastLetter = prevLetters[prevLetters.length - 1];
-            var lr = lastLetter.getBoundingClientRect();
-            // One space-width after last letter
-            var spaceW = parseFloat(getComputedStyle(lastLetter).width) * 0.6;
-            pos = { left: lr.left - cRect.left + lr.width + spaceW, top: lr.top - cRect.top };
+      // Empty span has no dimensions — position at inner's top-left
+      if (r0.width === 0 && r0.height === 0) {
+        if (mode === 'zen' && currentWordIndex > 0) {
+          // After a space: position after last letter of prev word
+          var prevWord = document.getElementById('word-' + (currentWordIndex - 1));
+          if (prevWord) {
+            var prevLetters = prevWord.querySelectorAll('.letter');
+            if (prevLetters.length > 0) {
+              var lastLetter = prevLetters[prevLetters.length - 1];
+              var lr = lastLetter.getBoundingClientRect();
+              var spaceW = parseFloat(getComputedStyle(lastLetter).width) * 0.6;
+              pos = { left: lr.left - cRect.left + lr.width + spaceW, top: lr.top - cRect.top };
+            } else {
+              pos = { left: 0, top: 0 };
+            }
           } else {
-            pos = { left: r0.left - cRect.left, top: r0.top - cRect.top };
+            pos = { left: 0, top: 0 };
           }
         } else {
-          pos = { left: r0.left - cRect.left, top: r0.top - cRect.top };
+          // First word, nothing typed yet — top-left of inner
+          pos = { left: 0, top: 0 };
         }
       } else {
         pos = { left: r0.left - cRect.left, top: r0.top - cRect.top };
@@ -430,7 +435,7 @@
     var acc = total > 0 ? Math.round((totalCorrectChars / total) * 100) : 100;
     document.getElementById('live-wpm').textContent = wpm;
     document.getElementById('live-acc').textContent = acc + '%';
-    updateWordProgress();
+    if (mode === 'zen') { updateZenCount(); } else { updateWordProgress(); }
     if (started && !finished && elapsed > 0) {
       if (wpmHistory.length === 0 || wpmHistory[wpmHistory.length - 1] !== wpm) {
         wpmHistory.push(wpm);
