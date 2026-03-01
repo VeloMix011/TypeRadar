@@ -226,7 +226,6 @@ main {
 .cursor-line {
   display: inline-block;
   width: 2.5px;
-  /* Match the actual font line-height so cursor is same height as letters */
   height: 1em;
   background: var(--cursor);
   position: absolute;
@@ -236,8 +235,7 @@ main {
   pointer-events: none;
   z-index: 5;
   transition: left 0.08s cubic-bezier(0.1,0.8,0.2,1), top 0.12s ease, background 0.4s;
-  /* Vertically center relative to the text baseline */
-  transform: translateY(0.2em);
+  /* No transform — offset-based JS positioning handles alignment */
 }
 
 /* ─── ZEN LETTERS ─────────────────────────────────────────────────────────── */
