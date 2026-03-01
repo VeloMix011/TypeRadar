@@ -224,12 +224,20 @@ main {
 
 /* ─── CURSOR ──────────────────────────────────────────────────────────────── */
 .cursor-line {
-  display: inline-block; width: 2.5px; height: 1.3em;
-  background: var(--cursor); position: absolute; border-radius: 2px;
+  display: inline-block;
+  width: 2.5px;
+  /* Match the actual font line-height so cursor is same height as letters */
+  height: 1em;
+  background: var(--cursor);
+  position: absolute;
+  border-radius: 2px;
   box-shadow: 0 0 10px var(--accent), 0 0 20px var(--glow);
-  animation: blink 0.9s step-end infinite; pointer-events: none; z-index: 5;
+  animation: blink 0.9s step-end infinite;
+  pointer-events: none;
+  z-index: 5;
   transition: left 0.08s cubic-bezier(0.1,0.8,0.2,1), top 0.12s ease, background 0.4s;
-  transform: translateY(0.1em);
+  /* Vertically center relative to the text baseline */
+  transform: translateY(0.2em);
 }
 
 /* ─── ZEN LETTERS ─────────────────────────────────────────────────────────── */
@@ -671,7 +679,7 @@ footer kbd {
   .stat-label { font-size: 0.58rem; }
   .typing-container { padding: 14px 12px; }
   #words-display { font-size: 1.1rem; line-height: 2.2; height: calc(2.2em * 3); }
-  .cursor-line { height: 1.35em; }
+  .cursor-line { height: 1em; }
   .click-hint { font-size: 0.65rem; margin-top: 14px; }
   .result-big { gap: 20px; }
   .result-stat .value { font-size: 2.8rem; }
