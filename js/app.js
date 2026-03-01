@@ -361,14 +361,21 @@
     var statProgress = document.getElementById('stat-progress');
     var statErr      = document.getElementById('stat-err');
     if (mode === 'time') {
-      // time mode: only countdown
       if (statWpm)      statWpm.style.display      = 'none';
       if (statAcc)      statAcc.style.display      = 'none';
       if (timerStat)    timerStat.style.display    = 'block';
       if (statProgress) statProgress.style.display = 'none';
       if (statErr)      statErr.style.display      = 'none';
+    } else if (mode === 'zen') {
+      if (statWpm)      statWpm.style.display      = 'none';
+      if (statAcc)      statAcc.style.display      = 'none';
+      if (timerStat)    timerStat.style.display    = 'none';
+      if (statProgress) statProgress.style.display = 'block';
+      if (statErr)      statErr.style.display      = 'none';
+      // Label shows just the count, no /total
+      var lbl = document.getElementById('live-progress');
+      if (lbl) lbl.textContent = '0';
     } else {
-      // words/quote/custom/zen: word progress
       if (statWpm)      statWpm.style.display      = 'none';
       if (statAcc)      statAcc.style.display      = 'none';
       if (timerStat)    timerStat.style.display    = 'none';
@@ -382,6 +389,11 @@
   function updateWordProgress() {
     var el = document.getElementById('live-progress');
     if (el) el.textContent = currentWordIndex + '/' + words.length;
+  }
+
+  function updateZenCount() {
+    var el = document.getElementById('live-progress');
+    if (el) el.textContent = correctWords;
   }
 
   function updateLiveStats() {
@@ -610,6 +622,30 @@
     document.getElementById('live-err').textContent = '0';
     document.getElementById('live-stats').classList.remove('visible');
     document.getElementById('click-hint').style.opacity = '0.6';
+    // Update hint text for zen
+    var hint = document.getElementById('click-hint');
+    if (hint) {
+      var isTouchDev2 = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      if (mode === 'zen') {
+        hint.textContent = isTouchDev2
+          ? '👆 tap to start — enter to finish'
+          : '👆 click or press any key to start — shift+enter to finish';
+      } else {
+        hint.textContent = isTouchDev2
+          ? '👆 tap to start typing'
+          : '👆 click or press any key to start typing';
+      }
+    }
+    // Update footer hint
+    var footer = document.querySelector('footer');
+    if (footer) {
+      var isTouchDev3 = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      if (mode === 'zen' && !isTouchDev3) {
+        footer.innerHTML = '<kbd>Tab</kbd> restart &nbsp;·&nbsp; <kbd>Esc</kbd> reset &nbsp;·&nbsp; <kbd>Shift+Enter</kbd> finish zen';
+      } else {
+        footer.innerHTML = '<kbd>Tab</kbd> restart &nbsp;·&nbsp; <kbd>Esc</kbd> reset';
+      }
+    }
     document.getElementById('result-screen').style.display = 'none';
     document.getElementById('test-screen').style.display = 'flex';
     // Remove blind-mode so letters are visible before typing starts
@@ -689,7 +725,8 @@
     if (key === ' ') {
       if (mode === 'zen') {
         if (currentInput.length === 0) return true;
-        // Start new word
+        // Commit word, start new one
+        correctWords++; // count every completed word in zen
         currentInput = '';
         currentWordIndex++;
         var inner = document.getElementById('words-inner');
@@ -697,6 +734,7 @@
         newWordEl.className = 'word';
         newWordEl.id = 'word-' + currentWordIndex;
         inner.appendChild(newWordEl);
+        updateZenCount();
         positionCursor();
         return true;
       }
@@ -817,9 +855,20 @@
       else restart();
       return;
     }
+    // Zen end: Shift+Enter on desktop, Enter on mobile
+    if (key === 'Enter') {
+      var isTouchDev = ('ontouchstart' in window) || (navigator.maxTouchPoints > 0);
+      if (mode === 'zen' && started) {
+        if (isTouchDev || e.shiftKey) {
+          e.preventDefault();
+          endTest();
+          return;
+        }
+      }
+    }
     var ignored = ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End',
       'PageUp','PageDown','Shift','Control','Alt','Meta','CapsLock','Insert','Delete',
-      'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'];
+      'Enter','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'];
     if (ignored.includes(key)) return;
     e.preventDefault();
     processKey(key);
