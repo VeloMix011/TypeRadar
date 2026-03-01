@@ -18,7 +18,6 @@
   <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1285670749929409"
      crossorigin="anonymous"></script>
 
-  <!-- Anti-copy / anti-devtools (optional, can be removed) -->
   <script>
     (function () {
       document.addEventListener('contextmenu', e => e.preventDefault());
@@ -62,14 +61,12 @@
 
     <!-- Config bar -->
     <div class="config-bar">
-      <!-- punct / numbers (always visible, slide in for time/words/custom) -->
       <div class="config-slide-group" id="extra-group">
         <button class="config-btn" onclick="togglePunct(this)"   id="toggle-punct">@ punctuation</button>
         <button class="config-btn" onclick="toggleNumbers(this)" id="toggle-numbers"># numbers</button>
       </div>
       <div class="config-sep config-slide-sep" id="extra-sep"></div>
 
-      <!-- modes -->
       <div style="display:flex;gap:2px;flex-wrap:wrap;" id="mode-group">
         <button class="config-btn active" onclick="setMode('time','mode-time')"     id="mode-time"><span class="btn-icon">⏱</span> time</button>
         <button class="config-btn"        onclick="setMode('words','mode-words')"   id="mode-words"><span class="btn-icon">A</span> words</button>
@@ -78,7 +75,6 @@
         <button class="config-btn"        onclick="setMode('custom','mode-custom')" id="mode-custom"><span class="btn-icon">🔧</span> custom</button>
       </div>
 
-      <!-- time options (slide in for time/words) -->
       <div class="config-sep config-slide-sep" id="time-sep"></div>
       <div class="config-slide-group" id="time-group">
         <button class="config-btn"        onclick="setTime(15,'t-15')"   id="t-15">15</button>
@@ -87,7 +83,6 @@
         <button class="config-btn"        onclick="setTime(120,'t-120')" id="t-120">120</button>
       </div>
 
-      <!-- quote length (slide in for quote) -->
       <div class="config-sep config-slide-sep" id="quote-sep"></div>
       <div class="config-slide-group" id="quote-group">
         <button class="config-btn active" onclick="setQuoteLen('all','ql-all')"       id="ql-all">all</button>
@@ -98,9 +93,8 @@
       </div>
     </div>
 
-    <!-- Live stats: during typing only show relevant info -->
+    <!-- Live stats -->
     <div class="live-stats" id="live-stats">
-      <!-- wpm + acc: hidden while typing in time mode, shown in words/quote/custom -->
       <div class="stat-item" id="stat-wpm">
         <div class="stat-label">wpm</div>
         <div class="stat-value" id="live-wpm">0</div>
@@ -109,12 +103,10 @@
         <div class="stat-label">accuracy</div>
         <div class="stat-value" id="live-acc">100%</div>
       </div>
-      <!-- timer / word counter -->
       <div class="stat-item" id="timer-stat">
         <div class="stat-label" id="timer-label">time</div>
         <div class="stat-value" id="timer-display">30</div>
       </div>
-      <!-- word progress (words / quote / custom mode) -->
       <div class="stat-item" id="stat-progress" style="display:none;">
         <div class="stat-label">words</div>
         <div class="stat-value" id="live-progress">0/0</div>
@@ -125,7 +117,7 @@
       </div>
     </div>
 
-    <!-- Language selector (above typing area, monkeytype style) -->
+    <!-- Language selector -->
     <div class="lang-dropdown-wrap" id="lang-dropdown-wrap">
       <button class="lang-indicator-btn" id="lang-indicator-btn" onclick="toggleLangDropdown()">
         <span id="lang-indicator-text">english</span>
@@ -171,11 +163,11 @@
     </div>
 
     <div class="result-details">
-      <div class="result-detail-item"><div class="label">raw wpm</div>       <div class="val"     id="res-raw">0</div></div>
+      <div class="result-detail-item"><div class="label">raw wpm</div>       <div class="val"      id="res-raw">0</div></div>
       <div class="result-detail-item"><div class="label">correct words</div> <div class="val good" id="res-correct">0</div></div>
       <div class="result-detail-item"><div class="label">wrong words</div>   <div class="val bad"  id="res-wrong">0</div></div>
       <div class="result-detail-item"><div class="label">errors</div>        <div class="val bad"  id="res-errors">0</div></div>
-      <div class="result-detail-item"><div class="label">total time</div>    <div class="val"     id="res-time">0s</div></div>
+      <div class="result-detail-item"><div class="label">total time</div>    <div class="val"      id="res-time">0s</div></div>
     </div>
 
     <button class="restart-btn" onclick="restart()">↺ restart</button>
@@ -200,6 +192,14 @@
 
       <!-- ── Left column ── -->
       <div class="settings-col">
+
+        <!-- Font Family -->
+        <div class="setting-section">
+          <h3>font family</h3>
+          <div class="font-grid" id="font-grid">
+            <!-- Built by JS -->
+          </div>
+        </div>
 
         <!-- Special Modes -->
         <div class="setting-section">
@@ -251,43 +251,43 @@
         <div class="setting-section">
           <h3>color theme</h3>
           <div class="theme-grid" id="color-theme-selector">
-            <div class="theme-card active" onclick="setColorTheme('classic')">
+            <div class="theme-card active" data-theme="classic" onclick="setColorTheme('classic')">
               <div class="preview" style="background:linear-gradient(90deg,#6af7b2 50%,#f76a8a 50%);"></div>
               <div class="name">classic</div>
             </div>
-            <div class="theme-card" onclick="setColorTheme('rgb')">
+            <div class="theme-card" data-theme="rgb" onclick="setColorTheme('rgb')">
               <div class="preview" style="background:linear-gradient(90deg,#ff3b3b,#ff8c42,#ffd93b,#4caf7f,#3b7fff,#9d4cff);"></div>
               <div class="name">rgb</div>
             </div>
-            <div class="theme-card" onclick="setColorTheme('matrix')">
+            <div class="theme-card" data-theme="matrix" onclick="setColorTheme('matrix')">
               <div class="preview" style="background:#0f0;box-shadow:0 0 10px #0f0;"></div>
               <div class="name">matrix</div>
             </div>
-            <div class="theme-card" onclick="setColorTheme('neon')">
+            <div class="theme-card" data-theme="neon" onclick="setColorTheme('neon')">
               <div class="preview" style="background:linear-gradient(90deg,#f0f,#0ff,#f0f);"></div>
               <div class="name">neon</div>
             </div>
-            <div class="theme-card" onclick="setColorTheme('fire')">
+            <div class="theme-card" data-theme="fire" onclick="setColorTheme('fire')">
               <div class="preview" style="background:linear-gradient(90deg,#ff4500,#ff8c00,#ffd700);"></div>
               <div class="name">fire</div>
             </div>
-            <div class="theme-card" onclick="setColorTheme('ocean')">
+            <div class="theme-card" data-theme="ocean" onclick="setColorTheme('ocean')">
               <div class="preview" style="background:linear-gradient(90deg,#00ffff,#4a9eff,#6a5acd);"></div>
               <div class="name">ocean</div>
             </div>
-            <div class="theme-card" onclick="setColorTheme('purple')">
+            <div class="theme-card" data-theme="purple" onclick="setColorTheme('purple')">
               <div class="preview" style="background:linear-gradient(90deg,#b87aff,#6a3aff);"></div>
               <div class="name">purple</div>
             </div>
-            <div class="theme-card" onclick="setColorTheme('rose')">
+            <div class="theme-card" data-theme="rose" onclick="setColorTheme('rose')">
               <div class="preview" style="background:linear-gradient(90deg,#ff6b9d,#ff9a8b);"></div>
               <div class="name">rose</div>
             </div>
-            <div class="theme-card" onclick="setColorTheme('mint')">
+            <div class="theme-card" data-theme="mint" onclick="setColorTheme('mint')">
               <div class="preview" style="background:linear-gradient(90deg,#00f5d4,#00bbf9);"></div>
               <div class="name">mint</div>
             </div>
-            <div class="theme-card" onclick="setColorTheme('gold')">
+            <div class="theme-card" data-theme="gold" onclick="setColorTheme('gold')">
               <div class="preview" style="background:linear-gradient(90deg,#ffd700,#ff8c00);"></div>
               <div class="name">gold</div>
             </div>
@@ -302,7 +302,7 @@
 <!-- Mobile keyboard activator -->
 <button class="keyboard-activator" id="keyboard-btn" onclick="focusInput()">⌨️</button>
 
-<!-- Hidden input (captures keystrokes on mobile) -->
+<!-- Hidden input -->
 <input type="text" id="hidden-input"
   style="position:fixed;top:-9999px;left:-9999px;opacity:0;height:1px;width:1px;"
   inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
