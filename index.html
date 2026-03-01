@@ -125,9 +125,18 @@
       </div>
     </div>
 
-    <!-- Language indicator (above typing area, monkeytype style) -->
-    <div class="lang-indicator" id="lang-indicator" onclick="openSettings()">
-      <span id="lang-indicator-text">english</span>
+    <!-- Language selector (above typing area, monkeytype style) -->
+    <div class="lang-dropdown-wrap" id="lang-dropdown-wrap">
+      <button class="lang-indicator-btn" id="lang-indicator-btn" onclick="toggleLangDropdown()">
+        <span id="lang-indicator-text">english</span>
+      </button>
+      <div class="lang-dropdown" id="lang-dropdown">
+        <div class="lang-search-wrap">
+          <span class="lang-search-icon">⌕</span>
+          <input class="lang-search" id="lang-search" type="text" placeholder="Language..." oninput="filterLangs(this.value)" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
+        </div>
+        <div class="lang-list" id="lang-list"></div>
+      </div>
     </div>
 
     <!-- Typing area -->
@@ -240,42 +249,7 @@
       </div>
     </div>
 
-    <!-- Language -->
-    <div class="setting-section">
-      <h3>◈ Language</h3>
-      <div class="lang-selector">
-        <button class="lang-btn active" onclick="setUILang('en',this)"  data-lang="en">english</button>
-        <button class="lang-btn"        onclick="setUILang('tr',this)"  data-lang="tr">türkçe</button>
-        <button class="lang-btn"        onclick="setUILang('az',this)"  data-lang="az">azərbaycan</button>
-        <button class="lang-btn"        onclick="setUILang('es',this)"  data-lang="es">español</button>
-        <button class="lang-btn"        onclick="setUILang('de',this)"  data-lang="de">deutsch</button>
-        <button class="lang-btn"        onclick="setUILang('fr',this)"  data-lang="fr">français</button>
-        <button class="lang-btn"        onclick="setUILang('it',this)"  data-lang="it">italiano</button>
-        <button class="lang-btn"        onclick="setUILang('pt',this)"  data-lang="pt">português</button>
-        <button class="lang-btn"        onclick="setUILang('ru',this)"  data-lang="ru">русский</button>
-        <button class="lang-btn"        onclick="setUILang('ja',this)"  data-lang="ja">日本語</button>
-        <button class="lang-btn"        onclick="setUILang('ko',this)"  data-lang="ko">한국어</button>
-        <button class="lang-btn"        onclick="setUILang('zh',this)"  data-lang="zh">中文</button>
-        <button class="lang-btn"        onclick="setUILang('ar',this)"  data-lang="ar">العربية</button>
-        <button class="lang-btn"        onclick="setUILang('hi',this)"  data-lang="hi">हिन्दी</button>
-        <button class="lang-btn"        onclick="setUILang('nl',this)"  data-lang="nl">nederlands</button>
-        <button class="lang-btn"        onclick="setUILang('pl',this)"  data-lang="pl">polski</button>
-        <button class="lang-btn"        onclick="setUILang('sv',this)"  data-lang="sv">svenska</button>
-        <button class="lang-btn"        onclick="setUILang('no',this)"  data-lang="no">norsk</button>
-        <button class="lang-btn"        onclick="setUILang('da',this)"  data-lang="da">dansk</button>
-        <button class="lang-btn"        onclick="setUILang('fi',this)"  data-lang="fi">suomi</button>
-        <button class="lang-btn"        onclick="setUILang('cs',this)"  data-lang="cs">čeština</button>
-        <button class="lang-btn"        onclick="setUILang('ro',this)"  data-lang="ro">română</button>
-        <button class="lang-btn"        onclick="setUILang('hu',this)"  data-lang="hu">magyar</button>
-        <button class="lang-btn"        onclick="setUILang('el',this)"  data-lang="el">ελληνικά</button>
-        <button class="lang-btn"        onclick="setUILang('id',this)"  data-lang="id">indonesia</button>
-        <button class="lang-btn"        onclick="setUILang('vi',this)"  data-lang="vi">tiếng việt</button>
-        <button class="lang-btn"        onclick="setUILang('th',this)"  data-lang="th">ภาษาไทย</button>
-        <button class="lang-btn"        onclick="setUILang('uk',this)"  data-lang="uk">українська</button>
-        <button class="lang-btn"        onclick="setUILang('fa',this)"  data-lang="fa">فارسی</button>
-        <button class="lang-btn"        onclick="setUILang('he',this)"  data-lang="he">עברית</button>
-      </div>
-    </div>
+
 
     <!-- Custom Text -->
     <div class="setting-section">
