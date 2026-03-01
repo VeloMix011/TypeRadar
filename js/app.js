@@ -240,9 +240,7 @@
     }
     if (mode === 'custom') return customText.trim().split(/\s+/);
     if (mode === 'zen') {
-      // Zen starts with empty display — words appear one line at a time via padding
-      var zlist = WORDS[uiLang] || WORDS.en;
-      return Array.from({ length: 60 }, function() { return zlist[Math.floor(Math.random() * zlist.length)]; });
+      return []; // zen: no pre-generated words, user types freely
     }
     var list2 = WORDS[uiLang] || WORDS.en;
     var count = mode === 'words' ? 30 : 50;
@@ -264,6 +262,15 @@
     var inner = document.getElementById('words-inner');
     inner.style.top = '0px';
     inner.innerHTML = '';
+    if (mode === 'zen') {
+      // Zen: start with one empty word span for cursor anchor
+      var emptyWord = document.createElement('span');
+      emptyWord.className = 'word';
+      emptyWord.id = 'word-0';
+      inner.appendChild(emptyWord);
+      currentWordIndex = 0;
+      return;
+    }
     words.forEach(function(word, wi) {
       var wordEl = document.createElement('span');
       wordEl.className = 'word';
@@ -625,6 +632,28 @@
 
     if (key === 'Backspace') {
       if (useConfidence) return true;
+      if (mode === 'zen') {
+        if (currentInput.length > 0) {
+          // Remove last letter element from current word
+          var wordEl = document.getElementById('word-' + currentWordIndex);
+          if (wordEl && wordEl.lastChild) wordEl.removeChild(wordEl.lastChild);
+          currentInput = currentInput.slice(0, -1);
+          positionCursor();
+        } else if (currentWordIndex > 0) {
+          // Go back to previous word
+          var inner = document.getElementById('words-inner');
+          var emptyWord = document.getElementById('word-' + currentWordIndex);
+          if (emptyWord) inner.removeChild(emptyWord);
+          currentWordIndex--;
+          var prevWord = document.getElementById('word-' + currentWordIndex);
+          if (prevWord) {
+            // Rebuild currentInput from prev word letters
+            currentInput = Array.from(prevWord.querySelectorAll('.zen-letter')).map(function(l){ return l.textContent; }).join('');
+          }
+          positionCursor();
+        }
+        return true;
+      }
       if (currentInput.length > 0) {
         var deleteIndex = currentInput.length - 1;
         animateLetter(deleteIndex, 'delete');
@@ -658,6 +687,19 @@
     }
 
     if (key === ' ') {
+      if (mode === 'zen') {
+        if (currentInput.length === 0) return true;
+        // Start new word
+        currentInput = '';
+        currentWordIndex++;
+        var inner = document.getElementById('words-inner');
+        var newWordEl = document.createElement('span');
+        newWordEl.className = 'word';
+        newWordEl.id = 'word-' + currentWordIndex;
+        inner.appendChild(newWordEl);
+        positionCursor();
+        return true;
+      }
       if (currentInput.length === 0) return true;
       var wasCorrect = (currentInput === wordStr);
       if (wasCorrect && wordHistory.length > 0) wordHistory[wordHistory.length - 1].locked = true;
@@ -705,6 +747,18 @@
     }
 
     if (key.length === 1) {
+      if (mode === 'zen') {
+        // Zen: just render typed chars, no word list, no right/wrong
+        var wordEl = document.getElementById('word-' + currentWordIndex);
+        if (!wordEl) return true;
+        var letter = document.createElement('span');
+        letter.className = 'letter zen-letter';
+        letter.textContent = key;
+        wordEl.appendChild(letter);
+        currentInput += key;
+        positionCursor();
+        return true;
+      }
       if (currentInput.length >= wordStr.length + 5) return true;
       var newIndex = currentInput.length;
       if (newIndex < wordStr.length && key !== wordStr[newIndex]) {
