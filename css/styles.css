@@ -365,6 +365,42 @@ main {
   transform: translateY(0.1em);
 }
 
+
+/* ─── LANGUAGE INDICATOR (above typing area) ────────────────────────────── */
+.lang-indicator {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+#lang-indicator-text {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.75rem;
+  color: var(--muted);
+  letter-spacing: 0.08em;
+  transition: color 0.18s;
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+#lang-indicator-text:hover { color: var(--text); }
+
+/* ─── REFRESH BUTTON (below typing area) ───────────────────────────────── */
+.refresh-btn {
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: color 0.18s, transform 0.2s;
+  margin-top: 4px;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+.refresh-btn:hover { color: var(--text); transform: rotate(180deg); }
+
 /* ─── CLICK HINT ──────────────────────────────────────────────────────────── */
 .click-hint {
   margin-top: 20px;
@@ -627,7 +663,14 @@ footer kbd {
 .theme-card .preview { width: 100%; height: 30px; border-radius: 6px; margin-bottom: 8px; }
 .theme-card .name { font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; }
 
-.lang-selector { display: flex; gap: 10px; margin-top: 10px; flex-wrap: wrap; }
+.lang-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding: 4px;
+}
 .lang-btn {
   flex: 1; min-width: 80px;
   background: var(--surface2);
