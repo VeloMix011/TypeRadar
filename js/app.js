@@ -464,6 +464,9 @@
     root.style.setProperty('--glow', `rgba(${r},${g},${b},0.18)`);
   }
 
+  // Apply default dark theme immediately — before any localStorage overrides
+  applyThemeVars(currentBgTheme);
+
   window.setTheme = function(el) {
     // Legacy: header theme dots still work as bg theme shortcuts
     document.querySelectorAll('.theme-dot').forEach(d => d.classList.remove('active'));
@@ -634,6 +637,8 @@
   // ─── LOAD SETTINGS ────────────────────────────────────────────────────────────
   function loadSettings() {
     try {
+      // Clear legacy body class themes
+      document.body.className = '';
       const savedText = localStorage.getItem('typeradar_custom_text');
       if (savedText) {
         customText = savedText;
