@@ -905,10 +905,18 @@ window.doSignUp=async function(){
   }
 };
 
-window.doSignOut=async function(){
-  await sb.auth.signOut();
-  currentUser=null;currentProfile=null;
-  updateAuthUI();closeAuth();
+window.doSignOut = async function() {
+  try {
+    await sb.auth.signOut();
+  } catch(e) { 
+    console.log(e); 
+  }
+  currentUser = null;
+  currentProfile = null;
+  updateAuthUI();
+  closeAuth();
+  // Sayfayı yenile ki temiz başlasın
+  setTimeout(() => window.location.reload(), 300);
 };
 
 async function loadProfile(userId){
