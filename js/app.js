@@ -936,11 +936,13 @@ window.doSignUp=async function(){
 };
 
 window.doSignOut=function(){
-  // localStorage'ı hemen temizle
-  try{localStorage.clear();sessionStorage.clear();}catch(e){}
-  // Supabase signOut'u arka planda başlat ama BEKLEMEDEN sayfayı yenile
+  // Sadece Supabase session key'lerini sil, diğer ayarları koru
+  try{
+    Object.keys(localStorage)
+      .filter(k=>k.startsWith('sb-')||k.includes('supabase'))
+      .forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
   try{sb.auth.signOut();}catch(e){}
-  // Direkt yönlendir
   window.location.href=window.location.origin+window.location.pathname;
 };
 
