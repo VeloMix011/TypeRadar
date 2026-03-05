@@ -226,15 +226,16 @@ main {
 .cursor-line {
   display: inline-block;
   width: 2.5px;
-  height: 1.2em;
+  height: 1.25em;
   background: var(--cursor);
   position: absolute;
   border-radius: 2px;
-  box-shadow: 0 0 10px var(--accent), 0 0 20px var(--glow);
-  animation: blink 0.9s step-end infinite;
+  box-shadow: 0 0 8px var(--cursor), 0 0 16px var(--glow);
+  animation: cursorBlink 1s ease-in-out infinite;
   pointer-events: none;
-  z-index: 5;
+  z-index: 10;
   transition: left 0.08s cubic-bezier(0.1,0.8,0.2,1), top 0.12s ease, background 0.4s;
+  will-change: opacity;
 }
 
 /* ─── ZEN LETTERS ─────────────────────────────────────────────────────────── */
@@ -593,7 +594,15 @@ footer kbd {
   0%,100%{transform:scale(0.8);opacity:0.8}
   50%{transform:scale(1.2);opacity:0.4}
 }
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ─── CURSOR BLINK — düzeltildi ───────────────────────────────────────────── */
+@keyframes cursorBlink {
+  0%   { opacity: 1; }
+  45%  { opacity: 1; }
+  55%  { opacity: 0; }
+  100% { opacity: 0; }
+}
+
 @keyframes pulse { 0%,100%{opacity:0.6} 50%{opacity:0.3} }
 @keyframes fadeUp { from{opacity:0;transform:translateY(24px)} to{opacity:1;transform:translateY(0)} }
 @keyframes modalPop { from{opacity:0;transform:scale(0.95)} to{opacity:1;transform:scale(1)} }
