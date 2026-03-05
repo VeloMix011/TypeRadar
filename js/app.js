@@ -929,19 +929,12 @@ window.doSignUp=async function(){
   }catch(e){err.textContent='Error: '+e.message;}
 };
 
-window.doSignOut=async function(){
-  const btn=document.querySelector(".auth-submit.danger");
-  if(btn){btn.textContent="signing out...";btn.disabled=true;}
-  try{
-    await sb.auth.signOut({scope:"global"});
-  }catch(e){console.log("signout err",e);}
-  try{
-    localStorage.clear();
-    sessionStorage.clear();
-    const keys=Object.keys(localStorage).filter(k=>k.startsWith("sb-"));
-    keys.forEach(k=>localStorage.removeItem(k));
-  }catch(e){}
-  currentUser=null;currentProfile=null;
+window.doSignOut=function(){
+  // localStorage'ı hemen temizle
+  try{localStorage.clear();sessionStorage.clear();}catch(e){}
+  // Supabase signOut'u arka planda başlat ama BEKLEMEDEN sayfayı yenile
+  try{sb.auth.signOut();}catch(e){}
+  // Direkt yönlendir
   window.location.href=window.location.origin+window.location.pathname;
 };
 
