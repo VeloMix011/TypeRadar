@@ -1,6 +1,6 @@
 /**
  * TypeRadar — Main Application Logic
- * Fixed: Zen mode, text effects, font selector, settings overhaul
+ * Fixed: cursor blink, meta tags
  */
 
 (function () {
@@ -36,8 +36,6 @@
   var audioCtx = null;
   var lineH2 = 0;
 
-  // Flag to prevent double-processing of Backspace/Space
-  // We use a timestamp: if < 20ms since last processed, skip
   let lastKeyTime = 0;
 
   const hiddenInput = document.getElementById('hidden-input');
@@ -723,14 +721,28 @@
       inner.appendChild(wordEl);
     });
 
+    // Cursor'ı words-inner'a ekle (her buildDisplay'de yeniden)
+    var cursor = document.createElement('div');
+    cursor.className = 'cursor-line';
+    cursor.id = 'cursor';
+    inner.appendChild(cursor);
+
     updateLineH();
     updateWordProgress();
   }
 
-  // ─── CURSOR ───────────────────────────────────────────────────────────────────
-  // Cursor is a child of #words-inner (position:relative).
-  // Letter offsets are relative to their parent word span, which is relative to
-  // words-inner — so: left = word.offsetLeft + letter.offsetLeft + letter.offsetWidth
+  // ─── CURSOR BLINK RESET ───────────────────────────────────────────────────────
+  function resetCursorBlink() {
+    var cursor = document.getElementById('cursor');
+    if (!cursor) return;
+    // Animasyonu sıfırla — reflow trick
+    cursor.style.animation = 'none';
+    cursor.style.opacity = '1';
+    void cursor.offsetWidth; // reflow tetikle
+    cursor.style.animation = 'cursorBlink 1s ease-in-out infinite';
+  }
+
+  // ─── CURSOR POSITION ──────────────────────────────────────────────────────────
   function positionCursor() {
     var cursor = document.getElementById('cursor');
     var inner  = document.getElementById('words-inner');
@@ -739,11 +751,9 @@
 
     updateLineH();
 
-    // Vertical offset: center cursor within the line-height leading
-    // lineH2 = actual line height in px; cursor height ≈ 1em = fontSize
     var display = document.getElementById('words-display');
     var fontSize = display ? parseFloat(getComputedStyle(display).fontSize) : lineH2 / 2.4;
-    var vOffset = (lineH2 - fontSize) / 2;  // centers 1em cursor in lineH2 row
+    var vOffset = (lineH2 - fontSize) / 2;
 
     var letters = mode === 'zen'
       ? wordEl.querySelectorAll('.zen-letter')
@@ -775,7 +785,6 @@
           left = 0; top = 0;
         }
       } else {
-        // Before any input: cursor sits left of first letter
         if (letters.length > 0) {
           var fl = letters[0];
           left = wordEl.offsetLeft + fl.offsetLeft;
@@ -800,7 +809,6 @@
     cursor.style.left = left + 'px';
     cursor.style.top  = (top + vOffset) + 'px';
 
-    // Scroll down one line when cursor reaches 3rd line
     if (lineH2 > 0 && top >= lineH2 * 2.1) {
       var currentTop = parseInt(inner.style.top || '0', 10);
       inner.style.top  = (currentTop - lineH2) + 'px';
@@ -1110,9 +1118,10 @@
     buildDisplay();
     setTimeout(() => {
       positionCursor();
+      resetCursorBlink(); // ← cursor animasyonunu sıfırla
       hiddenInput.value = '';
       if (!finished) setTimeout(focusInput, 100);
-    }, 50);
+    }, 60);
   };
 
   // ─── KEY PROCESSING ───────────────────────────────────────────────────────────
@@ -1288,7 +1297,6 @@
     if (warning) warning.classList.toggle('visible', !!capsOn);
   });
 
-  // ─── MAIN KEYDOWN — handles ALL key routing including Backspace/Space ─────────
   document.addEventListener('keydown', function(e) {
     if (document.getElementById('settings-modal').style.display === 'flex') {
       if (e.key === 'Escape') { closeSettings(); e.preventDefault(); }
@@ -1318,7 +1326,6 @@
       'Enter','F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'];
     if (ignored.includes(key)) return;
 
-    // For Backspace and Space: process here and prevent hiddenInput from also firing
     if (key === 'Backspace' || key === ' ') {
       e.preventDefault();
       if (!finished) {
@@ -1328,23 +1335,15 @@
       return;
     }
 
-    // For printable characters: let the hidden input's `input` event handle it
-    // (we preventDefault to stop double-fire on desktop)
     e.preventDefault();
     if (!finished) processKey(key);
   });
 
   // ─── HIDDEN INPUT ─────────────────────────────────────────────────────────────
-  // `input` event fires on mobile when the OS keyboard inserts/deletes a character.
-  // On desktop this fires too, but timestamp check prevents double-processing.
-  // We intentionally do NOT add a separate `keydown` on hiddenInput —
-  // that caused double-fire because document keydown already handled it.
   hiddenInput.addEventListener('input', function(e) {
     if (finished) return;
-    // If a document keydown just fired within 30ms, skip (desktop dedup)
     if (Date.now() - lastKeyTime < 30) return;
 
-    // inputType tells us what happened (works on modern mobile Chrome/Safari)
     var itype = e.inputType || '';
 
     if (itype === 'deleteContentBackward' || itype === 'deleteWordBackward') {
@@ -1403,7 +1402,10 @@
     updateUILanguage();
     applyStatsLayout();
     updateLineH();
-    positionCursor();
+    setTimeout(() => {
+      positionCursor();
+      resetCursorBlink();
+    }, 100);
     if (!(('ontouchstart' in window) || navigator.maxTouchPoints > 0)) {
       setTimeout(() => hiddenInput.focus(), 300);
     }
