@@ -905,27 +905,33 @@ window.doSignUp=async function(){
   if(!email||!pass||pass.length<6){err.textContent='Fill all fields (password min 6 chars)';return;}
   err.textContent='creating account...';
   try{
-    // Check username not taken
-    const {data:existing}=await sb.from('profiles').select('id').eq('username',username).maybeSingle();
-    if(existing){err.textContent='Username already taken';return;}
-
-    const {data,error}=await sb.auth.signUp({email,password:pass,options:{emailRedirectTo:window.location.origin}});
+    // Step 1: sign up
+    const {data,error}=await sb.auth.signUp({email,password:pass});
     if(error){err.textContent=error.message;return;}
-    if(data.user){
-      // Insert profile immediately (works even if email not confirmed yet)
-      const {error:pe}=await sb.from('profiles').insert({id:data.user.id,username});
-      if(pe&&!pe.message.includes('duplicate')){err.textContent='Profile error: '+pe.message;return;}
-      // Try to sign in immediately (works if email confirmation is OFF)
-      const {data:sinData}=await sb.auth.signInWithPassword({email,password:pass});
-      if(sinData&&sinData.user){
-        currentUser=sinData.user;
-        await loadProfile(sinData.user.id);
-        err.textContent='';
-        closeAuth();
-      }else{
-        err.textContent='✓ Account created! Check email to confirm then sign in.';
+    if(!data.user){err.textContent='Signup failed, try again';return;}
+
+    // Step 2: sign in to get valid session
+    const {data:sinData,error:sinErr}=await sb.auth.signInWithPassword({email,password:pass});
+    if(sinErr||!sinData||!sinData.user){
+      err.textContent='Account created! Please sign in.';return;
+    }
+
+    // Step 3: insert profile with the authenticated session
+    const uid=sinData.user.id;
+    const {error:pe}=await sb.from('profiles').insert({id:uid,username});
+    if(pe){
+      if(pe.message.includes('duplicate')||pe.message.includes('unique')){
+        // Profile already exists, just load it
+      } else {
+        err.textContent='Profile error: '+pe.message;return;
       }
     }
+
+    // Step 4: load and show
+    currentUser=sinData.user;
+    await loadProfile(uid);
+    err.textContent='';
+    closeAuth();
   }catch(e){err.textContent='Error: '+e.message;}
 };
 
