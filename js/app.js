@@ -882,10 +882,18 @@ window.doSignIn=async function(){
   const email=document.getElementById('signin-email').value.trim();
   const pass=document.getElementById('signin-pass').value;
   const err=document.getElementById('signin-err');
+  if(!email||!pass){err.textContent='Please fill all fields';return;}
   err.textContent='signing in...';
-  const {error}=await sb.auth.signInWithPassword({email,password:pass});
-  if(error){err.textContent=error.message;}
-  else{err.textContent='';closeAuth();}
+  try{
+    const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error){err.textContent=error.message;return;}
+    if(data.user){
+      currentUser=data.user;
+      await loadProfile(data.user.id);
+      err.textContent='';
+      closeAuth();
+    }
+  }catch(e){err.textContent='Network error, try again';}
 };
 
 window.doSignUp=async function(){
@@ -893,30 +901,41 @@ window.doSignUp=async function(){
   const email=document.getElementById('signup-email').value.trim();
   const pass=document.getElementById('signup-pass').value;
   const err=document.getElementById('signup-err');
-  if(!username||username.length<3){err.textContent='Username must be at least 3 characters';return;}
-  if(!email||!pass){err.textContent='Please fill all fields';return;}
+  if(!username||username.length<3){err.textContent='Username must be at least 3 chars';return;}
+  if(!email||!pass||pass.length<6){err.textContent='Fill all fields (password min 6 chars)';return;}
   err.textContent='creating account...';
-  const {data,error}=await sb.auth.signUp({email,password:pass});
-  if(error){err.textContent=error.message;return;}
-  if(data.user){
-    const {error:pe}=await sb.from('profiles').insert({id:data.user.id,username});
-    if(pe){err.textContent='Account created but profile error: '+pe.message;}
-    else{err.textContent='✓ check your email to confirm!';setTimeout(closeAuth,2000);}
-  }
+  try{
+    // Check username not taken
+    const {data:existing}=await sb.from('profiles').select('id').eq('username',username).maybeSingle();
+    if(existing){err.textContent='Username already taken';return;}
+
+    const {data,error}=await sb.auth.signUp({email,password:pass,options:{emailRedirectTo:window.location.origin}});
+    if(error){err.textContent=error.message;return;}
+    if(data.user){
+      // Insert profile immediately (works even if email not confirmed yet)
+      const {error:pe}=await sb.from('profiles').insert({id:data.user.id,username});
+      if(pe&&!pe.message.includes('duplicate')){err.textContent='Profile error: '+pe.message;return;}
+      // Try to sign in immediately (works if email confirmation is OFF)
+      const {data:sinData}=await sb.auth.signInWithPassword({email,password:pass});
+      if(sinData&&sinData.user){
+        currentUser=sinData.user;
+        await loadProfile(sinData.user.id);
+        err.textContent='';
+        closeAuth();
+      }else{
+        err.textContent='✓ Account created! Check email to confirm then sign in.';
+      }
+    }
+  }catch(e){err.textContent='Error: '+e.message;}
 };
 
-window.doSignOut = async function() {
-  try {
-    await sb.auth.signOut();
-  } catch(e) { 
-    console.log(e); 
-  }
-  currentUser = null;
-  currentProfile = null;
+window.doSignOut=async function(){
+  try{await sb.auth.signOut();}catch(e){console.log('signout err',e);}
+  currentUser=null;currentProfile=null;
   updateAuthUI();
   closeAuth();
-  // Sayfayı yenile ki temiz başlasın
-  setTimeout(() => window.location.reload(), 300);
+  // Force page reload to clear all state
+  setTimeout(()=>window.location.reload(),200);
 };
 
 async function loadProfile(userId){
@@ -954,10 +973,13 @@ function updateAuthUI(){
 
 async function saveResult(wpm,acc,raw,consistency){
   if(!currentUser)return;
-  await sb.from('results').insert({
-    user_id:currentUser.id,wpm,accuracy:acc,raw_wpm:raw,
-    mode,time_seconds:mode==='time'?totalTime:wpmTick,language:uiLang,consistency
-  });
+  try{
+    const {error}=await sb.from("results").insert({
+      user_id:currentUser.id,wpm:wpm||0,accuracy:acc||0,raw_wpm:raw||0,
+      mode:mode||"time",time_seconds:mode==="time"?totalTime:(wpmTick||0),language:uiLang||"en",consistency:consistency||0
+    });
+    if(error)console.log("saveResult error:",error.message);
+  }catch(e){console.log("saveResult exception:",e);}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
