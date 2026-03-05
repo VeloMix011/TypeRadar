@@ -935,7 +935,7 @@ window.doSignOut=async function(){
   updateAuthUI();
   closeAuth();
   // Force page reload to clear all state
-  setTimeout(()=>window.location.reload(),200);
+  setTimeout(()=>{window.location.href=window.location.origin+window.location.pathname;},200);
 };
 
 async function loadProfile(userId){
