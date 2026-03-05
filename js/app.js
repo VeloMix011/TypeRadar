@@ -930,12 +930,19 @@ window.doSignUp=async function(){
 };
 
 window.doSignOut=async function(){
-  try{await sb.auth.signOut();}catch(e){console.log('signout err',e);}
+  const btn=document.querySelector(".auth-submit.danger");
+  if(btn){btn.textContent="signing out...";btn.disabled=true;}
+  try{
+    await sb.auth.signOut({scope:"global"});
+  }catch(e){console.log("signout err",e);}
+  try{
+    localStorage.clear();
+    sessionStorage.clear();
+    const keys=Object.keys(localStorage).filter(k=>k.startsWith("sb-"));
+    keys.forEach(k=>localStorage.removeItem(k));
+  }catch(e){}
   currentUser=null;currentProfile=null;
-  updateAuthUI();
-  closeAuth();
-  // Force page reload to clear all state
-  setTimeout(()=>{window.location.href=window.location.origin+window.location.pathname;},200);
+  window.location.href=window.location.origin+window.location.pathname;
 };
 
 async function loadProfile(userId){
@@ -1193,6 +1200,9 @@ function loadSettings(){
    SUPABASE AUTH LISTENER
 ═══════════════════════════════════════════════════════════════════════ */
 sb.auth.onAuthStateChange(async(event,session)=>{
+  if(event==="SIGNED_OUT"){
+    currentUser=null;currentProfile=null;updateAuthUI();return;
+  }
   if(session&&session.user){
     currentUser=session.user;
     await loadProfile(session.user.id);
