@@ -6,7 +6,14 @@
 ═══════════════════════════════════════════════════════════════════════ */
 const SUPABASE_URL  = 'https://diqzysrdzzdinjjydtsk.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpcXp5c3JkenpkaW5qanlkdHNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MjkwNTEsImV4cCI6MjA4ODMwNTA1MX0.t-uJmkQtEwJwuq7SWWCQGp3NbjrI3VJF1f-Qh8nLV9g';
-const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON);
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
+  auth: {
+    persistSession: true,
+    storageKey: "typeradar_auth",
+    autoRefreshToken: true,
+    detectSessionInUrl: false
+  }
+});
 
 /* ═══════════════════════════════════════════════════════════════════════
    STATE
@@ -935,14 +942,8 @@ window.doSignUp=async function(){
   }catch(e){err.textContent='Error: '+e.message;}
 };
 
-window.doSignOut=function(){
-  // Sadece Supabase session key'lerini sil, diğer ayarları koru
-  try{
-    Object.keys(localStorage)
-      .filter(k=>k.startsWith('sb-')||k.includes('supabase'))
-      .forEach(k=>localStorage.removeItem(k));
-  }catch(e){}
-  try{sb.auth.signOut();}catch(e){}
+window.doSignOut=async function(){
+  try{await sb.auth.signOut();}catch(e){}
   window.location.href=window.location.origin+window.location.pathname;
 };
 
