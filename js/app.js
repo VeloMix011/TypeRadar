@@ -24,7 +24,7 @@ let correctWords = 0, wrongWords = 0, totalErrors = 0;
 let started = false, finished = false;
 let timerInterval = null, timeLeft = 30, totalTime = 30;
 let mode = 'time', isZen = false;
-let wpmHistory = [], rawHistory = [], wpmTick = 0, wordHistory = [];
+let wpmHistory = [], rawHistory = [], errHistory = [], wpmTick = 0, wordHistory = [];
 let uiLang = 'en', colorTheme = 'classic', customText = 'The five boxing wizards jump quickly.';
 let usePunct = false, useNumbers = false, useBlind = false, useConfidence = false;
 let quoteLen = 'all', soundEffect = 'off', currentFont = 'JetBrains Mono';
@@ -71,21 +71,17 @@ function applyFont(name){
   try{localStorage.setItem('typeradar_font',name);}catch(e){}
 }
 
-// FIX 1: selectFont fonksiyonunda tırnak sorunu — data-font eşleşmesi için
-//         escapelenmiş string yerine güvenli seçici kullanıyoruz
 window.selectFont=function(name){
   const f=FONTS.find(function(x){return x.name===name;});
   if(f)loadGoogleFont(f);
   applyFont(name);
   document.querySelectorAll('.font-card').forEach(function(c){c.classList.remove('active');});
-  // FIX 2: querySelectorAll ile dolaşarak eşleştirme (özel karakterli font adları için güvenli)
   document.querySelectorAll('.font-card').forEach(function(c){
     if(c.getAttribute('data-font')===name) c.classList.add('active');
   });
   setTimeout(positionCursor,200);
 };
 
-// FIX 3: buildFontGrid — onclick handler'da tırnak sorunu (tek tırnak içinde tek tırnaklı font adları)
 function buildFontGrid(){
   var g=document.getElementById('font-grid');if(!g)return;
   g.innerHTML='';
@@ -155,7 +151,6 @@ function applyThemeVars(key){
 }
 applyThemeVars(currentBgTheme);
 
-// FIX 4: setBgTheme — tema adlarında boşluk olabilir, querySelectorAll ile güvenli eşleşme
 window.setBgTheme=function(key){
   currentBgTheme=key; document.body.className=''; applyThemeVars(key);
   document.querySelectorAll('#bg-theme-selector .theme-card').forEach(function(c){c.classList.remove('active');});
@@ -166,8 +161,6 @@ window.setBgTheme=function(key){
   setTimeout(positionCursor,50);
 };
 
-// FIX 5: buildBgThemeGrid — innerHTML ile dinamik onclick'te tırnak/boşluk sorunu
-// addEventListener ile güvenli hale getirildi
 function buildBgThemeGrid(){
   var g=document.getElementById('bg-theme-selector');if(!g)return;
   g.innerHTML='';
@@ -206,7 +199,6 @@ var LANGS=[
   {code:'id',name:'indonesia'},{code:'vi',name:'tiếng việt'},{code:'uk',name:'українська'},
 ];
 
-// FIX 6: buildLangList — innerHTML içindeki onclick'te tırnak sorunu düzeltildi
 function buildLangList(filter){
   var list=document.getElementById('lang-list');if(!list)return;
   var items=filter?LANGS.filter(function(l){return l.name.toLowerCase().includes(filter.toLowerCase())||l.code.includes(filter);}):LANGS;
@@ -337,10 +329,7 @@ var PUNCTS=[',','.','!','?',';',':'];
 function generateWords(seedWords){
   if(seedWords)return seedWords;
   if(mode==='quote'){
-    // FIX 7: QUOTES tanımlanmamış olabilir — kontrol eklendi
-    if(typeof QUOTES==='undefined'||!QUOTES||!QUOTES.length){
-      return ['quotes','not','loaded','yet'];
-    }
+    if(typeof QUOTES==='undefined'||!QUOTES||!QUOTES.length){return ['quotes','not','loaded','yet'];}
     var pool=QUOTES;
     if(quoteLen==='short')pool=QUOTES.filter(function(q){return q.split(' ').length<=8;});
     if(quoteLen==='medium')pool=QUOTES.filter(function(q){var n=q.split(' ').length;return n>8&&n<=15;});
@@ -351,10 +340,7 @@ function generateWords(seedWords){
   }
   if(mode==='custom')return customText.trim().split(/\s+/);
   if(mode==='zen')return[];
-  // FIX 8: WORDS tanımlanmamış olabilir — kontrol eklendi
-  if(typeof WORDS==='undefined'||!WORDS){
-    return ['words','not','loaded','yet'];
-  }
+  if(typeof WORDS==='undefined'||!WORDS){return ['words','not','loaded','yet'];}
   var list=WORDS[uiLang]||WORDS.en||['the','quick','brown','fox','jumps'];
   var count=mode==='words'?30:50;
   return Array.from({length:count},function(){
@@ -374,7 +360,7 @@ function generateWords(seedWords){
 function buildDisplay(seedWords){
   words=generateWords(seedWords);
   var inner=document.getElementById('words-inner');
-  if(!inner)return; // FIX 9: null kontrolü
+  if(!inner)return;
   inner.style.top='0px';inner.innerHTML='';
 
   if(mode==='zen'){
@@ -399,9 +385,6 @@ function buildDisplay(seedWords){
   updateWordProgress();
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   LINE HEIGHT
-═══════════════════════════════════════════════════════════════════════ */
 function updateLineH(){
   var d=document.getElementById('words-display');if(!d)return;
   var lh=parseFloat(getComputedStyle(d).lineHeight);
@@ -409,17 +392,11 @@ function updateLineH(){
   lineH2=isNaN(lh)?fs*2.4:lh;
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   WORD HIGHLIGHT
-═══════════════════════════════════════════════════════════════════════ */
 function highlightWord(idx){
   document.querySelectorAll('.word').forEach(function(w){w.classList.remove('active-word');});
   var w=document.getElementById('word-'+idx);if(w)w.classList.add('active-word');
 }
 
-/* ═══════════════════════════════════════════════════════════════════════
-   CURSOR POSITION
-═══════════════════════════════════════════════════════════════════════ */
 function positionCursor(){
   var cursor=document.getElementById('cursor');
   var inner=document.getElementById('words-inner');
@@ -430,7 +407,6 @@ function positionCursor(){
   var display=document.getElementById('words-display');
   var fontSize=display?parseFloat(getComputedStyle(display).fontSize):lineH2/2.4;
   var isUnderline=(caretStyle==='underline');
-  // FIX 10: isBlock değişkeni tanımlanıp kullanılmıyordu, kaldırıldı (kullanılmayan değişken)
   var vOffset=isUnderline?(lineH2-fontSize*0.1)/2:(lineH2-fontSize*1.1)/2;
 
   var letters=mode==='zen'?wordEl.querySelectorAll('.zen-letter'):wordEl.querySelectorAll('.letter');
@@ -457,8 +433,8 @@ function positionCursor(){
     }
   }else{
     if(letters.length>0){
-      var idx=Math.min(currentInput.length-1,letters.length-1);
-      var lt=letters[idx];
+      var idx2=Math.min(currentInput.length-1,letters.length-1);
+      var lt=letters[idx2];
       left=wordEl.offsetLeft+lt.offsetLeft+lt.offsetWidth;top=wordEl.offsetTop+lt.offsetTop;
     }else{left=wordEl.offsetLeft;top=wordEl.offsetTop;}
   }
@@ -466,7 +442,6 @@ function positionCursor(){
   cursor.style.left=left+'px';
   cursor.style.top=(top+vOffset)+'px';
 
-  // FIX 11: lineH2 sıfır olduğunda sonsuz scroll'u engelle
   if(lineH2>0&&top>=lineH2*2.1){
     var currentTop=parseInt(inner.style.top||'0',10);
     inner.style.top=(currentTop-lineH2)+'px';
@@ -490,7 +465,6 @@ function animateLetter(li,type){
   var letters=we.querySelectorAll('.letter');
   if(li>=0&&li<letters.length){
     var l=letters[li];
-    // FIX 12: spread operator (...) yerine apply/concat kullanıldı (eski tarayıcı uyumluluğu)
     var removeClasses=['correct','wrong','deleting'].concat(THEME_CLASSES);
     removeClasses.forEach(function(cls){l.classList.remove(cls);});
     if(type==='add'){
@@ -558,7 +532,7 @@ function startTimer(){
   if(useBlind)typingContainer.classList.add('blind-mode');
   var ls=document.getElementById('live-stats');if(ls)ls.classList.add('visible');
   var ch=document.getElementById('click-hint');if(ch)ch.style.opacity='0.3';
-  wpmTick=0;wpmHistory=[];rawHistory=[];
+  wpmTick=0;wpmHistory=[];rawHistory=[];errHistory=[];
   if(timerInterval)clearInterval(timerInterval);
   timerInterval=setInterval(function(){
     if(finished)return;
@@ -579,12 +553,13 @@ function startTimer(){
     var elapsed=mode==='time'?(totalTime-timeLeft):wpmTick;
     var raw=elapsed>0?Math.round((totalTyped/5)/(elapsed/60)):0;
     rawHistory.push(raw);
+    errHistory.push(totalErrors);
     updateLiveStats();
   },1000);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   CONSISTENCY CALCULATION
+   CONSISTENCY
 ═══════════════════════════════════════════════════════════════════════ */
 function calcConsistency(arr){
   if(!arr||arr.length<2)return 100;
@@ -600,7 +575,7 @@ function calcConsistency(arr){
 ═══════════════════════════════════════════════════════════════════════ */
 function launchConfetti(){
   var canvas=document.getElementById('confetti-canvas');
-  if(!canvas)return; // FIX 13: null kontrolü
+  if(!canvas)return;
   canvas.style.display='block';
   var ctx=canvas.getContext('2d');
   canvas.width=window.innerWidth;canvas.height=window.innerHeight;
@@ -665,7 +640,6 @@ function endTest(){
   var acc=total>0?Math.round((totalCorrectChars/total)*100):100;
   var consistency=calcConsistency(rawHistory);
 
-  // FIX 14: getElementById null kontrolü eklendi
   var resWpm=document.getElementById('res-wpm');if(resWpm)resWpm.textContent=wpm;
   var resAcc=document.getElementById('res-acc');if(resAcc)resAcc.textContent=acc+'%';
   var resRaw=document.getElementById('res-raw');if(resRaw)resRaw.textContent=rawWpm;
@@ -691,83 +665,144 @@ function endTest(){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   RESULT CHART
+   RESULT CHART — MonkeyType style
 ═══════════════════════════════════════════════════════════════════════ */
 function drawResultChart(){
   var canvas=document.getElementById('wpm-chart');
-  if(!canvas)return; // FIX 15: null kontrolü
+  if(!canvas)return;
   var wrapper=canvas.parentElement;
   if(!wrapper)return;
   var dpr=window.devicePixelRatio||1;
-  var W_css=wrapper.offsetWidth||640,H_css=160;
+  var W_css=wrapper.offsetWidth||700,H_css=220;
   canvas.style.width=W_css+'px';canvas.style.height=H_css+'px';
   canvas.width=W_css*dpr;canvas.height=H_css*dpr;
   var ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
   var W=W_css,H=H_css;
   ctx.clearRect(0,0,W,H);
 
-  var data=wpmHistory.length>0?wpmHistory:[0];
+  var wpmData=wpmHistory.length>0?wpmHistory:[0];
   var rawData=rawHistory.length>0?rawHistory:null;
-  var allVals=data.slice();
-  if(rawData)allVals=allVals.concat(rawData);
-  allVals.push(10);
-  var maxV=Math.max.apply(null,allVals);
-  var maxVR=Math.ceil(maxV/10)*10;
-  var pad={t:16,b:32,l:40,r:20};
+  var errData=errHistory.length>0?errHistory:null;
+
+  // Compute combined max for WPM axis
+  var allWpm=wpmData.slice();
+  if(rawData)allWpm=allWpm.concat(rawData);
+  allWpm.push(10);
+  var maxWpm=Math.max.apply(null,allWpm);
+  var maxWpmR=Math.ceil(maxWpm/10)*10;
+
+  // Compute max for errors axis
+  var maxErr=errData?Math.max.apply(null,errData.concat([1])):1;
+  var maxErrR=Math.ceil(maxErr);
+
+  var pad={t:20,b:36,l:44,r:44};
   var cW=W-pad.l-pad.r,cH=H-pad.t-pad.b;
-  var px=function(i){return pad.l+(data.length<=1?cW/2:(i/(data.length-1))*cW);};
-  var py=function(v){return pad.t+cH-(v/maxVR)*cH;};
 
+  var n=wpmData.length;
+  var px=function(i){return pad.l+(n<=1?cW/2:(i/(n-1))*cW);};
+  var py=function(v){return pad.t+cH-(v/maxWpmR)*cH;};
+  var pyErr=function(v){return pad.t+cH-(v/maxErrR)*cH;};
+
+  // ── grid lines ──
   ctx.font="11px 'JetBrains Mono', monospace";
-  ctx.textAlign='right';
-  var g,gVal,gY;
-  for(g=0;g<=4;g++){
-    gVal=Math.round((maxVR/4)*g);
-    gY=py(gVal);
+  for(var g=0;g<=5;g++){
+    var gVal=Math.round((maxWpmR/5)*g);
+    var gY=py(gVal);
     ctx.beginPath();ctx.moveTo(pad.l,gY);ctx.lineTo(W-pad.r,gY);
-    ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.stroke();
-    ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText(gVal,pad.l-6,gY+4);
-  }
-  ctx.textAlign='center';ctx.fillStyle='rgba(255,255,255,0.25)';
-  var xCount=Math.min(data.length,8);
-  var xi,xIdx;
-  for(xi=0;xi<xCount;xi++){
-    xIdx=Math.round((xi/Math.max(xCount-1,1))*(data.length-1));
-    ctx.fillText(xIdx+'s',px(xIdx),H-8);
+    ctx.strokeStyle='rgba(255,255,255,0.05)';ctx.lineWidth=1;ctx.stroke();
+    ctx.textAlign='right';ctx.fillStyle='rgba(255,255,255,0.25)';
+    ctx.fillText(gVal,pad.l-7,gY+4);
   }
 
-  var cpx2,fi,si,di;
+  // Right axis — errors
+  if(maxErrR>0){
+    for(var ge=0;ge<=maxErrR;ge++){
+      var geY=pyErr(ge);
+      ctx.textAlign='left';ctx.fillStyle='rgba(247,106,138,0.5)';
+      ctx.fillText(ge,W-pad.r+7,geY+4);
+    }
+  }
+
+  // ── x-axis labels ──
+  ctx.textAlign='center';ctx.fillStyle='rgba(255,255,255,0.2)';
+  var xCount=Math.min(n,10);
+  for(var xi=0;xi<xCount;xi++){
+    var xIdx=Math.round((xi/Math.max(xCount-1,1))*(n-1));
+    ctx.fillText((xIdx+1)+'s',px(xIdx),H-8);
+  }
+
+  // ── raw WPM line (grey) ──
   if(rawData&&rawData.length>1){
     ctx.beginPath();ctx.moveTo(px(0),py(rawData[0]));
-    for(var ri=1;ri<Math.min(rawData.length,data.length);ri++){
-      cpx2=px(ri-0.5);
-      ctx.bezierCurveTo(cpx2,py(rawData[ri-1]),cpx2,py(rawData[ri]),px(ri),py(rawData[ri]));
+    for(var ri=1;ri<Math.min(rawData.length,n);ri++){
+      var cpxR=px(ri-0.5);
+      ctx.bezierCurveTo(cpxR,py(rawData[ri-1]),cpxR,py(rawData[ri]),px(ri),py(rawData[ri]));
     }
-    ctx.strokeStyle='rgba(180,180,180,0.35)';ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
+    ctx.strokeStyle='rgba(200,200,200,0.28)';ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
   }
 
-  if(data.length>1){
+  // ── WPM area + line (accent color) ──
+  if(n>1){
+    // area fill
     var grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
-    grad.addColorStop(0,'rgba(124,106,247,0.25)');grad.addColorStop(1,'rgba(124,106,247,0.02)');
-    ctx.beginPath();ctx.moveTo(px(0),py(data[0]));
-    for(fi=1;fi<data.length;fi++){cpx2=px(fi-0.5);ctx.bezierCurveTo(cpx2,py(data[fi-1]),cpx2,py(data[fi]),px(fi),py(data[fi]));}
-    ctx.lineTo(px(data.length-1),H-pad.b);ctx.lineTo(px(0),H-pad.b);
+    grad.addColorStop(0,'rgba(124,106,247,0.22)');
+    grad.addColorStop(1,'rgba(124,106,247,0.01)');
+    ctx.beginPath();ctx.moveTo(px(0),py(wpmData[0]));
+    for(var fi=1;fi<n;fi++){var cpF=px(fi-0.5);ctx.bezierCurveTo(cpF,py(wpmData[fi-1]),cpF,py(wpmData[fi]),px(fi),py(wpmData[fi]));}
+    ctx.lineTo(px(n-1),H-pad.b);ctx.lineTo(px(0),H-pad.b);
     ctx.closePath();ctx.fillStyle=grad;ctx.fill();
-    ctx.beginPath();ctx.moveTo(px(0),py(data[0]));
-    for(si=1;si<data.length;si++){var sx=px(si-0.5);ctx.bezierCurveTo(sx,py(data[si-1]),sx,py(data[si]),px(si),py(data[si]));}
+
+    // wpm line
+    ctx.beginPath();ctx.moveTo(px(0),py(wpmData[0]));
+    for(var si=1;si<n;si++){var cpS=px(si-0.5);ctx.bezierCurveTo(cpS,py(wpmData[si-1]),cpS,py(wpmData[si]),px(si),py(wpmData[si]));}
     ctx.strokeStyle='rgba(124,106,247,1)';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
   }
-  for(di=0;di<data.length;di++){
-    ctx.beginPath();ctx.arc(px(di),py(data[di]),2.5,0,Math.PI*2);ctx.fillStyle='rgba(124,106,247,1)';ctx.fill();
-  }
-  ctx.beginPath();ctx.arc(px(data.length-1),py(data[data.length-1]),5,0,Math.PI*2);ctx.fillStyle='rgba(124,106,247,0.3)';ctx.fill();
-  ctx.beginPath();ctx.arc(px(data.length-1),py(data[data.length-1]),3,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
 
-  if(totalErrors>0){
-    ctx.fillStyle='rgba(247,106,138,0.8)';
-    ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='center';
-    ctx.fillText('× '+totalErrors,W-pad.r,pad.t+12);
+  // ── WPM dots ──
+  for(var di=0;di<n;di++){
+    ctx.beginPath();ctx.arc(px(di),py(wpmData[di]),2.5,0,Math.PI*2);
+    ctx.fillStyle='rgba(124,106,247,1)';ctx.fill();
   }
+  // last dot highlight
+  ctx.beginPath();ctx.arc(px(n-1),py(wpmData[n-1]),5,0,Math.PI*2);
+  ctx.fillStyle='rgba(124,106,247,0.25)';ctx.fill();
+  ctx.beginPath();ctx.arc(px(n-1),py(wpmData[n-1]),3,0,Math.PI*2);
+  ctx.fillStyle='#fff';ctx.fill();
+
+  // ── Error markers (MonkeyType red X style) ──
+  if(errData&&errData.length>0){
+    var prevErr=0;
+    for(var ei=0;ei<errData.length;ei++){
+      var eCount=errData[ei]-prevErr;
+      if(eCount>0){
+        var ex=px(ei);
+        var ey=pyErr(errData[ei]);
+        // draw red X marker
+        ctx.save();
+        ctx.strokeStyle='rgba(247,106,138,0.9)';
+        ctx.lineWidth=1.8;
+        var sz=5;
+        ctx.beginPath();ctx.moveTo(ex-sz,ey-sz);ctx.lineTo(ex+sz,ey+sz);ctx.stroke();
+        ctx.beginPath();ctx.moveTo(ex+sz,ey-sz);ctx.lineTo(ex-sz,ey+sz);ctx.stroke();
+        ctx.restore();
+      }
+      prevErr=errData[ei];
+    }
+  }
+
+  // ── Legend ──
+  var lx=pad.l+8, ly=pad.t+8;
+  ctx.font="10px 'JetBrains Mono', monospace";
+  // wpm
+  ctx.beginPath();ctx.moveTo(lx,ly+4);ctx.lineTo(lx+18,ly+4);
+  ctx.strokeStyle='rgba(124,106,247,1)';ctx.lineWidth=2.5;ctx.stroke();
+  ctx.fillStyle='rgba(200,200,200,0.5)';ctx.textAlign='left';ctx.fillText('wpm',lx+22,ly+8);
+  // raw
+  ctx.beginPath();ctx.moveTo(lx+60,ly+4);ctx.lineTo(lx+78,ly+4);
+  ctx.strokeStyle='rgba(200,200,200,0.28)';ctx.lineWidth=1.5;ctx.stroke();
+  ctx.fillStyle='rgba(200,200,200,0.35)';ctx.fillText('raw',lx+82,ly+8);
+  // errors
+  ctx.fillStyle='rgba(247,106,138,0.7)';ctx.fillText('errors',lx+115,ly+8);
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -780,12 +815,8 @@ window.shareResult=function(){
   var acc=resAcc?resAcc.textContent:'0%';
   var text='TypeRadar result\n⌨️ '+wpm+' wpm  ✓ '+acc+'\nmode: '+mode+' '+(mode==='time'?totalTime+'s':'')+'\ntyperadar.com';
   if(navigator.clipboard&&navigator.clipboard.writeText){
-    navigator.clipboard.writeText(text).then(showShareToast).catch(function(){
-      fallbackCopy(text);
-    });
-  }else{
-    fallbackCopy(text);
-  }
+    navigator.clipboard.writeText(text).then(showShareToast).catch(function(){fallbackCopy(text);});
+  }else{fallbackCopy(text);}
 };
 function fallbackCopy(text){
   var ta=document.createElement('textarea');ta.value=text;document.body.appendChild(ta);ta.select();
@@ -805,9 +836,8 @@ window.restart=function(seedWords){
   started=false;finished=false;isDailyMode=false;
   currentWordIndex=0;currentInput='';
   totalCorrectChars=0;totalWrongChars=0;correctWords=0;wrongWords=0;totalErrors=0;
-  wpmHistory=[];rawHistory=[];wpmTick=0;wordHistory=[];timeLeft=totalTime;lastKeyTime=0;
+  wpmHistory=[];rawHistory=[];errHistory=[];wpmTick=0;wordHistory=[];timeLeft=totalTime;lastKeyTime=0;
 
-  // FIX 16: tüm getElementById çağrılarına null kontrolü eklendi
   var td=document.getElementById('timer-display');
   if(td){td.textContent=mode==='time'?totalTime:'0';td.classList.remove('warning');}
   var lw=document.getElementById('live-wpm');if(lw)lw.textContent='0';
@@ -933,18 +963,26 @@ window.saveCustomText=function(){
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   AUTH — SUPABASE
+   AUTH — FIXED
 ═══════════════════════════════════════════════════════════════════════ */
+
+// Helper: set error message
+function setAuthErr(elId, msg, isInfo){
+  var el=document.getElementById(elId);
+  if(!el)return;
+  el.textContent=msg;
+  el.style.color=isInfo?'var(--accent)':'var(--wrong)';
+}
+
 window.openAuth=function(){
-  if(currentUser && currentProfile){
+  var am=document.getElementById('auth-modal');
+  if(!am)return;
+  if(currentUser&&currentProfile){
     showProfileInModal();
-  } else {
-    currentUser = null;
-    currentProfile = null;
-    updateAuthUI();
+  }else{
     showLoginInModal();
   }
-  var am=document.getElementById('auth-modal');if(am)am.style.display='flex';
+  am.style.display='flex';
 };
 
 window.closeAuth=function(){
@@ -954,13 +992,14 @@ window.closeAuth=function(){
 function showLoginInModal(){
   var afa=document.getElementById('auth-form-area');if(afa)afa.style.display='block';
   var apa=document.getElementById('auth-profile-area');if(apa)apa.style.display='none';
-  var se=document.getElementById('signin-email');if(se)se.value='';
-  var sp=document.getElementById('signin-pass');if(sp)sp.value='';
-  var sue=document.getElementById('signup-email');if(sue)sue.value='';
-  var sup=document.getElementById('signup-pass');if(sup)sup.value='';
-  var sun=document.getElementById('signup-username');if(sun)sun.value='';
-  var serr=document.getElementById('signin-err');if(serr)serr.textContent='';
-  var suerr=document.getElementById('signup-err');if(suerr)suerr.textContent='';
+  // clear fields
+  ['signin-email','signin-pass','signup-email','signup-pass','signup-username'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  setAuthErr('signin-err','');
+  setAuthErr('signup-err','');
+  // ensure signin tab is active
+  switchAuthTab('signin');
 }
 
 function showProfileInModal(){
@@ -972,7 +1011,8 @@ function showProfileInModal(){
     var un=document.getElementById('profile-username');
     if(un)un.textContent=currentProfile.username||(currentUser?currentUser.email:'');
     var pj=document.getElementById('profile-joined');
-    if(pj)pj.textContent='joined '+new Date(currentProfile.created_at||(currentUser?currentUser.created_at:Date.now())).toLocaleDateString();
+    var joinDate=currentProfile.created_at||(currentUser?currentUser.created_at:'');
+    if(pj)pj.textContent=joinDate?('joined '+new Date(joinDate).toLocaleDateString()):'';
     loadProfileStats();
   }
 }
@@ -982,58 +1022,63 @@ window.switchAuthTab=function(tab){
   var tu=document.getElementById('tab-signup');if(tu)tu.classList.toggle('active',tab==='signup');
   var asf=document.getElementById('auth-signin-form');if(asf)asf.style.display=tab==='signin'?'block':'none';
   var auf=document.getElementById('auth-signup-form');if(auf)auf.style.display=tab==='signup'?'block':'none';
-  var se=document.getElementById('signin-err');if(se)se.textContent='';
-  var sue=document.getElementById('signup-err');if(sue)sue.textContent='';
+  setAuthErr('signin-err','');
+  setAuthErr('signup-err','');
 };
 
 window.doSignIn=async function(){
   var emailEl=document.getElementById('signin-email');
   var passEl=document.getElementById('signin-pass');
-  var err=document.getElementById('signin-err');
-  if(!emailEl||!passEl||!err)return;
+  if(!emailEl||!passEl)return;
   var email=emailEl.value.trim();
   var pass=passEl.value;
-  if(!email||!pass){err.textContent='Please fill all fields';return;}
-  err.textContent='signing in...';
+  if(!email||!pass){setAuthErr('signin-err','Please fill all fields');return;}
 
-  var timeoutId = setTimeout(function(){
-    err.textContent='Request timed out. Check your connection and try again.';
-  }, 10000);
+  setAuthErr('signin-err','signing in...', true);
+
+  // Disable button during request
+  var btn=document.querySelector('#auth-signin-form .auth-submit');
+  if(btn)btn.disabled=true;
 
   try{
-    var result=await sb.auth.signInWithPassword({email:email,password:pass});
-    var data=result.data;
-    var error=result.error;
-    clearTimeout(timeoutId);
+    var result=await Promise.race([
+      sb.auth.signInWithPassword({email:email,password:pass}),
+      new Promise(function(_,reject){setTimeout(function(){reject(new Error('timeout'));},12000);})
+    ]);
 
-    if(error){
-      if(error.message.toLowerCase().indexOf('email not confirmed')!==-1){
-        err.textContent='Please confirm your email first, then try again. (Check your inbox)';
-      } else if(error.message.toLowerCase().indexOf('invalid login')!==-1){
-        err.textContent='Wrong email or password.';
-      } else {
-        err.textContent=error.message;
+    if(result.error){
+      var msg=result.error.message||'';
+      if(msg.toLowerCase().indexOf('email not confirmed')!==-1){
+        setAuthErr('signin-err','Please confirm your email first. Check your inbox.');
+      }else if(msg.toLowerCase().indexOf('invalid')!==-1||msg.toLowerCase().indexOf('credentials')!==-1){
+        setAuthErr('signin-err','Wrong email or password.');
+      }else{
+        setAuthErr('signin-err',msg||'Sign in failed.');
       }
       return;
     }
 
-    if(data && data.user){
-      currentUser=data.user;
-      await loadProfile(data.user.id);
+    if(result.data&&result.data.user){
+      currentUser=result.data.user;
+      await loadProfile(result.data.user.id);
       if(currentProfile){
-        err.textContent='';
+        setAuthErr('signin-err','');
         closeAuth();
-      } else {
-        err.textContent='Profile could not be loaded, please try again.';
-        currentUser=null;
-        updateAuthUI();
+      }else{
+        setAuthErr('signin-err','Signed in! Profile loading...');
+        setTimeout(function(){closeAuth();},1000);
       }
-    } else {
-      err.textContent='Sign in failed, please try again.';
+    }else{
+      setAuthErr('signin-err','Sign in failed, please try again.');
     }
   }catch(e){
-    clearTimeout(timeoutId);
-    err.textContent='Network error: '+e.message;
+    if(e.message==='timeout'){
+      setAuthErr('signin-err','Request timed out. Check your connection.');
+    }else{
+      setAuthErr('signin-err','Error: '+e.message);
+    }
+  }finally{
+    if(btn)btn.disabled=false;
   }
 };
 
@@ -1041,52 +1086,101 @@ window.doSignUp=async function(){
   var usernameEl=document.getElementById('signup-username');
   var emailEl=document.getElementById('signup-email');
   var passEl=document.getElementById('signup-pass');
-  var err=document.getElementById('signup-err');
-  if(!usernameEl||!emailEl||!passEl||!err)return;
+  if(!usernameEl||!emailEl||!passEl)return;
   var username=usernameEl.value.trim();
   var email=emailEl.value.trim();
   var pass=passEl.value;
-  if(!username||username.length<3){err.textContent='Username must be at least 3 chars';return;}
-  if(!email||!pass||pass.length<6){err.textContent='Fill all fields (password min 6 chars)';return;}
-  err.textContent='creating account...';
-  try{
-    var signupResult=await sb.auth.signUp({email:email,password:pass});
-    if(signupResult.error){err.textContent=signupResult.error.message;return;}
-    if(!signupResult.data||!signupResult.data.user){err.textContent='Signup failed, try again';return;}
 
-    var sinResult=await sb.auth.signInWithPassword({email:email,password:pass});
-    if(sinResult.error||!sinResult.data||!sinResult.data.user){
-      err.textContent='Account created! Please sign in.';return;
+  if(!username||username.length<3){setAuthErr('signup-err','Username must be at least 3 characters');return;}
+  if(!email){setAuthErr('signup-err','Please enter your email');return;}
+  if(!pass||pass.length<6){setAuthErr('signup-err','Password must be at least 6 characters');return;}
+
+  // Basic email validation
+  if(email.indexOf('@')===-1||email.indexOf('.')===-1){setAuthErr('signup-err','Please enter a valid email');return;}
+
+  setAuthErr('signup-err','creating account...', true);
+  var btn=document.querySelector('#auth-signup-form .auth-submit');
+  if(btn)btn.disabled=true;
+
+  try{
+    // Step 1: Sign up
+    var signupResult=await Promise.race([
+      sb.auth.signUp({email:email,password:pass}),
+      new Promise(function(_,reject){setTimeout(function(){reject(new Error('timeout'));},12000);})
+    ]);
+
+    if(signupResult.error){
+      var msg=signupResult.error.message||'';
+      if(msg.toLowerCase().indexOf('already')!==-1||msg.toLowerCase().indexOf('registered')!==-1){
+        setAuthErr('signup-err','Email already registered. Try signing in.');
+      }else{
+        setAuthErr('signup-err',msg||'Sign up failed.');
+      }
+      return;
     }
 
+    if(!signupResult.data||!signupResult.data.user){
+      setAuthErr('signup-err','Sign up failed, please try again.');
+      return;
+    }
+
+    // Step 2: Try to sign in immediately (works if email confirmation is disabled)
+    var sinResult=await sb.auth.signInWithPassword({email:email,password:pass});
+
+    if(sinResult.error||!sinResult.data||!sinResult.data.user){
+      // Email confirmation required
+      setAuthErr('signup-err','Account created! Please check your email to confirm, then sign in.', true);
+      return;
+    }
+
+    // Step 3: Create profile
     var uid=sinResult.data.user.id;
     var profileResult=await sb.from('profiles').insert({id:uid,username:username});
+
     if(profileResult.error){
-      if(profileResult.error.message.indexOf('duplicate')===-1&&profileResult.error.message.indexOf('unique')===-1){
-        err.textContent='Profile error: '+profileResult.error.message;return;
+      var perr=profileResult.error.message||'';
+      if(perr.indexOf('duplicate')!==-1||perr.indexOf('unique')!==-1||perr.indexOf('already')!==-1){
+        // Username taken — try with a suffix
+        var altUsername=username+'_'+(Math.floor(Math.random()*9000)+1000);
+        var profileResult2=await sb.from('profiles').insert({id:uid,username:altUsername});
+        if(profileResult2.error){
+          setAuthErr('signup-err','Username taken. Please choose another.');
+          await sb.auth.signOut();
+          return;
+        }
+      }else{
+        setAuthErr('signup-err','Profile error: '+perr);
+        return;
       }
     }
 
     currentUser=sinResult.data.user;
     await loadProfile(uid);
     if(currentProfile){
-      err.textContent='';
+      setAuthErr('signup-err','');
       closeAuth();
-    } else {
-      err.textContent='Account created! Please sign in.';
+    }else{
+      setAuthErr('signup-err','Account created! Please sign in.', true);
       currentUser=null;
       updateAuthUI();
     }
-  }catch(e){err.textContent='Error: '+e.message;}
+  }catch(e){
+    if(e.message==='timeout'){
+      setAuthErr('signup-err','Request timed out. Check your connection.');
+    }else{
+      setAuthErr('signup-err','Error: '+e.message);
+    }
+  }finally{
+    if(btn)btn.disabled=false;
+  }
 };
 
 window.doSignOut=async function(){
+  try{await sb.auth.signOut();}catch(e){}
   currentUser=null;
   currentProfile=null;
   updateAuthUI();
   closeAuth();
-  try{await sb.auth.signOut();}catch(e){}
-  setTimeout(function(){window.location.reload();},150);
 };
 
 async function loadProfile(userId){
@@ -1094,7 +1188,7 @@ async function loadProfile(userId){
     var result=await sb.from('profiles').select('*').eq('id',userId).single();
     if(result.error||!result.data){
       currentProfile=null;
-    } else {
+    }else{
       currentProfile=result.data;
     }
   }catch(e){
@@ -1105,21 +1199,26 @@ async function loadProfile(userId){
 
 async function loadProfileStats(){
   if(!currentUser)return;
-  var result=await sb.from('results').select('wpm,accuracy').eq('user_id',currentUser.id).order('wpm',{ascending:false}).limit(50);
-  var data=result.data;
   var ps=document.getElementById('profile-stats');if(!ps)return;
-  if(data&&data.length>0){
-    var bestWpm=data[0].wpm;
-    var avgWpm=Math.round(data.reduce(function(s,r){return s+r.wpm;},0)/data.length);
-    var tests=data.length;
-    var bestAcc=Math.max.apply(null,data.map(function(r){return r.accuracy;}));
-    ps.innerHTML=
-      '<div class="ps-item"><div class="ps-label">best wpm</div><div class="ps-val">'+bestWpm+'</div></div>'+
-      '<div class="ps-item"><div class="ps-label">avg wpm</div><div class="ps-val">'+avgWpm+'</div></div>'+
-      '<div class="ps-item"><div class="ps-label">tests</div><div class="ps-val">'+tests+'</div></div>'+
-      '<div class="ps-item"><div class="ps-label">best acc</div><div class="ps-val">'+bestAcc+'%</div></div>';
-  }else{
-    ps.innerHTML='<div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.78rem;">no tests yet</div>';
+  ps.innerHTML='<div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.78rem;padding:8px;">loading...</div>';
+  try{
+    var result=await sb.from('results').select('wpm,accuracy').eq('user_id',currentUser.id).order('wpm',{ascending:false}).limit(50);
+    var data=result.data;
+    if(data&&data.length>0){
+      var bestWpm=data[0].wpm;
+      var avgWpm=Math.round(data.reduce(function(s,r){return s+r.wpm;},0)/data.length);
+      var tests=data.length;
+      var bestAcc=Math.max.apply(null,data.map(function(r){return r.accuracy;}));
+      ps.innerHTML=
+        '<div class="ps-item"><div class="ps-label">best wpm</div><div class="ps-val">'+bestWpm+'</div></div>'+
+        '<div class="ps-item"><div class="ps-label">avg wpm</div><div class="ps-val">'+avgWpm+'</div></div>'+
+        '<div class="ps-item"><div class="ps-label">tests</div><div class="ps-val">'+tests+'</div></div>'+
+        '<div class="ps-item"><div class="ps-label">best acc</div><div class="ps-val">'+bestAcc+'%</div></div>';
+    }else{
+      ps.innerHTML='<div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.78rem;">no tests yet</div>';
+    }
+  }catch(e){
+    ps.innerHTML='<div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.78rem;">could not load stats</div>';
   }
 }
 
@@ -1127,6 +1226,9 @@ function updateAuthUI(){
   var btn=document.getElementById('auth-btn');if(!btn)return;
   if(currentUser&&currentProfile){
     btn.textContent=currentProfile.username||currentUser.email.split('@')[0];
+    btn.classList.add('user-logged');
+  }else if(currentUser){
+    btn.textContent=currentUser.email.split('@')[0];
     btn.classList.add('user-logged');
   }else{
     btn.textContent='sign in';
@@ -1137,12 +1239,11 @@ function updateAuthUI(){
 async function saveResult(wpm,acc,raw,consistency){
   if(!currentUser)return;
   try{
-    var result=await sb.from("results").insert({
+    await sb.from('results').insert({
       user_id:currentUser.id,wpm:wpm||0,accuracy:acc||0,raw_wpm:raw||0,
-      mode:mode||"time",time_seconds:mode==="time"?totalTime:(wpmTick||0),language:uiLang||"en",consistency:consistency||0
+      mode:mode||'time',time_seconds:mode==='time'?totalTime:(wpmTick||0),language:uiLang||'en',consistency:consistency||0
     });
-    if(result.error)console.log("saveResult error:",result.error.message);
-  }catch(e){console.log("saveResult exception:",e);}
+  }catch(e){console.warn('saveResult error:',e);}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1163,33 +1264,35 @@ window.loadLeaderboard=async function(m,t,el){
   if(!list)return;
   list.innerHTML='<div class="lb-loading">loading...</div>';
 
-  var result=await sb.from('results')
-    .select('wpm,accuracy,profiles(username)')
-    .eq('mode',m).eq('time_seconds',t)
-    .order('wpm',{ascending:false}).limit(50);
+  try{
+    var result=await sb.from('results')
+      .select('wpm,accuracy,profiles(username)')
+      .eq('mode',m).eq('time_seconds',t)
+      .order('wpm',{ascending:false}).limit(50);
 
-  if(result.error||!result.data){list.innerHTML='<div class="lb-loading">failed to load</div>';return;}
+    if(result.error||!result.data){list.innerHTML='<div class="lb-loading">failed to load</div>';return;}
 
-  var best={};
-  result.data.forEach(function(r){
-    var u=r.profiles?r.profiles.username:'anonymous';
-    if(!u)u='anonymous';
-    if(!best[u]||r.wpm>best[u].wpm)best[u]={wpm:r.wpm,accuracy:r.accuracy,username:u};
-  });
-  var rows=Object.values(best).sort(function(a,b){return b.wpm-a.wpm;}).slice(0,20);
+    var best={};
+    result.data.forEach(function(r){
+      var u=r.profiles?r.profiles.username:'anonymous';
+      if(!u)u='anonymous';
+      if(!best[u]||r.wpm>best[u].wpm)best[u]={wpm:r.wpm,accuracy:r.accuracy,username:u};
+    });
+    var rows=Object.values(best).sort(function(a,b){return b.wpm-a.wpm;}).slice(0,20);
 
-  if(rows.length===0){list.innerHTML='<div class="lb-loading">no results yet — be first!</div>';return;}
-  var rankIcons=['🥇','🥈','🥉'];
-  list.innerHTML=rows.map(function(r,i){
-    var isMe=currentProfile&&r.username===currentProfile.username;
-    var rankDisplay=i<3?'<span class="lb-rank '+['gold','silver','bronze'][i]+'">'+rankIcons[i]+'</span>':'<span class="lb-rank">'+(i+1)+'</span>';
-    return '<div class="lb-row'+(isMe?' me':'')+'">'+
-      rankDisplay+
-      '<span class="lb-user">'+r.username+'</span>'+
-      '<span class="lb-wpm">'+r.wpm+'</span>'+
-      '<span class="lb-acc">'+r.accuracy+'%</span>'+
-    '</div>';
-  }).join('');
+    if(rows.length===0){list.innerHTML='<div class="lb-loading">no results yet — be first!</div>';return;}
+    var rankIcons=['🥇','🥈','🥉'];
+    list.innerHTML=rows.map(function(r,i){
+      var isMe=currentProfile&&r.username===currentProfile.username;
+      var rankDisplay=i<3?'<span class="lb-rank '+['gold','silver','bronze'][i]+'">'+rankIcons[i]+'</span>':'<span class="lb-rank">'+(i+1)+'</span>';
+      return '<div class="lb-row'+(isMe?' me':'')+'">'+
+        rankDisplay+
+        '<span class="lb-user">'+r.username+'</span>'+
+        '<span class="lb-wpm">'+r.wpm+'</span>'+
+        '<span class="lb-acc">'+r.accuracy+'%</span>'+
+      '</div>';
+    }).join('');
+  }catch(e){list.innerHTML='<div class="lb-loading">error loading leaderboard</div>';}
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1202,7 +1305,6 @@ function getDailySeed(){
   var dateStr=getDailyDateStr();
   var hash=0;for(var i=0;i<dateStr.length;i++)hash=((hash<<5)-hash)+dateStr.charCodeAt(i);
   var rng=function(s){s=Math.sin(s)*10000;return s-Math.floor(s);};
-  // FIX 17: WORDS tanımlanmamış olabilir
   var list=(typeof WORDS!=='undefined'&&WORDS)?WORDS['en']||[]:[];
   if(!list.length)list=['the','quick','brown','fox','jumps','over','lazy','dog'];
   var count=30;var chosen=[];
@@ -1250,10 +1352,12 @@ async function saveDailyResult(wpm,acc){
   var key='typeradar_daily_'+dateStr;
   try{localStorage.setItem(key,JSON.stringify({wpm:wpm,accuracy:acc}));}catch(e){}
   if(!currentUser||!currentProfile)return;
-  await sb.from('daily_results').upsert({
-    user_id:currentUser.id,username:currentProfile.username,
-    date:dateStr,wpm:wpm,accuracy:acc
-  },{onConflict:'user_id,date'});
+  try{
+    await sb.from('daily_results').upsert({
+      user_id:currentUser.id,username:currentProfile.username,
+      date:dateStr,wpm:wpm,accuracy:acc
+    },{onConflict:'user_id,date'});
+  }catch(e){}
 }
 
 async function loadDailyBoard(){
@@ -1261,21 +1365,23 @@ async function loadDailyBoard(){
   var board=document.getElementById('daily-board');
   if(!board)return;
   board.innerHTML='<div class="lb-loading">loading...</div>';
-  var result=await sb.from('daily_results')
-    .select('username,wpm,accuracy').eq('date',dateStr)
-    .order('wpm',{ascending:false}).limit(20);
-  if(result.error||!result.data||result.data.length===0){
-    board.innerHTML='<div class="lb-loading">no entries yet — be first!</div>';return;
-  }
-  var rankIcons=['🥇','🥈','🥉'];
-  board.innerHTML=result.data.map(function(r,i){
-    var isMe=currentProfile&&r.username===currentProfile.username;
-    var rankD=i<3?'<span class="lb-rank '+['gold','silver','bronze'][i]+'">'+rankIcons[i]+'</span>':'<span class="lb-rank">'+(i+1)+'</span>';
-    return '<div class="lb-row'+(isMe?' me':'')+'">'+
-      rankD+'<span class="lb-user">'+r.username+'</span>'+
-      '<span class="lb-wpm">'+r.wpm+'</span><span class="lb-acc">'+r.accuracy+'%</span>'+
-    '</div>';
-  }).join('');
+  try{
+    var result=await sb.from('daily_results')
+      .select('username,wpm,accuracy').eq('date',dateStr)
+      .order('wpm',{ascending:false}).limit(20);
+    if(result.error||!result.data||result.data.length===0){
+      board.innerHTML='<div class="lb-loading">no entries yet — be first!</div>';return;
+    }
+    var rankIcons=['🥇','🥈','🥉'];
+    board.innerHTML=result.data.map(function(r,i){
+      var isMe=currentProfile&&r.username===currentProfile.username;
+      var rankD=i<3?'<span class="lb-rank '+['gold','silver','bronze'][i]+'">'+rankIcons[i]+'</span>':'<span class="lb-rank">'+(i+1)+'</span>';
+      return '<div class="lb-row'+(isMe?' me':'')+'">'+
+        rankD+'<span class="lb-user">'+r.username+'</span>'+
+        '<span class="lb-wpm">'+r.wpm+'</span><span class="lb-acc">'+r.accuracy+'%</span>'+
+      '</div>';
+    }).join('');
+  }catch(e){board.innerHTML='<div class="lb-loading">error loading board</div>';}
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1301,9 +1407,7 @@ document.addEventListener('keydown',function(e){
      (authModal&&authModal.style.display==='flex')||
      (leaderboardModal&&leaderboardModal.style.display==='flex')||
      (dailyModal&&dailyModal.style.display==='flex')){
-    if(e.key==='Escape'){
-      closeSettings();closeAuth();closeLeaderboard();closeDaily();e.preventDefault();
-    }
+    if(e.key==='Escape'){closeSettings();closeAuth();closeLeaderboard();closeDaily();e.preventDefault();}
     return;
   }
   var key=e.key;
@@ -1313,7 +1417,7 @@ document.addEventListener('keydown',function(e){
   var ignored=['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End','PageUp','PageDown',
     'Shift','Control','Alt','Meta','CapsLock','Insert','Delete','Enter',
     'F1','F2','F3','F4','F5','F6','F7','F8','F9','F10','F11','F12'];
-  if(ignored.indexOf(key)!==-1)return; // FIX 18: includes yerine indexOf (daha geniş uyumluluk)
+  if(ignored.indexOf(key)!==-1)return;
   if(key==='Backspace'||key===' '){e.preventDefault();if(!finished){lastKeyTime=Date.now();processKey(key);}return;}
   e.preventDefault();if(!finished)processKey(key);
 });
@@ -1333,7 +1437,6 @@ hiddenInput.addEventListener('input',function(e){
 typingContainer.addEventListener('click',function(e){e.preventDefault();if(!finished)hiddenInput.focus();});
 typingContainer.addEventListener('touchend',function(e){e.preventDefault();if(!finished)hiddenInput.focus();});
 
-// FIX 19: Event listener eklenmeden önce elementlerin varlığı kontrol ediliyor
 var settingsModalEl=document.getElementById('settings-modal');
 if(settingsModalEl)settingsModalEl.addEventListener('click',function(e){if(e.target===this)closeSettings();});
 var authModalEl=document.getElementById('auth-modal');
@@ -1357,7 +1460,7 @@ function loadSettings(){
       setTimeout(function(){
         document.querySelectorAll('#color-theme-selector .theme-card').forEach(function(x){x.classList.remove('active');});
         document.querySelectorAll('#color-theme-selector .theme-card').forEach(function(c){
-          if(c.getAttribute('data-theme')===savedColor) c.classList.add('active');
+          if(c.getAttribute('data-theme')===savedColor)c.classList.add('active');
         });
       },100);
     }
@@ -1372,7 +1475,7 @@ function loadSettings(){
       setTimeout(function(){
         document.querySelectorAll('.caret-btn').forEach(function(b){b.classList.remove('active');});
         document.querySelectorAll('.caret-btn').forEach(function(b){
-          if(b.getAttribute('data-caret')===savedCaret) b.classList.add('active');
+          if(b.getAttribute('data-caret')===savedCaret)b.classList.add('active');
         });
       },100);
     }
@@ -1383,20 +1486,15 @@ function loadSettings(){
    SUPABASE AUTH LISTENER
 ═══════════════════════════════════════════════════════════════════════ */
 sb.auth.onAuthStateChange(async function(event, session){
-  if(event === 'SIGNED_OUT' || !session || !session.user){
-    currentUser = null;
-    currentProfile = null;
+  if(event==='SIGNED_OUT'||!session||!session.user){
+    currentUser=null;
+    currentProfile=null;
     updateAuthUI();
     return;
   }
-  if(
-    event === 'SIGNED_IN' ||
-    event === 'INITIAL_SESSION' ||
-    event === 'TOKEN_REFRESHED' ||
-    event === 'USER_UPDATED'
-  ){
-    if(session && session.user){
-      currentUser = session.user;
+  if(event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'||event==='USER_UPDATED'){
+    if(session&&session.user){
+      currentUser=session.user;
       await loadProfile(session.user.id);
     }
   }
@@ -1416,7 +1514,9 @@ window.addEventListener('load',function(){
   if(window.visualViewport){
     window.visualViewport.addEventListener('resize',function(){updateLineH();positionCursor();});
   }
-  document.addEventListener('touchmove',function(e){if(e.target.closest&&e.target.closest('.typing-container'))e.preventDefault();},{passive:false});
+  document.addEventListener('touchmove',function(e){
+    if(e.target.closest&&e.target.closest('.typing-container'))e.preventDefault();
+  },{passive:false});
 });
 
 // Auto-refocus
