@@ -114,8 +114,8 @@ main { width:100%; max-width:960px; padding:0 24px; flex:1; display:flex; flex-d
 .rm-row { display:flex; flex-direction:column; }
 .rm-label { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; }
 .rm-val { font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--accent); }
-.result-chart-wrap { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 8px 8px; position:relative; }
-#wpm-chart { width:100%; height:160px; display:block; }
+.result-chart-wrap { width:100%; background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 8px 8px; position:relative; min-height:260px; }
+#wpm-chart { width:100%; height:220px; display:block; }
 .result-details { display:flex; background:var(--surface); border:1px solid var(--border); border-radius:16px; overflow-x:auto; width:100%; }
 .result-detail-item { text-align:center; padding:16px 24px; border-right:1px solid var(--border); flex:1; min-width:90px; }
 .result-detail-item:last-child { border-right:none; }
@@ -153,48 +153,26 @@ footer kbd { background:var(--surface2); border:1px solid var(--border); border-
 .auth-tabs { display:flex; gap:4px; margin-bottom:20px; background:var(--surface2); border-radius:10px; padding:4px; }
 .auth-tab { flex:1; background:none; border:none; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:0.78rem; padding:8px; border-radius:7px; cursor:pointer; transition:all 0.18s; }
 .auth-tab.active { background:var(--accent); color:#fff; }
-
-/* FIX: input color — force dark background and light text, fix autofill white flash */
 .auth-input {
-  width:100%;
-  background:var(--surface2);
-  border:1px solid var(--border);
-  border-radius:10px;
-  padding:12px 14px;
-  color:var(--text);
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.85rem;
-  outline:none;
-  margin-bottom:10px;
-  transition:border-color 0.2s, background 0.2s;
-  -webkit-text-fill-color: var(--text);
-  caret-color: var(--accent);
+  width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px;
+  padding:12px 14px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.85rem;
+  outline:none; margin-bottom:10px; transition:border-color 0.2s,background 0.2s;
+  -webkit-text-fill-color:var(--text); caret-color:var(--accent);
 }
 .auth-input:focus { border-color:var(--accent); }
-/* Fix browser autofill turning input white */
 .auth-input:-webkit-autofill,
 .auth-input:-webkit-autofill:hover,
 .auth-input:-webkit-autofill:focus {
-  -webkit-box-shadow: 0 0 0px 1000px var(--surface2) inset !important;
-  -webkit-text-fill-color: var(--text) !important;
-  border-color: var(--border);
-  transition: background-color 5000s ease-in-out 0s;
+  -webkit-box-shadow:0 0 0px 1000px var(--surface2) inset !important;
+  -webkit-text-fill-color:var(--text) !important;
+  border-color:var(--border);
+  transition:background-color 5000s ease-in-out 0s;
 }
-
 .auth-submit { width:100%; background:var(--accent); border:none; border-radius:10px; padding:12px; color:#fff; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:0.85rem; transition:opacity 0.15s; margin-top:4px; }
 .auth-submit:hover { opacity:0.85; }
+.auth-submit:disabled { opacity:0.5; cursor:not-allowed; }
 .auth-submit.danger { background:var(--wrong); margin-top:16px; }
-
-/* FIX: auth-err — default red for errors, JS overrides color for info messages */
-.auth-err {
-  font-family:'JetBrains Mono',monospace;
-  font-size:0.72rem;
-  color:var(--wrong);
-  margin-top:8px;
-  min-height:18px;
-  transition: color 0.15s;
-}
-
+.auth-err { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--wrong); margin-top:8px; min-height:18px; transition:color 0.15s; }
 .profile-header { display:flex; gap:16px; align-items:center; margin-bottom:20px; }
 .profile-avatar { width:52px; height:52px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:600; color:#fff; flex-shrink:0; }
 .profile-username { font-family:'JetBrains Mono',monospace; font-size:1.1rem; color:var(--text); font-weight:500; }
@@ -337,7 +315,8 @@ footer kbd { background:var(--surface2); border:1px solid var(--border); border-
   .click-hint{font-size:0.65rem;margin-top:14px;}
   .result-header{gap:20px;} .rbs-value{font-size:3.5rem;} .rbs-value.accent2{font-size:2.5rem;}
   .result-detail-item{padding:10px 14px;} .result-detail-item .val{font-size:1.1rem;}
-  #wpm-chart{height:100px;} .restart-btn{padding:10px 24px;font-size:0.82rem;}
+  #wpm-chart{height:140px;} .result-chart-wrap{min-height:180px;}
+  .restart-btn{padding:10px 24px;font-size:0.82rem;}
   .modal{padding:24px 18px;border-radius:18px;} .settings-grid{grid-template-columns:1fr;}
   footer{display:none;} .keyboard-activator{display:flex;}
   .header-btn{font-size:0.65rem;padding:4px 8px;}
