@@ -951,9 +951,29 @@ window.focusInput=function(fromClick){
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SETTINGS MODAL
+   PANEL SYSTEM (MonkeyType-style dropdowns)
 ═══════════════════════════════════════════════════════════════════════ */
-window.openSettings=function(){buildFontGrid();buildBgThemeGrid();var sm=document.getElementById('settings-modal');if(sm)sm.style.display='flex';};
+var activePanel=null;
+
+function openPanel(id){
+  closeAllPanels();
+  var p=document.getElementById(id);
+  var overlay=document.getElementById('panel-overlay');
+  if(p){p.classList.add('open');activePanel=id;}
+  if(overlay)overlay.classList.add('active');
+}
+function closeAllPanels(){
+  document.querySelectorAll('.side-panel').forEach(function(p){p.classList.remove('open');});
+  var overlay=document.getElementById('panel-overlay');
+  if(overlay)overlay.classList.remove('active');
+  activePanel=null;
+}
+function togglePanel(id){
+  if(activePanel===id){closeAllPanels();}else{openPanel(id);}
+}
+
+// Settings modal still uses overlay modal
+window.openSettings=function(){buildFontGrid();buildBgThemeGrid();closeAllPanels();var sm=document.getElementById('settings-modal');if(sm)sm.style.display='flex';};
 window.closeSettings=function(){var sm=document.getElementById('settings-modal');if(sm)sm.style.display='none';setTimeout(function(){if(!('ontouchstart' in window))hiddenInput.focus();},100);};
 window.saveCustomText=function(){
   var ta=document.getElementById('custom-text-input');if(!ta)return;
@@ -963,273 +983,177 @@ window.saveCustomText=function(){
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   AUTH — FIXED
+   AUTH PANEL
 ═══════════════════════════════════════════════════════════════════════ */
-
-// Helper: set error message
-function setAuthErr(elId, msg, isInfo){
-  var el=document.getElementById(elId);
+function setAuthMsg(id,msg,isInfo){
+  var el=document.getElementById(id);
   if(!el)return;
   el.textContent=msg;
   el.style.color=isInfo?'var(--accent)':'var(--wrong)';
 }
+// keep old alias for compatibility
+function setAuthErr(elId,msg,isInfo){setAuthMsg(elId,msg,isInfo);}
 
-window.openAuth=function(){
-  var am=document.getElementById('auth-modal');
-  if(!am)return;
-  // currentUser var mı kontrol et (profil yüklenmiş olmasa bile)
-  if(currentUser){
-    showProfileInModal();
-  }else{
-    showLoginInModal();
-  }
-  am.style.display='flex';
-};
-
-window.closeAuth=function(){
-  var am=document.getElementById('auth-modal');if(am)am.style.display='none';
-};
-
-function showLoginInModal(){
-  var afa=document.getElementById('auth-form-area');if(afa)afa.style.display='block';
-  var apa=document.getElementById('auth-profile-area');if(apa)apa.style.display='none';
-  // clear fields
-  ['signin-email','signin-pass','signup-email','signup-pass','signup-username'].forEach(function(id){
-    var el=document.getElementById(id);if(el)el.value='';
-  });
-  setAuthErr('signin-err','');
-  setAuthErr('signup-err','');
-  // ensure signin tab is active
-  switchAuthTab('signin');
+function openUserPanel(){
+  if(currentUser){showProfilePanel();}else{showLoginPanel();}
+  openPanel('auth-panel');
 }
 
-function showProfileInModal(){
-  var afa=document.getElementById('auth-form-area');if(afa)afa.style.display='none';
-  var apa=document.getElementById('auth-profile-area');if(apa)apa.style.display='block';
+function showLoginPanel(){
+  var lp=document.getElementById('auth-panel-login');if(lp)lp.style.display='block';
+  var pp=document.getElementById('auth-panel-profile');if(pp)pp.style.display='none';
+  ['signup-username','signup-email','signup-pass','signin-email','signin-pass'].forEach(function(id){
+    var el=document.getElementById(id);if(el)el.value='';
+  });
+  setAuthMsg('signup-msg','');setAuthMsg('signin-msg','');
+}
 
+function showProfilePanel(){
+  var lp=document.getElementById('auth-panel-login');if(lp)lp.style.display='none';
+  var pp=document.getElementById('auth-panel-profile');if(pp)pp.style.display='block';
   var username=currentProfile?currentProfile.username:(currentUser?currentUser.email.split('@')[0]:'?');
   var joinDate=currentProfile?currentProfile.created_at:(currentUser?currentUser.created_at:'');
 
-  var apa2=document.getElementById('auth-profile-area');
-  if(!apa2)return;
+  var avEl=document.getElementById('pp-avatar');
+  if(avEl){
+    avEl.textContent=username[0].toUpperCase();
+    avEl.style.background=getAvatarColor(username);
+  }
+  var unEl=document.getElementById('pp-username');if(unEl)unEl.textContent=username;
+  var jEl=document.getElementById('pp-joined');if(jEl)jEl.textContent=joinDate?('joined '+new Date(joinDate).toLocaleDateString()):'';
 
-  // innerHTML ile yaz ama butonlara id ver, onclick'i sonra addEventListener ile bağla
-  apa2.innerHTML=
-    '<div class="profile-header">'+
-      '<div class="profile-avatar-wrap">'+
-        '<div class="profile-avatar" id="profile-avatar" style="background:'+getAvatarColor(username)+'">'+username[0].toUpperCase()+'</div>'+
-        '<button class="avatar-edit-btn" id="avatar-edit-btn" title="change color">✎</button>'+
-      '</div>'+
-      '<div>'+
-        '<div class="profile-username">'+username+'</div>'+
-        '<div class="profile-joined">'+(joinDate?('joined '+new Date(joinDate).toLocaleDateString()):'')+'</div>'+
-      '</div>'+
-    '</div>'+
-    '<div class="profile-stats" id="profile-stats"><div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.78rem;padding:8px;">loading...</div></div>'+
-    '<button class="auth-submit danger" id="signout-btn">sign out</button>';
-
-  // Butonlara event listener bağla (inline onclick değil)
-  var avatarBtn=document.getElementById('avatar-edit-btn');
-  if(avatarBtn){
-    avatarBtn.addEventListener('click',function(){
-      var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
-      var cur=getAvatarColor(username);
-      var idx=colors.indexOf(cur);
-      var next=colors[(idx+1)%colors.length];
-      try{localStorage.setItem('typeradar_avatar_color_'+username,next);}catch(e){}
-      var av=document.getElementById('profile-avatar');
-      if(av)av.style.background=next;
+  // Avatar renk seçici
+  var colorWrap=document.getElementById('pp-avatar-colors');
+  if(colorWrap){
+    var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
+    colorWrap.innerHTML='';
+    colors.forEach(function(c){
+      var btn=document.createElement('button');
+      btn.className='avatar-color-dot';
+      btn.style.background=c;
+      btn.title=c;
+      if(c===getAvatarColor(username))btn.classList.add('selected');
+      btn.addEventListener('click',function(){
+        try{localStorage.setItem('typeradar_avatar_color_'+username,c);}catch(e){}
+        var av=document.getElementById('pp-avatar');if(av)av.style.background=c;
+        colorWrap.querySelectorAll('.avatar-color-dot').forEach(function(d){d.classList.remove('selected');});
+        btn.classList.add('selected');
+        updateAuthUI();
+      });
+      colorWrap.appendChild(btn);
     });
   }
 
-  var signoutBtn=document.getElementById('signout-btn');
-  if(signoutBtn){
-    signoutBtn.addEventListener('click',function(){
-      doSignOutInternal();
-    });
-  }
-
-  loadProfileStats();
+  loadProfileStatsPanel();
 }
 
-function getAvatarColor(username){
-  var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
+async function loadProfileStatsPanel(){
+  if(!currentUser)return;
+  var ps=document.getElementById('pp-stats');if(!ps)return;
+  ps.innerHTML='<div class="notif-empty">loading...</div>';
   try{
-    var saved=localStorage.getItem('typeradar_avatar_color_'+username);
-    if(saved)return saved;
-  }catch(e){}
-  return colors[(username||'?').charCodeAt(0)%colors.length];
+    var result=await sb.from('results').select('wpm,accuracy').eq('user_id',currentUser.id).order('wpm',{ascending:false}).limit(50);
+    var data=result.data;
+    if(data&&data.length>0){
+      var bestWpm=data[0].wpm;
+      var avgWpm=Math.round(data.reduce(function(s,r){return s+r.wpm;},0)/data.length);
+      var tests=data.length;
+      var bestAcc=Math.max.apply(null,data.map(function(r){return r.accuracy;}));
+      ps.innerHTML=
+        '<div class="pp-stat-grid">'+
+        '<div class="pp-stat"><div class="pp-stat-label">best wpm</div><div class="pp-stat-val">'+bestWpm+'</div></div>'+
+        '<div class="pp-stat"><div class="pp-stat-label">avg wpm</div><div class="pp-stat-val">'+avgWpm+'</div></div>'+
+        '<div class="pp-stat"><div class="pp-stat-label">tests</div><div class="pp-stat-val">'+tests+'</div></div>'+
+        '<div class="pp-stat"><div class="pp-stat-label">best acc</div><div class="pp-stat-val">'+bestAcc+'%</div></div>'+
+        '</div>';
+    }else{
+      ps.innerHTML='<div class="notif-empty">no tests yet</div>';
+    }
+  }catch(e){
+    ps.innerHTML='<div class="notif-empty">could not load</div>';
+  }
 }
 
-async function doSignOutInternal(){
-  currentUser=null;
-  currentProfile=null;
-  updateAuthUI();
-  closeAuth();
-  try{await sb.auth.signOut();}catch(e){}
-}
-
-window.switchAuthTab=function(tab){
-  var ts=document.getElementById('tab-signin');if(ts)ts.classList.toggle('active',tab==='signin');
-  var tu=document.getElementById('tab-signup');if(tu)tu.classList.toggle('active',tab==='signup');
-  var asf=document.getElementById('auth-signin-form');if(asf)asf.style.display=tab==='signin'?'block':'none';
-  var auf=document.getElementById('auth-signup-form');if(auf)auf.style.display=tab==='signup'?'block':'none';
-  setAuthErr('signin-err','');
-  setAuthErr('signup-err','');
-};
+// compat stubs
+window.openAuth=openUserPanel;
+window.closeAuth=closeAllPanels;
 
 window.doSignIn=async function(){
   var emailEl=document.getElementById('signin-email');
   var passEl=document.getElementById('signin-pass');
   if(!emailEl||!passEl)return;
-  var email=emailEl.value.trim();
-  var pass=passEl.value;
-  if(!email||!pass){setAuthErr('signin-err','Please fill all fields');return;}
-
-  setAuthErr('signin-err','signing in...', true);
-
-  // Disable button during request
-  var btn=document.querySelector('#auth-signin-form .auth-submit');
-  if(btn)btn.disabled=true;
-
+  var email=emailEl.value.trim();var pass=passEl.value;
+  if(!email||!pass){setAuthMsg('signin-msg','Please fill all fields');return;}
+  setAuthMsg('signin-msg','signing in...', true);
+  var btn=document.getElementById('signin-btn');if(btn)btn.disabled=true;
   try{
     var result=await Promise.race([
       sb.auth.signInWithPassword({email:email,password:pass}),
-      new Promise(function(_,reject){setTimeout(function(){reject(new Error('timeout'));},12000);})
+      new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},12000);})
     ]);
-
     if(result.error){
       var msg=result.error.message||'';
-      if(msg.toLowerCase().indexOf('email not confirmed')!==-1){
-        setAuthErr('signin-err','Please confirm your email first. Check your inbox.');
-      }else if(msg.toLowerCase().indexOf('invalid')!==-1||msg.toLowerCase().indexOf('credentials')!==-1){
-        setAuthErr('signin-err','Wrong email or password.');
-      }else{
-        setAuthErr('signin-err',msg||'Sign in failed.');
-      }
+      if(msg.toLowerCase().indexOf('email not confirmed')!==-1)setAuthMsg('signin-msg','Please confirm your email first.');
+      else if(msg.toLowerCase().indexOf('invalid')!==-1||msg.toLowerCase().indexOf('credentials')!==-1)setAuthMsg('signin-msg','Wrong email or password.');
+      else setAuthMsg('signin-msg',msg||'Sign in failed.');
       return;
     }
-
     if(result.data&&result.data.user){
       currentUser=result.data.user;
       await loadProfile(result.data.user.id);
-      if(currentProfile){
-        setAuthErr('signin-err','');
-        closeAuth();
-      }else{
-        setAuthErr('signin-err','Signed in! Profile loading...');
-        setTimeout(function(){closeAuth();},1000);
-      }
-    }else{
-      setAuthErr('signin-err','Sign in failed, please try again.');
-    }
+      showProfilePanel();
+    }else{setAuthMsg('signin-msg','Sign in failed.');}
   }catch(e){
-    if(e.message==='timeout'){
-      setAuthErr('signin-err','Request timed out. Check your connection.');
-    }else{
-      setAuthErr('signin-err','Error: '+e.message);
-    }
-  }finally{
-    if(btn)btn.disabled=false;
-  }
+    setAuthMsg('signin-msg',e.message==='timeout'?'Request timed out.':'Error: '+e.message);
+  }finally{if(btn)btn.disabled=false;}
 };
 
 window.doSignUp=async function(){
-  var usernameEl=document.getElementById('signup-username');
-  var emailEl=document.getElementById('signup-email');
-  var passEl=document.getElementById('signup-pass');
-  if(!usernameEl||!emailEl||!passEl)return;
-  var username=usernameEl.value.trim();
-  var email=emailEl.value.trim();
-  var pass=passEl.value;
-
-  if(!username||username.length<3){setAuthErr('signup-err','Username must be at least 3 characters');return;}
-  if(!email){setAuthErr('signup-err','Please enter your email');return;}
-  if(!pass||pass.length<6){setAuthErr('signup-err','Password must be at least 6 characters');return;}
-
-  // Basic email validation
-  if(email.indexOf('@')===-1||email.indexOf('.')===-1){setAuthErr('signup-err','Please enter a valid email');return;}
-
-  setAuthErr('signup-err','creating account...', true);
-  var btn=document.querySelector('#auth-signup-form .auth-submit');
-  if(btn)btn.disabled=true;
-
+  var unEl=document.getElementById('signup-username');
+  var emEl=document.getElementById('signup-email');
+  var psEl=document.getElementById('signup-pass');
+  if(!unEl||!emEl||!psEl)return;
+  var username=unEl.value.trim();var email=emEl.value.trim();var pass=psEl.value;
+  if(!username||username.length<3){setAuthMsg('signup-msg','Username min 3 chars');return;}
+  if(!email||email.indexOf('@')===-1){setAuthMsg('signup-msg','Valid email required');return;}
+  if(!pass||pass.length<6){setAuthMsg('signup-msg','Password min 6 chars');return;}
+  setAuthMsg('signup-msg','creating account...', true);
+  var btn=document.getElementById('signup-btn');if(btn)btn.disabled=true;
   try{
-    // Step 1: Sign up
-    var signupResult=await Promise.race([
+    var sr=await Promise.race([
       sb.auth.signUp({email:email,password:pass}),
-      new Promise(function(_,reject){setTimeout(function(){reject(new Error('timeout'));},12000);})
+      new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},12000);})
     ]);
-
-    if(signupResult.error){
-      var msg=signupResult.error.message||'';
-      if(msg.toLowerCase().indexOf('already')!==-1||msg.toLowerCase().indexOf('registered')!==-1){
-        setAuthErr('signup-err','Email already registered. Try signing in.');
-      }else{
-        setAuthErr('signup-err',msg||'Sign up failed.');
-      }
+    if(sr.error){
+      var m=sr.error.message||'';
+      setAuthMsg('signup-msg',(m.toLowerCase().indexOf('already')!==-1)?'Email already registered.':m||'Sign up failed.');
       return;
     }
-
-    if(!signupResult.data||!signupResult.data.user){
-      setAuthErr('signup-err','Sign up failed, please try again.');
-      return;
+    if(!sr.data||!sr.data.user){setAuthMsg('signup-msg','Sign up failed.');return;}
+    var sinR=await sb.auth.signInWithPassword({email:email,password:pass});
+    if(sinR.error||!sinR.data||!sinR.data.user){
+      setAuthMsg('signup-msg','Check your email to confirm, then sign in.',true);return;
     }
-
-    // Step 2: Try to sign in immediately (works if email confirmation is disabled)
-    var sinResult=await sb.auth.signInWithPassword({email:email,password:pass});
-
-    if(sinResult.error||!sinResult.data||!sinResult.data.user){
-      // Email confirmation required
-      setAuthErr('signup-err','Account created! Please check your email to confirm, then sign in.', true);
-      return;
+    var uid=sinR.data.user.id;
+    var pr=await sb.from('profiles').insert({id:uid,username:username});
+    if(pr.error&&(pr.error.message.indexOf('duplicate')!==-1||pr.error.message.indexOf('unique')!==-1)){
+      var alt=username+'_'+(Math.floor(Math.random()*9000)+1000);
+      await sb.from('profiles').insert({id:uid,username:alt});
     }
-
-    // Step 3: Create profile
-    var uid=sinResult.data.user.id;
-    var profileResult=await sb.from('profiles').insert({id:uid,username:username});
-
-    if(profileResult.error){
-      var perr=profileResult.error.message||'';
-      if(perr.indexOf('duplicate')!==-1||perr.indexOf('unique')!==-1||perr.indexOf('already')!==-1){
-        // Username taken — try with a suffix
-        var altUsername=username+'_'+(Math.floor(Math.random()*9000)+1000);
-        var profileResult2=await sb.from('profiles').insert({id:uid,username:altUsername});
-        if(profileResult2.error){
-          setAuthErr('signup-err','Username taken. Please choose another.');
-          await sb.auth.signOut();
-          return;
-        }
-      }else{
-        setAuthErr('signup-err','Profile error: '+perr);
-        return;
-      }
-    }
-
-    currentUser=sinResult.data.user;
+    currentUser=sinR.data.user;
     await loadProfile(uid);
-    if(currentProfile){
-      setAuthErr('signup-err','');
-      closeAuth();
-    }else{
-      setAuthErr('signup-err','Account created! Please sign in.', true);
-      currentUser=null;
-      updateAuthUI();
-    }
+    showProfilePanel();
   }catch(e){
-    if(e.message==='timeout'){
-      setAuthErr('signup-err','Request timed out. Check your connection.');
-    }else{
-      setAuthErr('signup-err','Error: '+e.message);
-    }
-  }finally{
-    if(btn)btn.disabled=false;
-  }
+    setAuthMsg('signup-msg',e.message==='timeout'?'Request timed out.':'Error: '+e.message);
+  }finally{if(btn)btn.disabled=false;}
 };
 
-window.doSignOut=async function(){
-  doSignOutInternal();
-};
+async function doSignOutInternal(){
+  currentUser=null;currentProfile=null;
+  updateAuthUI();closeAllPanels();
+  try{await sb.auth.signOut();}catch(e){}
+}
+window.doSignOut=function(){doSignOutInternal();};
 
 async function loadProfile(userId){
   try{
@@ -1271,16 +1195,21 @@ async function loadProfileStats(){
 }
 
 function updateAuthUI(){
-  var btn=document.getElementById('auth-btn');if(!btn)return;
-  if(currentUser&&currentProfile){
-    btn.textContent=currentProfile.username||currentUser.email.split('@')[0];
+  var btn=document.getElementById('nav-user');
+  var mini=document.getElementById('user-avatar-mini');
+  if(!btn)return;
+  if(currentUser){
+    var username=currentProfile?currentProfile.username:currentUser.email.split('@')[0];
     btn.classList.add('user-logged');
-  }else if(currentUser){
-    btn.textContent=currentUser.email.split('@')[0];
-    btn.classList.add('user-logged');
+    // avatar harfini küçük badge olarak göster
+    if(mini){
+      mini.textContent=username[0].toUpperCase();
+      mini.style.background=getAvatarColor(username);
+      mini.style.display='flex';
+    }
   }else{
-    btn.textContent='sign in';
     btn.classList.remove('user-logged');
+    if(mini)mini.style.display='none';
   }
 }
 
@@ -1299,6 +1228,7 @@ async function saveResult(wpm,acc,raw,consistency){
 ═══════════════════════════════════════════════════════════════════════ */
 var lbMode='time',lbTime=30;
 window.openLeaderboard=function(){
+  closeAllPanels();
   var lm=document.getElementById('leaderboard-modal');if(lm)lm.style.display='flex';
   loadLeaderboard('time',30,document.querySelector('.lb-tab'));
 };
@@ -1313,34 +1243,47 @@ window.loadLeaderboard=async function(m,t,el){
   list.innerHTML='<div class="lb-loading">loading...</div>';
 
   try{
+    // Get top results with user_id
     var result=await sb.from('results')
-      .select('wpm,accuracy,profiles(username)')
+      .select('wpm,accuracy,user_id')
       .eq('mode',m).eq('time_seconds',t)
-      .order('wpm',{ascending:false}).limit(50);
+      .order('wpm',{ascending:false}).limit(200);
 
-    if(result.error||!result.data){list.innerHTML='<div class="lb-loading">failed to load</div>';return;}
+    if(result.error){list.innerHTML='<div class="lb-loading">failed to load</div>';return;}
+    if(!result.data||result.data.length===0){list.innerHTML='<div class="lb-loading">no results yet — be first!</div>';return;}
 
+    // Deduplicate: best per user_id
     var best={};
     result.data.forEach(function(r){
-      var u=r.profiles?r.profiles.username:'anonymous';
-      if(!u)u='anonymous';
-      if(!best[u]||r.wpm>best[u].wpm)best[u]={wpm:r.wpm,accuracy:r.accuracy,username:u};
+      var uid=r.user_id||'anon';
+      if(!best[uid]||r.wpm>best[uid].wpm)best[uid]={wpm:r.wpm,accuracy:r.accuracy,user_id:uid};
     });
     var rows=Object.values(best).sort(function(a,b){return b.wpm-a.wpm;}).slice(0,20);
 
-    if(rows.length===0){list.innerHTML='<div class="lb-loading">no results yet — be first!</div>';return;}
+    // Fetch usernames for these user_ids
+    var uids=rows.map(function(r){return r.user_id;}).filter(function(uid){return uid!=='anon';});
+    var nameMap={};
+    if(uids.length>0){
+      var pRes=await sb.from('profiles').select('id,username').in('id',uids);
+      if(pRes.data)pRes.data.forEach(function(p){nameMap[p.id]=p.username;});
+    }
+
     var rankIcons=['🥇','🥈','🥉'];
+    var myUsername=currentProfile?currentProfile.username:null;
     list.innerHTML=rows.map(function(r,i){
-      var isMe=currentProfile&&r.username===currentProfile.username;
-      var rankDisplay=i<3?'<span class="lb-rank '+['gold','silver','bronze'][i]+'">'+rankIcons[i]+'</span>':'<span class="lb-rank">'+(i+1)+'</span>';
+      var uname=nameMap[r.user_id]||'anonymous';
+      var isMe=myUsername&&uname===myUsername;
+      var rankDisplay=i<3?
+        '<span class="lb-rank '+['gold','silver','bronze'][i]+'">'+rankIcons[i]+'</span>':
+        '<span class="lb-rank">'+(i+1)+'</span>';
       return '<div class="lb-row'+(isMe?' me':'')+'">'+
         rankDisplay+
-        '<span class="lb-user">'+r.username+'</span>'+
+        '<span class="lb-user">'+uname+'</span>'+
         '<span class="lb-wpm">'+r.wpm+'</span>'+
         '<span class="lb-acc">'+r.accuracy+'%</span>'+
       '</div>';
     }).join('');
-  }catch(e){list.innerHTML='<div class="lb-loading">error loading leaderboard</div>';}
+  }catch(e){list.innerHTML='<div class="lb-loading">error: '+e.message+'</div>';}
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -1447,15 +1390,14 @@ document.addEventListener('keyup',function(e){
 });
 document.addEventListener('keydown',function(e){
   var settingsModal=document.getElementById('settings-modal');
-  var authModal=document.getElementById('auth-modal');
   var leaderboardModal=document.getElementById('leaderboard-modal');
   var dailyModal=document.getElementById('daily-modal');
 
   if((settingsModal&&settingsModal.style.display==='flex')||
-     (authModal&&authModal.style.display==='flex')||
      (leaderboardModal&&leaderboardModal.style.display==='flex')||
-     (dailyModal&&dailyModal.style.display==='flex')){
-    if(e.key==='Escape'){closeSettings();closeAuth();closeLeaderboard();closeDaily();e.preventDefault();}
+     (dailyModal&&dailyModal.style.display==='flex')||
+     activePanel){
+    if(e.key==='Escape'){closeSettings();closeLeaderboard();closeDaily();closeAllPanels();e.preventDefault();}
     return;
   }
   var key=e.key;
@@ -1487,12 +1429,40 @@ typingContainer.addEventListener('touchend',function(e){e.preventDefault();if(!f
 
 var settingsModalEl=document.getElementById('settings-modal');
 if(settingsModalEl)settingsModalEl.addEventListener('click',function(e){if(e.target===this)closeSettings();});
-var authModalEl=document.getElementById('auth-modal');
-if(authModalEl)authModalEl.addEventListener('click',function(e){if(e.target===this)closeAuth();});
 var leaderboardModalEl=document.getElementById('leaderboard-modal');
 if(leaderboardModalEl)leaderboardModalEl.addEventListener('click',function(e){if(e.target===this)closeLeaderboard();});
 var dailyModalEl=document.getElementById('daily-modal');
 if(dailyModalEl)dailyModalEl.addEventListener('click',function(e){if(e.target===this)closeDaily();});
+
+// Panel overlay click — close panels
+var panelOverlay=document.getElementById('panel-overlay');
+if(panelOverlay)panelOverlay.addEventListener('click',function(){closeAllPanels();});
+
+// Header nav buttons
+var navKeyboard=document.getElementById('nav-keyboard');
+if(navKeyboard)navKeyboard.addEventListener('click',function(){closeAllPanels();restart();});
+var logoBtn=document.getElementById('logo-btn');
+if(logoBtn)logoBtn.addEventListener('click',function(){closeAllPanels();restart();});
+var navLeaderboard=document.getElementById('nav-leaderboard');
+if(navLeaderboard)navLeaderboard.addEventListener('click',function(){openLeaderboard();});
+var navDaily=document.getElementById('nav-daily');
+if(navDaily)navDaily.addEventListener('click',function(){openDailyModal();});
+var navSettingsBtn=document.getElementById('nav-settings');
+if(navSettingsBtn)navSettingsBtn.addEventListener('click',function(){openSettings();});
+var navNotif=document.getElementById('nav-notif');
+if(navNotif)navNotif.addEventListener('click',function(){togglePanel('notif-panel');});
+var navUser=document.getElementById('nav-user');
+if(navUser)navUser.addEventListener('click',function(){openUserPanel();});
+var notifClose=document.getElementById('notif-panel-close');
+if(notifClose)notifClose.addEventListener('click',function(){closeAllPanels();});
+
+// Auth panel buttons
+var signupBtn=document.getElementById('signup-btn');
+if(signupBtn)signupBtn.addEventListener('click',function(){doSignUp();});
+var signinBtn=document.getElementById('signin-btn');
+if(signinBtn)signinBtn.addEventListener('click',function(){doSignIn();});
+var signoutPanelBtn=document.getElementById('signout-panel-btn');
+if(signoutPanelBtn)signoutPanelBtn.addEventListener('click',function(){doSignOutInternal();});
 
 /* ═══════════════════════════════════════════════════════════════════════
    LOAD SETTINGS
@@ -1571,13 +1541,12 @@ if(!('ontouchstart' in window)){
   setInterval(function(){
     var testScreen=document.getElementById('test-screen');
     var sm=document.getElementById('settings-modal');
-    var am=document.getElementById('auth-modal');
     var lm=document.getElementById('leaderboard-modal');
     var dm=document.getElementById('daily-modal');
     if(!finished&&testScreen&&testScreen.style.display!=='none'
       &&document.activeElement!==hiddenInput
+      &&!activePanel
       &&(!sm||sm.style.display!=='flex')
-      &&(!am||am.style.display!=='flex')
       &&(!lm||lm.style.display!=='flex')
       &&(!dm||dm.style.display!=='flex')){
       hiddenInput.focus();
