@@ -1010,49 +1010,50 @@ function showProfileInModal(){
   var username=currentProfile?currentProfile.username:(currentUser?currentUser.email.split('@')[0]:'?');
   var joinDate=currentProfile?currentProfile.created_at:(currentUser?currentUser.created_at:'');
 
-  // Avatar harfi
-  var av=document.getElementById('profile-avatar');
-  if(av){
-    av.textContent=username[0].toUpperCase();
-    // avatar rengi — username'e göre deterministik renk
-    var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
-    var ci=username.charCodeAt(0)%colors.length;
-    av.style.background=colors[ci];
-  }
-
-  // Profile area içeriğini dinamik yaz
   var apa2=document.getElementById('auth-profile-area');
   if(!apa2)return;
+
+  // innerHTML ile yaz ama butonlara id ver, onclick'i sonra addEventListener ile bağla
   apa2.innerHTML=
     '<div class="profile-header">'+
       '<div class="profile-avatar-wrap">'+
         '<div class="profile-avatar" id="profile-avatar" style="background:'+getAvatarColor(username)+'">'+username[0].toUpperCase()+'</div>'+
-        '<button class="avatar-edit-btn" onclick="triggerAvatarEdit()" title="change avatar color">✎</button>'+
+        '<button class="avatar-edit-btn" id="avatar-edit-btn" title="change color">✎</button>'+
       '</div>'+
       '<div>'+
-        '<div class="profile-username" id="profile-username">'+username+'</div>'+
-        '<div class="profile-joined" id="profile-joined">'+(joinDate?('joined '+new Date(joinDate).toLocaleDateString()):'')+'</div>'+
+        '<div class="profile-username">'+username+'</div>'+
+        '<div class="profile-joined">'+(joinDate?('joined '+new Date(joinDate).toLocaleDateString()):'')+'</div>'+
       '</div>'+
     '</div>'+
-    // Edit section
-    '<div class="profile-edit-section" id="profile-edit-section">'+
-      '<div class="profile-edit-row">'+
-        '<input class="auth-input profile-edit-input" id="edit-username" type="text" placeholder="new username" autocorrect="off" autocapitalize="none" value="'+username+'">'+
-        '<button class="profile-save-btn" onclick="saveUsername()">save</button>'+
-      '</div>'+
-      '<div class="auth-err" id="edit-username-err"></div>'+
-    '</div>'+
-    // Stats
-    '<div class="profile-stats" id="profile-stats"></div>'+
-    // Sign out
-    '<button class="auth-submit danger" onclick="doSignOut()">sign out</button>';
+    '<div class="profile-stats" id="profile-stats"><div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.78rem;padding:8px;">loading...</div></div>'+
+    '<button class="auth-submit danger" id="signout-btn">sign out</button>';
+
+  // Butonlara event listener bağla (inline onclick değil)
+  var avatarBtn=document.getElementById('avatar-edit-btn');
+  if(avatarBtn){
+    avatarBtn.addEventListener('click',function(){
+      var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
+      var cur=getAvatarColor(username);
+      var idx=colors.indexOf(cur);
+      var next=colors[(idx+1)%colors.length];
+      try{localStorage.setItem('typeradar_avatar_color_'+username,next);}catch(e){}
+      var av=document.getElementById('profile-avatar');
+      if(av)av.style.background=next;
+    });
+  }
+
+  var signoutBtn=document.getElementById('signout-btn');
+  if(signoutBtn){
+    signoutBtn.addEventListener('click',function(){
+      doSignOutInternal();
+    });
+  }
 
   loadProfileStats();
 }
 
 function getAvatarColor(username){
   var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
-  // Try saved color first
   try{
     var saved=localStorage.getItem('typeradar_avatar_color_'+username);
     if(saved)return saved;
@@ -1060,65 +1061,13 @@ function getAvatarColor(username){
   return colors[(username||'?').charCodeAt(0)%colors.length];
 }
 
-window.triggerAvatarEdit=function(){
-  var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
-  var username=currentProfile?currentProfile.username:(currentUser?currentUser.email.split('@')[0]:'?');
-  // Rotate to next color
-  try{
-    var cur=localStorage.getItem('typeradar_avatar_color_'+username)||getAvatarColor(username);
-    var idx=colors.indexOf(cur);
-    var next=colors[(idx+1)%colors.length];
-    localStorage.setItem('typeradar_avatar_color_'+username,next);
-    var av=document.getElementById('profile-avatar');
-    if(av)av.style.background=next;
-    updateAuthAvatarColor(next);
-  }catch(e){}
-};
-
-function updateAuthAvatarColor(color){
-  // header'da avatar varsa güncelle (gelecek için)
+async function doSignOutInternal(){
+  currentUser=null;
+  currentProfile=null;
+  updateAuthUI();
+  closeAuth();
+  try{await sb.auth.signOut();}catch(e){}
 }
-
-window.saveUsername=async function(){
-  var input=document.getElementById('edit-username');
-  var errEl=document.getElementById('edit-username-err');
-  if(!input||!errEl)return;
-  var newName=input.value.trim();
-  if(!newName||newName.length<3){
-    errEl.textContent='Username must be at least 3 characters';errEl.style.color='var(--wrong)';return;
-  }
-  if(newName===(currentProfile?currentProfile.username:'')){
-    errEl.textContent='That is already your username';errEl.style.color='var(--wrong)';return;
-  }
-  errEl.textContent='saving...';errEl.style.color='var(--accent)';
-  var btn=document.querySelector('.profile-save-btn');if(btn)btn.disabled=true;
-  try{
-    var result=await sb.from('profiles').update({username:newName}).eq('id',currentUser.id);
-    if(result.error){
-      var msg=result.error.message||'';
-      if(msg.indexOf('duplicate')!==-1||msg.indexOf('unique')!==-1){
-        errEl.textContent='Username taken, try another';errEl.style.color='var(--wrong)';
-      }else{
-        errEl.textContent=msg||'Update failed';errEl.style.color='var(--wrong)';
-      }
-    }else{
-      if(currentProfile)currentProfile.username=newName;
-      errEl.textContent='✓ saved!';errEl.style.color='var(--correct)';
-      // update header button
-      updateAuthUI();
-      // update avatar letter & header
-      var av=document.getElementById('profile-avatar');
-      if(av)av.textContent=newName[0].toUpperCase();
-      var un=document.getElementById('profile-username');
-      if(un)un.textContent=newName;
-      setTimeout(function(){errEl.textContent='';},2000);
-    }
-  }catch(e){
-    errEl.textContent='Error: '+e.message;errEl.style.color='var(--wrong)';
-  }finally{
-    if(btn)btn.disabled=false;
-  }
-};
 
 window.switchAuthTab=function(tab){
   var ts=document.getElementById('tab-signin');if(ts)ts.classList.toggle('active',tab==='signin');
@@ -1279,11 +1228,7 @@ window.doSignUp=async function(){
 };
 
 window.doSignOut=async function(){
-  try{await sb.auth.signOut();}catch(e){}
-  currentUser=null;
-  currentProfile=null;
-  updateAuthUI();
-  closeAuth();
+  doSignOutInternal();
 };
 
 async function loadProfile(userId){
