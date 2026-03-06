@@ -174,10 +174,19 @@ footer kbd { background:var(--surface2); border:1px solid var(--border); border-
 .auth-submit.danger { background:var(--wrong); margin-top:16px; }
 .auth-err { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--wrong); margin-top:8px; min-height:18px; transition:color 0.15s; }
 .profile-header { display:flex; gap:16px; align-items:center; margin-bottom:20px; }
-.profile-avatar { width:52px; height:52px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:600; color:#fff; flex-shrink:0; }
+.profile-avatar-wrap { position:relative; display:inline-block; }
+.profile-avatar { width:52px; height:52px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:600; color:#fff; flex-shrink:0; transition:background 0.3s; }
+.avatar-edit-btn { position:absolute; bottom:-4px; right:-4px; width:20px; height:20px; background:var(--surface2); border:1px solid var(--border); border-radius:50%; color:var(--muted); font-size:0.6rem; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:all 0.15s; }
+.avatar-edit-btn:hover { color:var(--accent); border-color:var(--accent); }
 .profile-username { font-family:'JetBrains Mono',monospace; font-size:1.1rem; color:var(--text); font-weight:500; }
 .profile-joined { font-family:'JetBrains Mono',monospace; font-size:0.68rem; color:var(--muted); margin-top:2px; }
-.profile-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:8px; }
+.profile-edit-section { margin-bottom:16px; }
+.profile-edit-row { display:flex; gap:8px; align-items:center; }
+.profile-edit-input { margin-bottom:0!important; flex:1; }
+.profile-save-btn { background:var(--accent); border:none; border-radius:8px; padding:12px 16px; color:#fff; font-family:'JetBrains Mono',monospace; font-size:0.78rem; cursor:pointer; white-space:nowrap; transition:opacity 0.15s; }
+.profile-save-btn:hover { opacity:0.85; }
+.profile-save-btn:disabled { opacity:0.5; cursor:not-allowed; }
+.profile-stats { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin-bottom:16px; }
 .ps-item { background:var(--surface2); border-radius:10px; padding:12px; text-align:center; }
 .ps-label { font-family:'JetBrains Mono',monospace; font-size:0.6rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; }
 .ps-val { font-family:'JetBrains Mono',monospace; font-size:1.4rem; color:var(--accent); margin-top:2px; }
