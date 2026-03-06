@@ -6,12 +6,9 @@
   <title>TypeRadar — Typing Speed Test</title>
   <meta name="description" content="TypeRadar — Free online typing speed test. Measure your WPM and accuracy. 30+ languages, 100+ themes, leaderboards.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%230d0d0f' stroke='%237c6af7' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='25' fill='none' stroke='%23f7c26a' stroke-width='3' stroke-dasharray='6 4'/%3E%3Cline x1='50' y1='50' x2='80' y2='50' stroke='%237c6af7' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='50' r='7' fill='%23f7c26a'/%3E%3C/svg%3E">
-  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
-  <link rel="shortcut icon" href="favicon.ico">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://pl28852892.effectivegatecpm.com/d9/cd/61/d9cd61f338c785c36208d6b151e17d40.js"></script>
   <script>
     (function(){
       var t=['#0d0d0f','#141417','#1c1c21','#2a2a32','#e8e8f0','#555566','#7c6af7','#f7c26a','#6af7b2','#f76a8a','#7c6af7'];
@@ -36,19 +33,150 @@
 
 <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;display:none;"></canvas>
 
-<!-- HEADER -->
-<header>
-  <div class="logo" onclick="restart()">
-    <div class="logo-icon"></div>
-    Type<span>Radar</span>
+<!-- ══════════════════════════════════════════════
+     HEADER — MonkeyType style
+══════════════════════════════════════════════ -->
+<header id="main-header">
+  <!-- LEFT: logo + nav icons -->
+  <div class="header-left">
+    <div class="logo" id="logo-btn" title="home">
+      <div class="logo-icon"></div>
+      Type<span>Radar</span>
+    </div>
+    <nav class="header-nav">
+      <button class="nav-icon-btn" id="nav-keyboard" title="home">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="2" y="6" width="20" height="13" rx="2"/>
+          <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M10 14h4M18 14h.01"/>
+        </svg>
+      </button>
+      <button class="nav-icon-btn" id="nav-leaderboard" title="leaderboard">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 17l-6.2 4.3 2.4-7.4L2 9.4h7.6z"/>
+        </svg>
+      </button>
+      <button class="nav-icon-btn" id="nav-daily" title="daily challenge">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+          <circle cx="12" cy="16" r="2" fill="currentColor"/>
+        </svg>
+      </button>
+      <button class="nav-icon-btn" id="nav-settings" title="settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+        </svg>
+      </button>
+    </nav>
   </div>
+
+  <!-- RIGHT: notification bell + user -->
   <div class="header-right">
-    <button class="header-btn" onclick="openLeaderboard()" title="Leaderboard">🏆</button>
-    <button class="header-btn" onclick="openDaily()" title="Daily Challenge">📅</button>
-    <button class="header-btn" id="auth-btn" onclick="openAuth()">sign in</button>
-    <button class="settings-btn" onclick="openSettings()">⚙️</button>
+    <button class="nav-icon-btn" id="nav-notif" title="notifications">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+      </svg>
+      <span class="notif-dot" id="notif-dot" style="display:none"></span>
+    </button>
+    <button class="nav-icon-btn user-btn" id="nav-user" title="account">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+        <circle cx="12" cy="7" r="4"/>
+      </svg>
+      <span class="user-avatar-mini" id="user-avatar-mini" style="display:none"></span>
+    </button>
   </div>
 </header>
+
+<!-- ══════════════════════════════════════════════
+     NOTIFICATION PANEL (dropdown sağ üst)
+══════════════════════════════════════════════ -->
+<div class="side-panel" id="notif-panel">
+  <div class="side-panel-header">
+    <span class="side-panel-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>
+      announcements
+    </span>
+    <button class="panel-close-btn" id="notif-panel-close">✕</button>
+  </div>
+  <div class="notif-section" id="announcements-list">
+    <div class="notif-empty">nothing to show</div>
+  </div>
+  <div class="side-panel-divider"></div>
+  <div class="side-panel-header" style="margin-top:8px;">
+    <span class="side-panel-title">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      notifications
+    </span>
+  </div>
+  <div class="notif-section" id="notifications-list">
+    <div class="notif-empty">nothing to show</div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════════════
+     AUTH PANEL (dropdown sağ üst — user icon)
+══════════════════════════════════════════════ -->
+<div class="side-panel auth-panel" id="auth-panel">
+  <!-- LOGIN / REGISTER görünümü -->
+  <div id="auth-panel-login">
+    <div class="auth-panel-cols">
+      <!-- Register -->
+      <div class="auth-col">
+        <div class="auth-col-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          register
+        </div>
+        <input class="auth-input" id="signup-username" type="text" placeholder="username" autocorrect="off" autocapitalize="none" spellcheck="false">
+        <input class="auth-input" id="signup-email" type="email" placeholder="email">
+        <input class="auth-input" id="signup-pass" type="password" placeholder="password">
+        <button class="auth-panel-btn" id="signup-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          sign up
+        </button>
+        <div class="auth-msg" id="signup-msg"></div>
+      </div>
+      <!-- Login -->
+      <div class="auth-col">
+        <div class="auth-col-title">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          login
+        </div>
+        <input class="auth-input" id="signin-email" type="email" placeholder="email">
+        <input class="auth-input" id="signin-pass" type="password" placeholder="password">
+        <button class="auth-panel-btn" id="signin-btn">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          sign in
+        </button>
+        <div class="auth-msg" id="signin-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE görünümü (giriş yapıldığında) -->
+  <div id="auth-panel-profile" style="display:none;">
+    <div class="profile-panel-top">
+      <div class="profile-panel-avatar" id="pp-avatar">?</div>
+      <div class="profile-panel-info">
+        <div class="profile-panel-name" id="pp-username">—</div>
+        <div class="profile-panel-joined" id="pp-joined"></div>
+      </div>
+    </div>
+    <div class="profile-panel-avatar-colors" id="pp-avatar-colors"></div>
+    <div class="profile-panel-stats" id="pp-stats">
+      <div class="notif-empty">loading...</div>
+    </div>
+    <button class="auth-panel-btn danger" id="signout-panel-btn">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      sign out
+    </button>
+  </div>
+</div>
+
+<!-- Overlay (panel kapatmak için) -->
+<div class="panel-overlay" id="panel-overlay"></div>
 
 <main>
   <!-- TEST SCREEN -->
@@ -62,7 +190,7 @@
       <div style="display:flex;gap:2px;flex-wrap:wrap;" id="mode-group">
         <button class="config-btn active" onclick="setMode('time','mode-time')" id="mode-time"><span class="btn-icon">⏱</span> time</button>
         <button class="config-btn" onclick="setMode('words','mode-words')" id="mode-words"><span class="btn-icon">A</span> words</button>
-        <button class="config-btn" onclick="setMode('quote','mode-quote')" id="mode-quote"><span class="btn-icon">❝❝</span> quote</button>
+        <button class="config-btn" onclick="setMode('quote','mode-quote')" id="mode-quote"><span class="btn-icon">❝</span> quote</button>
         <button class="config-btn" onclick="setMode('zen','mode-zen')" id="mode-zen"><span class="btn-icon">▲</span> zen</button>
         <button class="config-btn" onclick="setMode('custom','mode-custom')" id="mode-custom"><span class="btn-icon">🔧</span> custom</button>
       </div>
@@ -152,44 +280,6 @@
 </main>
 
 <footer><kbd>Tab</kbd> restart &nbsp;·&nbsp; <kbd>Esc</kbd> reset</footer>
-
-<!-- AUTH MODAL -->
-<div class="modal-overlay" id="auth-modal">
-  <div class="modal modal-sm">
-    <button class="modal-close" onclick="closeAuth()">✕</button>
-    <h2 class="modal-title" id="auth-title">account</h2>
-    <div id="auth-form-area">
-      <div class="auth-tabs">
-        <button class="auth-tab active" id="tab-signin" onclick="switchAuthTab('signin')">sign in</button>
-        <button class="auth-tab" id="tab-signup" onclick="switchAuthTab('signup')">sign up</button>
-      </div>
-      <div id="auth-signin-form">
-        <input class="auth-input" id="signin-email" type="email" placeholder="email">
-        <input class="auth-input" id="signin-pass" type="password" placeholder="password">
-        <button class="auth-submit" onclick="doSignIn()">sign in</button>
-        <div class="auth-err" id="signin-err"></div>
-      </div>
-      <div id="auth-signup-form" style="display:none;">
-        <input class="auth-input" id="signup-username" type="text" placeholder="username" autocorrect="off" autocapitalize="none">
-        <input class="auth-input" id="signup-email" type="email" placeholder="email">
-        <input class="auth-input" id="signup-pass" type="password" placeholder="password (min 6 chars)">
-        <button class="auth-submit" onclick="doSignUp()">create account</button>
-        <div class="auth-err" id="signup-err"></div>
-      </div>
-    </div>
-    <div id="auth-profile-area" style="display:none;">
-      <div class="profile-header">
-        <div class="profile-avatar" id="profile-avatar">?</div>
-        <div>
-          <div class="profile-username" id="profile-username">—</div>
-          <div class="profile-joined" id="profile-joined"></div>
-        </div>
-      </div>
-      <div class="profile-stats" id="profile-stats"></div>
-      <button class="auth-submit danger" onclick="doSignOut()">sign out</button>
-    </div>
-  </div>
-</div>
 
 <!-- LEADERBOARD MODAL -->
 <div class="modal-overlay" id="leaderboard-modal">
