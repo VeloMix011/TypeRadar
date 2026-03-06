@@ -81,22 +81,10 @@ main { width:100%; max-width:960px; padding:0 24px; flex:1; display:flex; flex-d
 /* ─── WORD HIGHLIGHT ─────────────────────────────────────────────────────────── */
 .word.active-word .letter { color:var(--text); }
 
-/* ─── CURSOR — all styles ────────────────────────────────────────────────────── */
-.cursor-line {
-  position: absolute;
-  pointer-events: none;
-  z-index: 10;
-  border-radius: 2px;
-  animation: cursorBlink 1s ease-in-out infinite;
-  will-change: opacity, left, top;
-  /* smooth movement */
-  transition: left 0.06s cubic-bezier(0.22,1,0.36,1), top 0.1s ease, background 0.3s, width 0.15s, height 0.15s, border-radius 0.15s;
-}
-/* line (default) */
+/* ─── CURSOR ─────────────────────────────────────────────────────────────────── */
+.cursor-line { position:absolute; pointer-events:none; z-index:10; border-radius:2px; animation:cursorBlink 1s ease-in-out infinite; will-change:opacity,left,top; transition:left 0.06s cubic-bezier(0.22,1,0.36,1),top 0.1s ease,background 0.3s,width 0.15s,height 0.15s,border-radius 0.15s; }
 .cursor-line.caret-line { width:2.5px; height:1.1em; background:var(--cursor); box-shadow:0 0 8px var(--cursor),0 0 16px var(--glow); }
-/* block */
 .cursor-line.caret-block { width:0.62em; height:1.1em; background:rgba(124,106,247,0.35); border:1.5px solid var(--cursor); box-shadow:none; border-radius:3px; }
-/* underline */
 .cursor-line.caret-underline { width:0.62em; height:2.5px; background:var(--cursor); box-shadow:0 0 6px var(--cursor); border-radius:2px; margin-top:0.9em; }
 
 /* ─── ZEN LETTER ─────────────────────────────────────────────────────────────── */
@@ -165,12 +153,48 @@ footer kbd { background:var(--surface2); border:1px solid var(--border); border-
 .auth-tabs { display:flex; gap:4px; margin-bottom:20px; background:var(--surface2); border-radius:10px; padding:4px; }
 .auth-tab { flex:1; background:none; border:none; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:0.78rem; padding:8px; border-radius:7px; cursor:pointer; transition:all 0.18s; }
 .auth-tab.active { background:var(--accent); color:#fff; }
-.auth-input { width:100%; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 14px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.85rem; outline:none; margin-bottom:10px; transition:border-color 0.2s; }
+
+/* FIX: input color — force dark background and light text, fix autofill white flash */
+.auth-input {
+  width:100%;
+  background:var(--surface2);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:12px 14px;
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.85rem;
+  outline:none;
+  margin-bottom:10px;
+  transition:border-color 0.2s, background 0.2s;
+  -webkit-text-fill-color: var(--text);
+  caret-color: var(--accent);
+}
 .auth-input:focus { border-color:var(--accent); }
+/* Fix browser autofill turning input white */
+.auth-input:-webkit-autofill,
+.auth-input:-webkit-autofill:hover,
+.auth-input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0px 1000px var(--surface2) inset !important;
+  -webkit-text-fill-color: var(--text) !important;
+  border-color: var(--border);
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 .auth-submit { width:100%; background:var(--accent); border:none; border-radius:10px; padding:12px; color:#fff; cursor:pointer; font-family:'JetBrains Mono',monospace; font-size:0.85rem; transition:opacity 0.15s; margin-top:4px; }
 .auth-submit:hover { opacity:0.85; }
 .auth-submit.danger { background:var(--wrong); margin-top:16px; }
-.auth-err { font-family:'JetBrains Mono',monospace; font-size:0.72rem; color:var(--wrong); margin-top:8px; min-height:18px; }
+
+/* FIX: auth-err — default red for errors, JS overrides color for info messages */
+.auth-err {
+  font-family:'JetBrains Mono',monospace;
+  font-size:0.72rem;
+  color:var(--wrong);
+  margin-top:8px;
+  min-height:18px;
+  transition: color 0.15s;
+}
+
 .profile-header { display:flex; gap:16px; align-items:center; margin-bottom:20px; }
 .profile-avatar { width:52px; height:52px; background:var(--accent); border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:600; color:#fff; flex-shrink:0; }
 .profile-username { font-family:'JetBrains Mono',monospace; font-size:1.1rem; color:var(--text); font-weight:500; }
