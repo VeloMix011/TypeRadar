@@ -977,7 +977,8 @@ function setAuthErr(elId, msg, isInfo){
 window.openAuth=function(){
   var am=document.getElementById('auth-modal');
   if(!am)return;
-  if(currentUser&&currentProfile){
+  // currentUser var mı kontrol et (profil yüklenmiş olmasa bile)
+  if(currentUser){
     showProfileInModal();
   }else{
     showLoginInModal();
@@ -1005,17 +1006,119 @@ function showLoginInModal(){
 function showProfileInModal(){
   var afa=document.getElementById('auth-form-area');if(afa)afa.style.display='none';
   var apa=document.getElementById('auth-profile-area');if(apa)apa.style.display='block';
-  if(currentProfile){
-    var av=document.getElementById('profile-avatar');
-    if(av)av.textContent=(currentProfile.username||'?')[0].toUpperCase();
-    var un=document.getElementById('profile-username');
-    if(un)un.textContent=currentProfile.username||(currentUser?currentUser.email:'');
-    var pj=document.getElementById('profile-joined');
-    var joinDate=currentProfile.created_at||(currentUser?currentUser.created_at:'');
-    if(pj)pj.textContent=joinDate?('joined '+new Date(joinDate).toLocaleDateString()):'';
-    loadProfileStats();
+
+  var username=currentProfile?currentProfile.username:(currentUser?currentUser.email.split('@')[0]:'?');
+  var joinDate=currentProfile?currentProfile.created_at:(currentUser?currentUser.created_at:'');
+
+  // Avatar harfi
+  var av=document.getElementById('profile-avatar');
+  if(av){
+    av.textContent=username[0].toUpperCase();
+    // avatar rengi — username'e göre deterministik renk
+    var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
+    var ci=username.charCodeAt(0)%colors.length;
+    av.style.background=colors[ci];
   }
+
+  // Profile area içeriğini dinamik yaz
+  var apa2=document.getElementById('auth-profile-area');
+  if(!apa2)return;
+  apa2.innerHTML=
+    '<div class="profile-header">'+
+      '<div class="profile-avatar-wrap">'+
+        '<div class="profile-avatar" id="profile-avatar" style="background:'+getAvatarColor(username)+'">'+username[0].toUpperCase()+'</div>'+
+        '<button class="avatar-edit-btn" onclick="triggerAvatarEdit()" title="change avatar color">✎</button>'+
+      '</div>'+
+      '<div>'+
+        '<div class="profile-username" id="profile-username">'+username+'</div>'+
+        '<div class="profile-joined" id="profile-joined">'+(joinDate?('joined '+new Date(joinDate).toLocaleDateString()):'')+'</div>'+
+      '</div>'+
+    '</div>'+
+    // Edit section
+    '<div class="profile-edit-section" id="profile-edit-section">'+
+      '<div class="profile-edit-row">'+
+        '<input class="auth-input profile-edit-input" id="edit-username" type="text" placeholder="new username" autocorrect="off" autocapitalize="none" value="'+username+'">'+
+        '<button class="profile-save-btn" onclick="saveUsername()">save</button>'+
+      '</div>'+
+      '<div class="auth-err" id="edit-username-err"></div>'+
+    '</div>'+
+    // Stats
+    '<div class="profile-stats" id="profile-stats"></div>'+
+    // Sign out
+    '<button class="auth-submit danger" onclick="doSignOut()">sign out</button>';
+
+  loadProfileStats();
 }
+
+function getAvatarColor(username){
+  var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
+  // Try saved color first
+  try{
+    var saved=localStorage.getItem('typeradar_avatar_color_'+username);
+    if(saved)return saved;
+  }catch(e){}
+  return colors[(username||'?').charCodeAt(0)%colors.length];
+}
+
+window.triggerAvatarEdit=function(){
+  var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
+  var username=currentProfile?currentProfile.username:(currentUser?currentUser.email.split('@')[0]:'?');
+  // Rotate to next color
+  try{
+    var cur=localStorage.getItem('typeradar_avatar_color_'+username)||getAvatarColor(username);
+    var idx=colors.indexOf(cur);
+    var next=colors[(idx+1)%colors.length];
+    localStorage.setItem('typeradar_avatar_color_'+username,next);
+    var av=document.getElementById('profile-avatar');
+    if(av)av.style.background=next;
+    updateAuthAvatarColor(next);
+  }catch(e){}
+};
+
+function updateAuthAvatarColor(color){
+  // header'da avatar varsa güncelle (gelecek için)
+}
+
+window.saveUsername=async function(){
+  var input=document.getElementById('edit-username');
+  var errEl=document.getElementById('edit-username-err');
+  if(!input||!errEl)return;
+  var newName=input.value.trim();
+  if(!newName||newName.length<3){
+    errEl.textContent='Username must be at least 3 characters';errEl.style.color='var(--wrong)';return;
+  }
+  if(newName===(currentProfile?currentProfile.username:'')){
+    errEl.textContent='That is already your username';errEl.style.color='var(--wrong)';return;
+  }
+  errEl.textContent='saving...';errEl.style.color='var(--accent)';
+  var btn=document.querySelector('.profile-save-btn');if(btn)btn.disabled=true;
+  try{
+    var result=await sb.from('profiles').update({username:newName}).eq('id',currentUser.id);
+    if(result.error){
+      var msg=result.error.message||'';
+      if(msg.indexOf('duplicate')!==-1||msg.indexOf('unique')!==-1){
+        errEl.textContent='Username taken, try another';errEl.style.color='var(--wrong)';
+      }else{
+        errEl.textContent=msg||'Update failed';errEl.style.color='var(--wrong)';
+      }
+    }else{
+      if(currentProfile)currentProfile.username=newName;
+      errEl.textContent='✓ saved!';errEl.style.color='var(--correct)';
+      // update header button
+      updateAuthUI();
+      // update avatar letter & header
+      var av=document.getElementById('profile-avatar');
+      if(av)av.textContent=newName[0].toUpperCase();
+      var un=document.getElementById('profile-username');
+      if(un)un.textContent=newName;
+      setTimeout(function(){errEl.textContent='';},2000);
+    }
+  }catch(e){
+    errEl.textContent='Error: '+e.message;errEl.style.color='var(--wrong)';
+  }finally{
+    if(btn)btn.disabled=false;
+  }
+};
 
 window.switchAuthTab=function(tab){
   var ts=document.getElementById('tab-signin');if(ts)ts.classList.toggle('active',tab==='signin');
@@ -1492,11 +1595,10 @@ sb.auth.onAuthStateChange(async function(event, session){
     updateAuthUI();
     return;
   }
-  if(event==='SIGNED_IN'||event==='INITIAL_SESSION'||event==='TOKEN_REFRESHED'||event==='USER_UPDATED'){
-    if(session&&session.user){
-      currentUser=session.user;
-      await loadProfile(session.user.id);
-    }
+  // Tüm oturum olaylarında (yenileme dahil) user ve profil yükle
+  if(session&&session.user){
+    currentUser=session.user;
+    await loadProfile(session.user.id);
   }
 });
 
