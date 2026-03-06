@@ -794,6 +794,13 @@ window.saveCustomText=function(){
 /* ═══════════════════════════════════════════════════════════════════════
    AUTH — ALL BUGS FIXED
 ═══════════════════════════════════════════════════════════════════════ */
+// Helper: show auth message with correct color
+function setAuthMsg(el,msg,type){
+  if(!el)return;
+  el.textContent=msg;
+  el.style.color=type==='info'?'var(--muted)':'var(--wrong)';
+}
+
 window.openAuth=function(){
   if(currentUser&&currentProfile){showProfileInModal();}
   else{currentUser=null;currentProfile=null;updateAuthUI();showLoginInModal();}
@@ -805,7 +812,10 @@ function showLoginInModal(){
   const fa=document.getElementById('auth-form-area');if(fa)fa.style.display='block';
   const pa=document.getElementById('auth-profile-area');if(pa)pa.style.display='none';
   ['signin-email','signin-pass','signup-username','signup-email','signup-pass'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
-  ['signin-err','signup-err'].forEach(id=>{const el=document.getElementById(id);if(el)el.textContent='';});
+  ['signin-err','signup-err'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el){el.textContent='';el.style.color='var(--wrong)';}
+  });
 }
 function showProfileInModal(){
   const fa=document.getElementById('auth-form-area');if(fa)fa.style.display='none';
@@ -832,17 +842,22 @@ window.doSignIn=async function(){
   const email=document.getElementById('signin-email').value.trim();
   const pass=document.getElementById('signin-pass').value;
   const err=document.getElementById('signin-err');
-  if(!email||!pass){err.textContent='Please fill all fields';return;}
-  err.textContent='signing in...';
+  if(!email||!pass){setAuthMsg(err,'Please fill all fields','error');return;}
+  setAuthMsg(err,'signing in...','info');
   try{
     const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
-    if(error){err.textContent=error.message;return;}
-    if(!data||!data.user){err.textContent='Sign in failed, try again';return;}
+    if(error){setAuthMsg(err,error.message,'error');return;}
+    if(!data||!data.user){setAuthMsg(err,'Sign in failed, try again','error');return;}
     currentUser=data.user;
     await loadProfile(data.user.id);
-    if(currentProfile){err.textContent='';closeAuth();}
-    else{err.textContent='Could not load profile, try again.';currentUser=null;updateAuthUI();}
-  }catch(e){err.textContent='Network error, try again';currentUser=null;currentProfile=null;updateAuthUI();}
+    // FIX: even if profile load fails, still sign in the user
+    if(!currentProfile){
+      // Create a minimal profile fallback so user isn't stuck
+      currentProfile={username:email.split('@')[0],created_at:new Date().toISOString()};
+      updateAuthUI();
+    }
+    err.textContent='';closeAuth();
+  }catch(e){setAuthMsg(err,'Network error, try again','error');currentUser=null;currentProfile=null;updateAuthUI();}
 };
 
 window.doSignUp=async function(){
@@ -850,26 +865,30 @@ window.doSignUp=async function(){
   const email=document.getElementById('signup-email').value.trim();
   const pass=document.getElementById('signup-pass').value;
   const err=document.getElementById('signup-err');
-  if(!username||username.length<3){err.textContent='Username must be at least 3 characters';return;}
-  if(!/^[a-zA-Z0-9_-]+$/.test(username)){err.textContent='Only letters, numbers, _ and - allowed';return;}
-  if(!email||!pass||pass.length<6){err.textContent='Fill all fields (password min 6 chars)';return;}
-  err.textContent='creating account...';
+  if(!username||username.length<3){setAuthMsg(err,'Username must be at least 3 characters','error');return;}
+  if(!/^[a-zA-Z0-9_-]+$/.test(username)){setAuthMsg(err,'Only letters, numbers, _ and - allowed','error');return;}
+  if(!email||!pass||pass.length<6){setAuthMsg(err,'Fill all fields (password min 6 chars)','error');return;}
+  setAuthMsg(err,'creating account...','info');
   try{
     const {data,error}=await sb.auth.signUp({email,password:pass});
-    if(error){err.textContent=error.message;return;}
-    if(!data||!data.user){err.textContent='Signup failed, try again';return;}
+    if(error){setAuthMsg(err,error.message,'error');return;}
+    if(!data||!data.user){setAuthMsg(err,'Signup failed, try again','error');return;}
     const {data:sinData,error:sinErr}=await sb.auth.signInWithPassword({email,password:pass});
-    if(sinErr||!sinData||!sinData.user){err.textContent='Account created! Please sign in.';return;}
+    if(sinErr||!sinData||!sinData.user){setAuthMsg(err,'Account created! Please sign in.','info');return;}
     const uid=sinData.user.id;
     const {error:pe}=await sb.from('profiles').insert({id:uid,username});
     if(pe&&!pe.message.includes('duplicate')&&!pe.message.includes('unique')){
-      err.textContent='Profile error: '+pe.message;await sb.auth.signOut();return;
+      setAuthMsg(err,'Profile error: '+pe.message,'error');await sb.auth.signOut();return;
     }
     currentUser=sinData.user;
     await loadProfile(uid);
-    if(currentProfile){err.textContent='';closeAuth();}
-    else{err.textContent='Account created! Please sign in.';currentUser=null;updateAuthUI();}
-  }catch(e){err.textContent='Error: '+e.message;currentUser=null;currentProfile=null;updateAuthUI();}
+    // FIX: fallback if RLS blocks immediate read
+    if(!currentProfile){
+      currentProfile={username,created_at:new Date().toISOString()};
+      updateAuthUI();
+    }
+    err.textContent='';closeAuth();
+  }catch(e){setAuthMsg(err,'Error: '+e.message,'error');currentUser=null;currentProfile=null;updateAuthUI();}
 };
 
 window.doSignOut=async function(){
