@@ -2,7 +2,7 @@
 'use strict';
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SUPABASE CONFIG — senin anahtarların
+   SUPABASE CONFIG
 ═══════════════════════════════════════════════════════════════════════ */
 const SUPABASE_URL  = 'https://diqzysrdzzdinjjydtsk.supabase.co';
 const SUPABASE_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRpcXp5c3JkenpkaW5qanlkdHNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI3MjkwNTEsImV4cCI6MjA4ODMwNTA1MX0.t-uJmkQtEwJwuq7SWWCQGp3NbjrI3VJF1f-Qh8nLV9g';
@@ -340,12 +340,10 @@ function buildDisplay(seedWords){
     });
   }
 
-  // Cursor
   const cursor=document.createElement('div');
   cursor.className='cursor-line caret-'+caretStyle;
   cursor.id='cursor';inner.appendChild(cursor);
 
-  // Highlight first word
   highlightWord(0);
   updateLineH();
   updateWordProgress();
@@ -370,7 +368,7 @@ function highlightWord(idx){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   CURSOR POSITION — smooth, baseline aligned
+   CURSOR POSITION
 ═══════════════════════════════════════════════════════════════════════ */
 function positionCursor(){
   const cursor=document.getElementById('cursor');
@@ -381,10 +379,8 @@ function positionCursor(){
   updateLineH();
   const display=document.getElementById('words-display');
   const fontSize=display?parseFloat(getComputedStyle(display).fontSize):lineH2/2.4;
-  // For underline caret: push to bottom of line; for others: center vertically
   const isUnderline=(caretStyle==='underline');
   const isBlock=(caretStyle==='block');
-  // vertical offset to align with text baseline area
   const vOffset=isUnderline?(lineH2-fontSize*0.1)/2:(lineH2-fontSize*1.1)/2;
 
   const letters=mode==='zen'?wordEl.querySelectorAll('.zen-letter'):wordEl.querySelectorAll('.letter');
@@ -415,7 +411,6 @@ function positionCursor(){
   cursor.style.left=left+'px';
   cursor.style.top=(top+vOffset)+'px';
 
-  // Scroll words up when cursor reaches 3rd line
   if(lineH2>0&&top>=lineH2*2.1){
     const currentTop=parseInt(inner.style.top||'0',10);
     inner.style.top=(currentTop-lineH2)+'px';
@@ -509,7 +504,6 @@ function startTimer(){
       if(timeLeft<=5)td.classList.add('warning');
       if(timeLeft<=0){endTest();return;}
     }else{wpmTick++;document.getElementById('timer-display').textContent=wpmTick;}
-    // raw wpm for consistency
     const totalTyped=totalCorrectChars+totalWrongChars;
     const elapsed=mode==='time'?(totalTime-timeLeft):wpmTick;
     const raw=elapsed>0?Math.round((totalTyped/5)/(elapsed/60)):0;
@@ -612,14 +606,11 @@ function endTest(){
   document.getElementById('test-screen').style.display='none';
   document.getElementById('result-screen').style.display='flex';
 
-  // PB check
   const isPB=checkPB(wpm);
   if(isPB||wpm>=80)launchConfetti();
 
-  // Save to Supabase
   if(currentUser)saveResult(wpm,acc,rawWpm,consistency);
 
-  // Daily mode save
   if(isDailyMode&&currentUser){
     saveDailyResult(wpm,acc);
     isDailyMode=false;
@@ -649,7 +640,6 @@ function drawResultChart(){
   const px=i=>pad.l+(data.length<=1?cW/2:(i/(data.length-1))*cW);
   const py=v=>pad.t+cH-(v/maxVR)*cH;
 
-  // Grid
   ctx.font=`11px 'JetBrains Mono', monospace`;
   ctx.textAlign='right';
   for(let g=0;g<=4;g++){
@@ -659,7 +649,6 @@ function drawResultChart(){
     ctx.strokeStyle='rgba(255,255,255,0.06)';ctx.lineWidth=1;ctx.stroke();
     ctx.fillStyle='rgba(255,255,255,0.3)';ctx.fillText(gVal,pad.l-6,gY+4);
   }
-  // X labels
   ctx.textAlign='center';ctx.fillStyle='rgba(255,255,255,0.25)';
   const xCount=Math.min(data.length,8);
   for(let xi=0;xi<xCount;xi++){
@@ -667,7 +656,6 @@ function drawResultChart(){
     ctx.fillText(xIdx+'s',px(xIdx),H-8);
   }
 
-  // Raw WPM line (gray)
   if(rawData&&rawData.length>1){
     ctx.beginPath();ctx.moveTo(px(0),py(rawData[0]));
     for(let i=1;i<Math.min(rawData.length,data.length);i++){
@@ -677,7 +665,6 @@ function drawResultChart(){
     ctx.strokeStyle='rgba(180,180,180,0.35)';ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
   }
 
-  // WPM fill gradient
   if(data.length>1){
     const grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
     grad.addColorStop(0,'rgba(124,106,247,0.25)');grad.addColorStop(1,'rgba(124,106,247,0.02)');
@@ -685,20 +672,16 @@ function drawResultChart(){
     for(let fi=1;fi<data.length;fi++){const cpx=px(fi-0.5);ctx.bezierCurveTo(cpx,py(data[fi-1]),cpx,py(data[fi]),px(fi),py(data[fi]));}
     ctx.lineTo(px(data.length-1),H-pad.b);ctx.lineTo(px(0),H-pad.b);
     ctx.closePath();ctx.fillStyle=grad;ctx.fill();
-    // WPM line
     ctx.beginPath();ctx.moveTo(px(0),py(data[0]));
     for(let si=1;si<data.length;si++){const sx=px(si-0.5);ctx.bezierCurveTo(sx,py(data[si-1]),sx,py(data[si]),px(si),py(data[si]));}
     ctx.strokeStyle='rgba(124,106,247,1)';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
   }
-  // Dots
   for(let di=0;di<data.length;di++){
     ctx.beginPath();ctx.arc(px(di),py(data[di]),2.5,0,Math.PI*2);ctx.fillStyle='rgba(124,106,247,1)';ctx.fill();
   }
-  // Last dot accent
   ctx.beginPath();ctx.arc(px(data.length-1),py(data[data.length-1]),5,0,Math.PI*2);ctx.fillStyle='rgba(124,106,247,0.3)';ctx.fill();
   ctx.beginPath();ctx.arc(px(data.length-1),py(data[data.length-1]),3,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
 
-  // Error markers
   if(totalErrors>0){
     ctx.fillStyle='rgba(247,106,138,0.8)';
     ctx.font='10px JetBrains Mono,monospace';ctx.textAlign='center';
@@ -849,19 +832,41 @@ window.saveCustomText=function(){
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   AUTH — SUPABASE
+   AUTH — SUPABASE  (BUG FIX BÖLÜMÜ)
 ═══════════════════════════════════════════════════════════════════════ */
+
+/* openAuth: currentUser VE currentProfile ikisi de doluysa profili göster,
+   aksi halde state'i temizleyip login ekranını aç */
 window.openAuth=function(){
-  if(currentUser)showProfileInModal();
-  else showLoginInModal();
+  if(currentUser && currentProfile){
+    showProfileInModal();
+  } else {
+    // Race condition ya da yarım state — temizle ve login göster
+    currentUser = null;
+    currentProfile = null;
+    updateAuthUI();
+    showLoginInModal();
+  }
   document.getElementById('auth-modal').style.display='flex';
 };
-window.closeAuth=function(){document.getElementById('auth-modal').style.display='none';};
+
+window.closeAuth=function(){
+  document.getElementById('auth-modal').style.display='none';
+};
 
 function showLoginInModal(){
   document.getElementById('auth-form-area').style.display='block';
   document.getElementById('auth-profile-area').style.display='none';
+  // Input'ları temizle
+  const se=document.getElementById('signin-email');if(se)se.value='';
+  const sp=document.getElementById('signin-pass');if(sp)sp.value='';
+  const sue=document.getElementById('signup-email');if(sue)sue.value='';
+  const sup=document.getElementById('signup-pass');if(sup)sup.value='';
+  const sun=document.getElementById('signup-username');if(sun)sun.value='';
+  const serr=document.getElementById('signin-err');if(serr)serr.textContent='';
+  const suerr=document.getElementById('signup-err');if(suerr)suerr.textContent='';
 }
+
 function showProfileInModal(){
   document.getElementById('auth-form-area').style.display='none';
   document.getElementById('auth-profile-area').style.display='block';
@@ -897,8 +902,15 @@ window.doSignIn=async function(){
     if(data.user){
       currentUser=data.user;
       await loadProfile(data.user.id);
-      err.textContent='';
-      closeAuth();
+      // Profil başarıyla yüklendiyse kapat, yoksa hata göster
+      if(currentProfile){
+        err.textContent='';
+        closeAuth();
+      } else {
+        err.textContent='Profile could not be loaded, please try again.';
+        currentUser=null;
+        updateAuthUI();
+      }
     }
   }catch(e){err.textContent='Network error, try again';}
 };
@@ -912,46 +924,61 @@ window.doSignUp=async function(){
   if(!email||!pass||pass.length<6){err.textContent='Fill all fields (password min 6 chars)';return;}
   err.textContent='creating account...';
   try{
-    // Step 1: sign up
     const {data,error}=await sb.auth.signUp({email,password:pass});
     if(error){err.textContent=error.message;return;}
     if(!data.user){err.textContent='Signup failed, try again';return;}
 
-    // Step 2: sign in to get valid session
     const {data:sinData,error:sinErr}=await sb.auth.signInWithPassword({email,password:pass});
     if(sinErr||!sinData||!sinData.user){
       err.textContent='Account created! Please sign in.';return;
     }
 
-    // Step 3: insert profile with the authenticated session
     const uid=sinData.user.id;
     const {error:pe}=await sb.from('profiles').insert({id:uid,username});
     if(pe){
-      if(pe.message.includes('duplicate')||pe.message.includes('unique')){
-        // Profile already exists, just load it
-      } else {
+      if(!pe.message.includes('duplicate')&&!pe.message.includes('unique')){
         err.textContent='Profile error: '+pe.message;return;
       }
     }
 
-    // Step 4: load and show
     currentUser=sinData.user;
     await loadProfile(uid);
-    err.textContent='';
-    closeAuth();
+    if(currentProfile){
+      err.textContent='';
+      closeAuth();
+    } else {
+      err.textContent='Account created! Please sign in.';
+      currentUser=null;
+      updateAuthUI();
+    }
   }catch(e){err.textContent='Error: '+e.message;}
 };
 
+/* doSignOut — önce state'i temizle, UI'ı güncelle, modal'ı kapat,
+   sonra Supabase'den çık ve sayfayı yenile */
 window.doSignOut=async function(){
+  currentUser=null;
+  currentProfile=null;
+  updateAuthUI();
+  closeAuth();
   try{await sb.auth.signOut();}catch(e){}
-  window.location.href=window.location.origin+window.location.pathname;
+  setTimeout(()=>window.location.reload(),150);
 };
 
 async function loadProfile(userId){
-  const {data}=await sb.from('profiles').select('*').eq('id',userId).single();
-  currentProfile=data;
+  try{
+    const {data,error}=await sb.from('profiles').select('*').eq('id',userId).single();
+    if(error||!data){
+      currentProfile=null;
+    } else {
+      currentProfile=data;
+    }
+  }catch(e){
+    currentProfile=null;
+  }
   updateAuthUI();
 }
+
 async function loadProfileStats(){
   if(!currentUser)return;
   const {data}=await sb.from('results').select('wpm,accuracy').eq('user_id',currentUser.id).order('wpm',{ascending:false}).limit(50);
@@ -970,13 +997,15 @@ async function loadProfileStats(){
     ps.innerHTML='<div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.78rem;">no tests yet</div>';
   }
 }
+
 function updateAuthUI(){
   const btn=document.getElementById('auth-btn');if(!btn)return;
   if(currentUser&&currentProfile){
     btn.textContent=currentProfile.username||currentUser.email.split('@')[0];
     btn.classList.add('user-logged');
   }else{
-    btn.textContent='sign in';btn.classList.remove('user-logged');
+    btn.textContent='sign in';
+    btn.classList.remove('user-logged');
   }
 }
 
@@ -1014,7 +1043,6 @@ window.loadLeaderboard=async function(m,t,el){
 
   if(error||!data){list.innerHTML='<div class="lb-loading">failed to load</div>';return;}
 
-  // Deduplicate by username — keep best
   const best={};
   data.forEach(r=>{
     const u=r.profiles?.username||'anonymous';
@@ -1043,7 +1071,6 @@ function getDailyDateStr(){
   const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 }
 function getDailySeed(){
-  // Deterministic daily words from date
   const dateStr=getDailyDateStr();
   let hash=0;for(let i=0;i<dateStr.length;i++)hash=((hash<<5)-hash)+dateStr.charCodeAt(i);
   const rng=(s)=>{s=Math.sin(s)*10000;return s-Math.floor(s);};
@@ -1060,7 +1087,6 @@ window.openDaily=function(){
   const dateBadge=document.getElementById('daily-date');if(dateBadge)dateBadge.textContent=dateStr;
   document.getElementById('daily-modal').style.display='flex';
   loadDailyBoard();
-  // Check if user already did today
   const savedKey=`typeradar_daily_${dateStr}`;
   try{
     const saved=localStorage.getItem(savedKey);
@@ -1078,7 +1104,6 @@ window.startDaily=function(){
   closeDaily();
   isDailyMode=true;
   const seed=getDailySeed();
-  // Force time mode 30s
   mode='time';totalTime=30;timeLeft=30;
   document.querySelectorAll('#mode-group .config-btn').forEach(b=>b.classList.remove('active'));
   const mb=document.getElementById('mode-time');if(mb)mb.classList.add('active');
@@ -1094,7 +1119,6 @@ async function saveDailyResult(wpm,acc){
   const key=`typeradar_daily_${dateStr}`;
   try{localStorage.setItem(key,JSON.stringify({wpm,accuracy:acc}));}catch(e){}
   if(!currentUser||!currentProfile)return;
-  // Upsert daily result
   await sb.from('daily_results').upsert({
     user_id:currentUser.id,username:currentProfile.username,
     date:dateStr,wpm,accuracy:acc
@@ -1106,7 +1130,6 @@ async function loadDailyBoard(){
   const board=document.getElementById('daily-board');
   if(!board)return;
   board.innerHTML='<div class="lb-loading">loading...</div>';
-  // Try daily_results table (may not exist yet — will fail gracefully)
   const {data,error}=await sb.from('daily_results')
     .select('username,wpm,accuracy').eq('date',dateStr)
     .order('wpm',{ascending:false}).limit(20);
@@ -1199,17 +1222,27 @@ function loadSettings(){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SUPABASE AUTH LISTENER
+   SUPABASE AUTH LISTENER  (BUG FIX)
+   — SIGNED_OUT veya session yoksa state'i her zaman temizle
+   — SIGNED_IN / INITIAL_SESSION / TOKEN_REFRESHED'da profil yükle
 ═══════════════════════════════════════════════════════════════════════ */
-sb.auth.onAuthStateChange(async(event,session)=>{
-  if(event==="SIGNED_OUT"){
-    currentUser=null;currentProfile=null;updateAuthUI();return;
+sb.auth.onAuthStateChange(async(event, session)=>{
+  if(event === 'SIGNED_OUT' || !session || !session.user){
+    currentUser = null;
+    currentProfile = null;
+    updateAuthUI();
+    return;
   }
-  if(session&&session.user){
-    currentUser=session.user;
-    await loadProfile(session.user.id);
-  }else{
-    currentUser=null;currentProfile=null;updateAuthUI();
+  if(
+    event === 'SIGNED_IN' ||
+    event === 'INITIAL_SESSION' ||
+    event === 'TOKEN_REFRESHED' ||
+    event === 'USER_UPDATED'
+  ){
+    if(session && session.user){
+      currentUser = session.user;
+      await loadProfile(session.user.id);
+    }
   }
 });
 
