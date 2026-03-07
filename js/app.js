@@ -1529,6 +1529,30 @@ window.addEventListener('load',function(){
   document.addEventListener('touchmove',function(e){
     if(e.target.closest&&e.target.closest('.typing-container'))e.preventDefault();
   },{passive:false});
+
+  // Modal overlay clicks
+  var sm2=document.getElementById('settings-modal');
+  if(sm2)sm2.addEventListener('click',function(e){if(e.target===this)closeSettings();});
+  var lm2=document.getElementById('leaderboard-modal');
+  if(lm2)lm2.addEventListener('click',function(e){if(e.target===this)closeLeaderboard();});
+  var dm2=document.getElementById('daily-modal');
+  if(dm2)dm2.addEventListener('click',function(e){if(e.target===this)closeDaily();});
+
+  // Panel overlay
+  var po=document.getElementById('panel-overlay');
+  if(po)po.addEventListener('click',function(){closeAllPanels();});
+
+  // Header nav — all wired here after DOM ready
+  var el;
+  el=document.getElementById('nav-keyboard');if(el)el.addEventListener('click',function(){closeAllPanels();restart();});
+  el=document.getElementById('logo-btn');if(el)el.addEventListener('click',function(){closeAllPanels();restart();});
+  el=document.getElementById('nav-leaderboard');if(el)el.addEventListener('click',function(){openLeaderboard();});
+  el=document.getElementById('nav-daily');if(el)el.addEventListener('click',function(){togglePanel('info-panel');});
+  el=document.getElementById('nav-settings');if(el)el.addEventListener('click',function(){openSettings();});
+  el=document.getElementById('nav-notif');if(el)el.addEventListener('click',function(){togglePanel('notif-panel');});
+  el=document.getElementById('nav-user');if(el)el.addEventListener('click',function(){openUserPanel();});
+  el=document.getElementById('notif-panel-close');if(el)el.addEventListener('click',function(){closeAllPanels();});
+  el=document.getElementById('info-panel-close');if(el)el.addEventListener('click',function(){closeAllPanels();});
 });
 
 // Auto-refocus
