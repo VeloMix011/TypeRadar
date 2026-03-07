@@ -972,7 +972,109 @@ function togglePanel(id){
   if(activePanel===id){closeAllPanels();}else{openPanel(id);}
 }
 
-// Settings modal still uses overlay modal
+/* ═══════════════════════════════════════════════════════════════════════
+   SCREEN NAVIGATION
+═══════════════════════════════════════════════════════════════════════ */
+var currentScreen='test'; // 'test'|'leaderboard'|'info'
+
+function showScreen(name){
+  var screens=['main-area','leaderboard-screen','info-screen'];
+  screens.forEach(function(id){
+    var el=document.getElementById(id);
+    if(el)el.style.display='none';
+  });
+  currentScreen=name;
+  if(name==='test'){
+    var el=document.getElementById('main-area');if(el)el.style.display='flex';
+    document.getElementById('result-screen').style.display='none';
+    document.getElementById('test-screen').style.display='flex';
+    setTimeout(function(){if(!('ontouchstart' in window))hiddenInput.focus();},100);
+  }else if(name==='leaderboard'){
+    var el=document.getElementById('leaderboard-screen');if(el)el.style.display='block';
+    loadLbPage('time',15,document.querySelector('.lb-page-tab'));
+  }else if(name==='info'){
+    var el=document.getElementById('info-screen');if(el)el.style.display='block';
+    loadInfoStats();
+  }
+}
+
+async function loadInfoStats(){
+  try{
+    var r=await sb.from('results').select('id',{count:'exact',head:true});
+    var total=r.count||0;
+    var el1=document.getElementById('stat-tests-started');
+    var el2=document.getElementById('stat-tests-completed');
+    if(el1)el1.textContent=total>1000?Math.round(total/1000)+'k':String(total);
+    if(el2)el2.textContent=total>1000?Math.round(total*0.85/1000)+'k':Math.round(total*0.85);
+    // estimate typing time (avg 30s per test)
+    var mins=Math.round(total*30/60);
+    var el3=document.getElementById('stat-typing-time');
+    if(el3)el3.textContent=mins>1000?Math.round(mins/1000)+'k':String(mins);
+  }catch(e){}
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   LEADERBOARD PAGE
+═══════════════════════════════════════════════════════════════════════ */
+window.loadLbPage=async function(m,t,el){
+  document.querySelectorAll('.lb-page-tab').forEach(function(b){b.classList.remove('active');});
+  if(el)el.classList.add('active');
+  var tbody=document.getElementById('lb-page-tbody');
+  if(!tbody)return;
+  tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">loading...</td></tr>';
+
+  try{
+    var result=await sb.from('results')
+      .select('wpm,accuracy,raw_wpm,consistency,user_id')
+      .eq('mode',m).eq('time_seconds',t)
+      .order('wpm',{ascending:false}).limit(200);
+
+    if(result.error||!result.data||result.data.length===0){
+      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">no results yet — be first!</td></tr>';return;
+    }
+
+    // best per user
+    var best={};
+    result.data.forEach(function(r){
+      var uid=r.user_id||'anon';
+      if(!best[uid]||r.wpm>best[uid].wpm)best[uid]=r;
+    });
+    var rows=Object.values(best).sort(function(a,b){return b.wpm-a.wpm;}).slice(0,50);
+
+    // fetch usernames
+    var uids=rows.map(function(r){return r.user_id;}).filter(Boolean);
+    var nameMap={};
+    if(uids.length>0){
+      var pRes=await sb.from('profiles').select('id,username').in('id',uids);
+      if(pRes.data)pRes.data.forEach(function(p){nameMap[p.id]=p.username;});
+    }
+
+    var myUsername=currentProfile?currentProfile.username:null;
+    tbody.innerHTML=rows.map(function(r,i){
+      var uname=nameMap[r.user_id]||'anonymous';
+      var isMe=myUsername&&uname===myUsername;
+      var rankCell=i===0?'<td class="lb-rank-cell gold">&#129351;</td>':
+                   i===1?'<td class="lb-rank-cell silver">&#129352;</td>':
+                   i===2?'<td class="lb-rank-cell bronze">&#129353;</td>':
+                   '<td class="lb-rank-cell">'+(i+1)+'</td>';
+      return '<tr class="lb-row'+(isMe?' lb-me':'')+'">'+
+        rankCell+
+        '<td class="lb-user-cell">'+uname+'</td>'+
+        '<td class="lb-wpm-cell">'+r.wpm+'</td>'+
+        '<td>'+(r.accuracy||0)+'%</td>'+
+        '<td>'+(r.raw_wpm||'—')+'</td>'+
+        '<td>'+(r.consistency?r.consistency+'%':'—')+'</td>'+
+      '</tr>';
+    }).join('');
+  }catch(e){
+    tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">error: '+e.message+'</td></tr>';
+  }
+};
+
+window.switchLbTab=function(cat,el){
+  document.querySelectorAll('.lb-sidebar-btn').forEach(function(b){b.classList.remove('active');});
+  if(el)el.classList.add('active');
+};
 window.openSettings=function(){buildFontGrid();buildBgThemeGrid();closeAllPanels();var sm=document.getElementById('settings-modal');if(sm)sm.style.display='flex';};
 window.closeSettings=function(){var sm=document.getElementById('settings-modal');if(sm)sm.style.display='none';setTimeout(function(){if(!('ontouchstart' in window))hiddenInput.focus();},100);};
 window.saveCustomText=function(){
@@ -983,8 +1085,17 @@ window.saveCustomText=function(){
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   AUTH PANEL
+   OAUTH (Google / GitHub)
 ═══════════════════════════════════════════════════════════════════════ */
+window.doOAuth=async function(provider){
+  try{
+    var result=await sb.auth.signInWithOAuth({
+      provider:provider,
+      options:{redirectTo:window.location.origin+window.location.pathname}
+    });
+    if(result.error)setAuthMsg('signin-msg','OAuth error: '+result.error.message);
+  }catch(e){setAuthMsg('signin-msg','Error: '+e.message);}
+};
 function setAuthMsg(id,msg,isInfo){
   var el=document.getElementById(id);
   if(!el)return;
@@ -1393,11 +1504,15 @@ document.addEventListener('keydown',function(e){
   var leaderboardModal=document.getElementById('leaderboard-modal');
   var dailyModal=document.getElementById('daily-modal');
 
+  if(activePanel){if(e.key==='Escape'){closeAllPanels();e.preventDefault();}return;}
   if((settingsModal&&settingsModal.style.display==='flex')||
      (leaderboardModal&&leaderboardModal.style.display==='flex')||
-     (dailyModal&&dailyModal.style.display==='flex')||
-     activePanel){
-    if(e.key==='Escape'){closeSettings();closeLeaderboard();closeDaily();closeAllPanels();e.preventDefault();}
+     (dailyModal&&dailyModal.style.display==='flex')){
+    if(e.key==='Escape'){closeSettings();closeLeaderboard();closeDaily();e.preventDefault();}
+    return;
+  }
+  if(currentScreen!=='test'){
+    if(e.key==='Escape'){showScreen('test');e.preventDefault();}
     return;
   }
   var key=e.key;
@@ -1438,26 +1553,26 @@ if(dailyModalEl)dailyModalEl.addEventListener('click',function(e){if(e.target===
 var panelOverlay=document.getElementById('panel-overlay');
 if(panelOverlay)panelOverlay.addEventListener('click',function(){closeAllPanels();});
 
-// Header nav buttons
+// Header nav buttons — all wired after DOM ready
 var navKeyboard=document.getElementById('nav-keyboard');
-if(navKeyboard)navKeyboard.addEventListener('click',function(){closeAllPanels();restart();});
-var logoBtn=document.getElementById('logo-btn');
-if(logoBtn)logoBtn.addEventListener('click',function(){closeAllPanels();restart();});
+if(navKeyboard)navKeyboard.addEventListener('click',function(){closeAllPanels();showScreen('test');});
+var logoBtn2=document.getElementById('logo-btn');
+if(logoBtn2)logoBtn2.addEventListener('click',function(){closeAllPanels();showScreen('test');});
 var navLeaderboard=document.getElementById('nav-leaderboard');
-if(navLeaderboard)navLeaderboard.addEventListener('click',function(){openLeaderboard();});
-var navDaily=document.getElementById('nav-daily');
-if(navDaily)navDaily.addEventListener('click',function(){openDailyModal();});
+if(navLeaderboard)navLeaderboard.addEventListener('click',function(){closeAllPanels();showScreen('leaderboard');});
+var navInfo=document.getElementById('nav-info');
+if(navInfo)navInfo.addEventListener('click',function(){closeAllPanels();showScreen('info');});
 var navSettingsBtn=document.getElementById('nav-settings');
 if(navSettingsBtn)navSettingsBtn.addEventListener('click',function(){openSettings();});
 var navNotif=document.getElementById('nav-notif');
 if(navNotif)navNotif.addEventListener('click',function(){togglePanel('notif-panel');});
 var navUser=document.getElementById('nav-user');
-if(navUser)navUser.addEventListener('click',function(){openUserPanel();});
-var notifClose=document.getElementById('notif-panel-close');
-if(notifClose)notifClose.addEventListener('click',function(){closeAllPanels();});
-
-// Auth panel buttons — onclick already set in HTML
-// (signup-btn, signin-btn, signout-panel-btn)
+if(navUser)navUser.addEventListener('click',function(){
+  if(activePanel==='auth-panel'){closeAllPanels();}
+  else{openUserPanel();}
+});
+var notifClose2=document.getElementById('notif-panel-close');
+if(notifClose2)notifClose2.addEventListener('click',function(){closeAllPanels();});
 
 /* ═══════════════════════════════════════════════════════════════════════
    LOAD SETTINGS
