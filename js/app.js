@@ -1116,6 +1116,18 @@ function showLoginPanel(){
   setAuthMsg('signup-msg','');setAuthMsg('signin-msg','');
 }
 
+var AVATAR_COLORS=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
+function getAvatarColor(username){
+  try{
+    var saved=localStorage.getItem('typeradar_avatar_color_'+(username||''));
+    if(saved)return saved;
+  }catch(e){}
+  // deterministic fallback based on username
+  var hash=0;
+  for(var i=0;i<(username||'').length;i++)hash=(hash*31+username.charCodeAt(i))&0xffff;
+  return AVATAR_COLORS[hash%AVATAR_COLORS.length];
+}
+
 function showProfilePanel(){
   var lp=document.getElementById('auth-panel-login');if(lp)lp.style.display='none';
   var pp=document.getElementById('auth-panel-profile');if(pp)pp.style.display='block';
