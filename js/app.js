@@ -1023,17 +1023,33 @@ window.loadLbPage=async function(m,t,el){
 
   try{
     var result=await sb.from('results')
-      .select('wpm,accuracy,raw_wpm,consistency,user_id')
-      .eq('mode',m).eq('time_seconds',t)
-      .order('wpm',{ascending:false}).limit(200);
+      .select('wpm,accuracy,raw_wpm,consistency,user_id,time_seconds')
+      .eq('mode',m)
+      .gte('time_seconds', t-1).lte('time_seconds', t+1)
+      .order('wpm',{ascending:false}).limit(500);
 
-    if(result.error||!result.data||result.data.length===0){
+    // If filtered query returns nothing, try without time filter
+    if(!result.error && (!result.data || result.data.length===0)){
+      result=await sb.from('results')
+        .select('wpm,accuracy,raw_wpm,consistency,user_id,time_seconds')
+        .eq('mode',m)
+        .order('wpm',{ascending:false}).limit(500);
+    }
+
+    if(result.error){
+      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">DB error: '+result.error.message+'</td></tr>';return;
+    }
+    if(!result.data||result.data.length===0){
       tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">no results yet — be first!</td></tr>';return;
     }
 
+    // Filter to matching time only
+    var filtered=result.data.filter(function(r){return Math.abs((r.time_seconds||0)-t)<=1;});
+    if(filtered.length===0)filtered=result.data; // fallback: show all if no match
+
     // best per user
     var best={};
-    result.data.forEach(function(r){
+    filtered.forEach(function(r){
       var uid=r.user_id||'anon';
       if(!best[uid]||r.wpm>best[uid].wpm)best[uid]=r;
     });
