@@ -1,6 +1,3 @@
-(function () {
-'use strict';
-
 /* ═══════════════════════════════════════════════════════════════════════
    SUPABASE CONFIG
 ═══════════════════════════════════════════════════════════════════════ */
@@ -1635,12 +1632,6 @@ window.addEventListener('load',function(){
   el=document.getElementById('nav-leaderboard');if(el)el.addEventListener('click',function(){closeAllPanels();showScreen('leaderboard');});
   el=document.getElementById('nav-info');if(el)el.addEventListener('click',function(){closeAllPanels();showScreen('info');});
   el=document.getElementById('nav-settings');if(el)el.addEventListener('click',function(){openSettings();});
-  el=document.getElementById('nav-notif');if(el)el.addEventListener('click',function(){
-    if(activePanel==='notif-panel'){closeAllPanels();}else{closeAllPanels();openPanel('notif-panel');}
-  });
-  el=document.getElementById('nav-user');if(el)el.addEventListener('click',function(){
-    if(activePanel==='auth-panel'){closeAllPanels();}else{closeAllPanels();openUserPanel();}
-  });
   el=document.getElementById('notif-panel-close');if(el)el.addEventListener('click',function(){closeAllPanels();});
 });
 
@@ -1662,33 +1653,16 @@ if(!('ontouchstart' in window)){
   },2000);
 }
 
-})();
 
 // ── Global toggle called directly from HTML onclick ──────────────────────────
 function toggleAuthPanel(panelId){
   var panel=document.getElementById(panelId);
   if(!panel)return;
   var isOpen=panel.classList.contains('open');
-  // close all panels
-  document.querySelectorAll('.side-panel').forEach(function(p){p.classList.remove('open');});
-  var ov=document.getElementById('panel-overlay');
-  if(isOpen){
-    if(ov)ov.classList.remove('active');
-    return;
-  }
-  // open requested panel
-  if(ov)ov.classList.add('active');
+  closeAllPanels();
+  if(isOpen)return;
   if(panelId==='auth-panel'){
-    var lp=document.getElementById('auth-panel-login');
-    var pp=document.getElementById('auth-panel-profile');
-    if(window.currentUser){
-      if(lp)lp.style.display='none';
-      if(pp)pp.style.display='block';
-      if(typeof showProfilePanel==='function')showProfilePanel();
-    } else {
-      if(lp)lp.style.display='block';
-      if(pp)pp.style.display='none';
-    }
+    if(currentUser){showProfilePanel();}else{showLoginPanel();}
   }
-  panel.classList.add('open');
+  openPanel(panelId);
 }
