@@ -31,6 +31,7 @@ let quoteLen = 'all', soundEffect = 'off', currentFont = 'JetBrains Mono';
 let caretStyle = 'line';
 let currentBgTheme = 'moon';
 let currentUser = null, currentProfile = null;
+window.currentUser = null; window.currentProfile = null;
 let isDailyMode = false;
 let lastKeyTime = 0;
 var audioCtx = null, lineH2 = 0;
@@ -1112,8 +1113,7 @@ function openUserPanel(){
 
 function showLoginPanel(){
   var lp=document.getElementById('auth-panel-login');if(lp)lp.style.display='block';
-  var pp=document.getElementById('auth-panel-profile');if(pp)pp.style.display='none';
-  ['signup-username','signup-email','signup-pass','signin-email','signin-pass'].forEach(function(id){
+  var pp=document.getElementById('auth-panel-profile');if(pp)pp.style.display='none';  ['signup-username','signup-email','signup-pass','signin-email','signin-pass'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   setAuthMsg('signup-msg','');setAuthMsg('signin-msg','');
@@ -1210,7 +1210,7 @@ window.doSignIn=async function(){
       return;
     }
     if(result.data&&result.data.user){
-      currentUser=result.data.user;
+      currentUser=result.data.user;window.currentUser=currentUser;
       await loadProfile(result.data.user.id);
       showProfilePanel();
     }else{setAuthMsg('signin-msg','Sign in failed.');}
@@ -1251,7 +1251,7 @@ window.doSignUp=async function(){
       var alt=username+'_'+(Math.floor(Math.random()*9000)+1000);
       await sb.from('profiles').insert({id:uid,username:alt});
     }
-    currentUser=sinR.data.user;
+    currentUser=sinR.data.user;window.currentUser=currentUser;
     await loadProfile(uid);
     showProfilePanel();
   }catch(e){
@@ -1260,7 +1260,7 @@ window.doSignUp=async function(){
 };
 
 async function doSignOutInternal(){
-  currentUser=null;currentProfile=null;
+  currentUser=null;currentProfile=null;window.currentUser=null;window.currentProfile=null;
   updateAuthUI();closeAllPanels();
   try{await sb.auth.signOut();}catch(e){}
 }
@@ -1593,7 +1593,7 @@ sb.auth.onAuthStateChange(async function(event, session){
   }
   // Tüm oturum olaylarında (yenileme dahil) user ve profil yükle
   if(session&&session.user){
-    currentUser=session.user;
+    currentUser=session.user;window.currentUser=currentUser;
     await loadProfile(session.user.id);
   }
 });
@@ -1663,3 +1663,32 @@ if(!('ontouchstart' in window)){
 }
 
 })();
+
+// ── Global toggle called directly from HTML onclick ──────────────────────────
+function toggleAuthPanel(panelId){
+  var panel=document.getElementById(panelId);
+  if(!panel)return;
+  var isOpen=panel.classList.contains('open');
+  // close all panels
+  document.querySelectorAll('.side-panel').forEach(function(p){p.classList.remove('open');});
+  var ov=document.getElementById('panel-overlay');
+  if(isOpen){
+    if(ov)ov.classList.remove('active');
+    return;
+  }
+  // open requested panel
+  if(ov)ov.classList.add('active');
+  if(panelId==='auth-panel'){
+    var lp=document.getElementById('auth-panel-login');
+    var pp=document.getElementById('auth-panel-profile');
+    if(window.currentUser){
+      if(lp)lp.style.display='none';
+      if(pp)pp.style.display='block';
+      if(typeof showProfilePanel==='function')showProfilePanel();
+    } else {
+      if(lp)lp.style.display='block';
+      if(pp)pp.style.display='none';
+    }
+  }
+  panel.classList.add('open');
+}
