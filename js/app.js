@@ -1544,35 +1544,6 @@ typingContainer.addEventListener('touchend',function(e){e.preventDefault();if(!f
 
 var settingsModalEl=document.getElementById('settings-modal');
 if(settingsModalEl)settingsModalEl.addEventListener('click',function(e){if(e.target===this)closeSettings();});
-var leaderboardModalEl=document.getElementById('leaderboard-modal');
-if(leaderboardModalEl)leaderboardModalEl.addEventListener('click',function(e){if(e.target===this)closeLeaderboard();});
-var dailyModalEl=document.getElementById('daily-modal');
-if(dailyModalEl)dailyModalEl.addEventListener('click',function(e){if(e.target===this)closeDaily();});
-
-// Panel overlay click — close panels
-var panelOverlay=document.getElementById('panel-overlay');
-if(panelOverlay)panelOverlay.addEventListener('click',function(){closeAllPanels();});
-
-// Header nav buttons — all wired after DOM ready
-var navKeyboard=document.getElementById('nav-keyboard');
-if(navKeyboard)navKeyboard.addEventListener('click',function(){closeAllPanels();showScreen('test');});
-var logoBtn2=document.getElementById('logo-btn');
-if(logoBtn2)logoBtn2.addEventListener('click',function(){closeAllPanels();showScreen('test');});
-var navLeaderboard=document.getElementById('nav-leaderboard');
-if(navLeaderboard)navLeaderboard.addEventListener('click',function(){closeAllPanels();showScreen('leaderboard');});
-var navInfo=document.getElementById('nav-info');
-if(navInfo)navInfo.addEventListener('click',function(){closeAllPanels();showScreen('info');});
-var navSettingsBtn=document.getElementById('nav-settings');
-if(navSettingsBtn)navSettingsBtn.addEventListener('click',function(){openSettings();});
-var navNotif=document.getElementById('nav-notif');
-if(navNotif)navNotif.addEventListener('click',function(){togglePanel('notif-panel');});
-var navUser=document.getElementById('nav-user');
-if(navUser)navUser.addEventListener('click',function(){
-  if(activePanel==='auth-panel'){closeAllPanels();}
-  else{openUserPanel();}
-});
-var notifClose2=document.getElementById('notif-panel-close');
-if(notifClose2)notifClose2.addEventListener('click',function(){closeAllPanels();});
 
 /* ═══════════════════════════════════════════════════════════════════════
    LOAD SETTINGS
@@ -1657,17 +1628,20 @@ window.addEventListener('load',function(){
   var po=document.getElementById('panel-overlay');
   if(po)po.addEventListener('click',function(){closeAllPanels();});
 
-  // Header nav — all wired here after DOM ready
+  // Header nav — wired after DOM ready
   var el;
-  el=document.getElementById('nav-keyboard');if(el)el.addEventListener('click',function(){closeAllPanels();restart();});
-  el=document.getElementById('logo-btn');if(el)el.addEventListener('click',function(){closeAllPanels();restart();});
-  el=document.getElementById('nav-leaderboard');if(el)el.addEventListener('click',function(){openLeaderboard();});
-  el=document.getElementById('nav-daily');if(el)el.addEventListener('click',function(){togglePanel('info-panel');});
+  el=document.getElementById('nav-keyboard');if(el)el.addEventListener('click',function(){closeAllPanels();showScreen('test');});
+  el=document.getElementById('logo-btn');if(el)el.addEventListener('click',function(){closeAllPanels();showScreen('test');});
+  el=document.getElementById('nav-leaderboard');if(el)el.addEventListener('click',function(){closeAllPanels();showScreen('leaderboard');});
+  el=document.getElementById('nav-info');if(el)el.addEventListener('click',function(){closeAllPanels();showScreen('info');});
   el=document.getElementById('nav-settings');if(el)el.addEventListener('click',function(){openSettings();});
-  el=document.getElementById('nav-notif');if(el)el.addEventListener('click',function(){togglePanel('notif-panel');});
-  el=document.getElementById('nav-user');if(el)el.addEventListener('click',function(){openUserPanel();});
+  el=document.getElementById('nav-notif');if(el)el.addEventListener('click',function(){
+    if(activePanel==='notif-panel'){closeAllPanels();}else{closeAllPanels();openPanel('notif-panel');}
+  });
+  el=document.getElementById('nav-user');if(el)el.addEventListener('click',function(){
+    if(activePanel==='auth-panel'){closeAllPanels();}else{closeAllPanels();openUserPanel();}
+  });
   el=document.getElementById('notif-panel-close');if(el)el.addEventListener('click',function(){closeAllPanels();});
-  el=document.getElementById('info-panel-close');if(el)el.addEventListener('click',function(){closeAllPanels();});
 });
 
 // Auto-refocus
