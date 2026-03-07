@@ -48,6 +48,17 @@ header { width:100%; padding:16px 24px 0; display:flex; align-items:center; just
 .panel-overlay { position:fixed; top:0;left:0;right:0;bottom:0; z-index:250; display:none; }
 .panel-overlay.active { display:block; }
 
+/* ─── INFO PANEL ─────────────────────────────────────────────────────────────── */
+.info-panel-body { display:flex; flex-direction:column; gap:12px; }
+.info-desc { font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--muted); line-height:1.6; }
+.info-section-title { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--accent); text-transform:uppercase; letter-spacing:0.12em; margin-top:4px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+.info-list { list-style:none; display:flex; flex-direction:column; gap:6px; }
+.info-list li { font-family:'JetBrains Mono',monospace; font-size:0.78rem; color:var(--text); }
+.info-shortcuts { display:flex; flex-direction:column; gap:6px; }
+.info-shortcut { display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; font-size:0.75rem; color:var(--muted); }
+.info-shortcut kbd { background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:2px 8px; font-size:0.68rem; color:var(--text); white-space:nowrap; }
+.info-version { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--muted); text-align:center; margin-top:8px; opacity:0.6; }
+
 /* ─── AUTH PANEL ────────────────────────────────────────────────────────────── */
 .auth-panel { width:520px; }
 .auth-panel-cols { display:flex; gap:24px; }
