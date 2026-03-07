@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, interactive-widget=resizes-content">
   <title>TypeRadar — Typing Speed Test</title>
-  <meta name="description" content="TypeRadar — Free online typing speed test. Measure your WPM and accuracy. 30+ languages, 100+ themes, leaderboards.">
+  <meta name="description" content="TypeRadar — Free online typing speed test. Measure your WPM and accuracy. 30+ languages, themes, leaderboards.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='45' fill='%230d0d0f' stroke='%237c6af7' stroke-width='4'/%3E%3Ccircle cx='50' cy='50' r='25' fill='none' stroke='%23f7c26a' stroke-width='3' stroke-dasharray='6 4'/%3E%3Cline x1='50' y1='50' x2='80' y2='50' stroke='%237c6af7' stroke-width='5' stroke-linecap='round'/%3E%3Ccircle cx='50' cy='50' r='7' fill='%23f7c26a'/%3E%3C/svg%3E">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/styles.css">
@@ -13,19 +13,8 @@
     (function(){
       var t=['#0d0d0f','#141417','#1c1c21','#2a2a32','#e8e8f0','#555566','#7c6af7','#f7c26a','#6af7b2','#f76a8a','#7c6af7'];
       var r=document.documentElement;
-      r.style.setProperty('--bg',t[0]);r.style.setProperty('--surface',t[1]);r.style.setProperty('--surface2',t[2]);
-      r.style.setProperty('--border',t[3]);r.style.setProperty('--text',t[4]);r.style.setProperty('--muted',t[5]);
-      r.style.setProperty('--accent',t[6]);r.style.setProperty('--accent2',t[7]);r.style.setProperty('--correct',t[8]);
-      r.style.setProperty('--wrong',t[9]);r.style.setProperty('--cursor',t[10]);r.style.setProperty('--glow','rgba(124,106,247,0.18)');
-    })();
-  </script>
-  <script>
-    (function(){
-      document.addEventListener('contextmenu',e=>e.preventDefault());
-      document.addEventListener('keydown',e=>{if(e.key==='F12'||(e.ctrlKey&&e.shiftKey&&['I','J','C'].includes(e.key))||(e.ctrlKey&&e.key==='u'))e.preventDefault();});
-      document.addEventListener('copy',e=>e.preventDefault());
-      document.addEventListener('cut',e=>e.preventDefault());
-      document.addEventListener('paste',e=>e.preventDefault());
+      ['--bg','--surface','--surface2','--border','--text','--muted','--accent','--accent2','--correct','--wrong','--cursor'].forEach(function(k,i){r.style.setProperty(k,t[i]);});
+      r.style.setProperty('--glow','rgba(124,106,247,0.18)');
     })();
   </script>
 </head>
@@ -33,11 +22,8 @@
 
 <canvas id="confetti-canvas" style="position:fixed;top:0;left:0;width:100%;height:100%;pointer-events:none;z-index:9999;display:none;"></canvas>
 
-<!-- ══════════════════════════════════════════════
-     HEADER — MonkeyType style
-══════════════════════════════════════════════ -->
+<!-- ═══════════════ HEADER ═══════════════ -->
 <header id="main-header">
-  <!-- LEFT: logo + nav icons -->
   <div class="header-left">
     <div class="logo" id="logo-btn" title="home">
       <div class="logo-icon"></div>
@@ -45,62 +31,39 @@
     </div>
     <nav class="header-nav">
       <button class="nav-icon-btn" id="nav-keyboard" title="home">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="2" y="6" width="20" height="13" rx="2"/>
-          <path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M10 14h4M18 14h.01"/>
-        </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M10 14h4M18 14h.01"/></svg>
       </button>
       <button class="nav-icon-btn" id="nav-leaderboard" title="leaderboard">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/>
-          <path d="M5 20h14"/>
-        </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M2 4l3 12h14l3-12-6 7-4-7-4 7-6-7z"/><path d="M5 20h14"/></svg>
       </button>
-      <button class="nav-icon-btn" id="nav-daily" title="info / daily">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="10"/>
-          <line x1="12" y1="8" x2="12" y2="12"/>
-          <line x1="12" y1="16" x2="12.01" y2="16"/>
-        </svg>
+      <button class="nav-icon-btn" id="nav-info" title="about">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg>
       </button>
       <button class="nav-icon-btn" id="nav-settings" title="settings">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="3"/>
-          <path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
-        </svg>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M2 12h3M19 12h3M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/></svg>
       </button>
     </nav>
   </div>
-
-  <!-- RIGHT: notification bell + user -->
   <div class="header-right">
     <button class="nav-icon-btn" id="nav-notif" title="notifications">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
-        <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
-      </svg>
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
       <span class="notif-dot" id="notif-dot" style="display:none"></span>
     </button>
-    <button class="nav-icon-btn user-btn" id="nav-user" title="account">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-        <circle cx="12" cy="7" r="4"/>
-      </svg>
+    <button class="nav-icon-btn" id="nav-user" title="account">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
       <span class="user-avatar-mini" id="user-avatar-mini" style="display:none"></span>
     </button>
   </div>
 </header>
 
-<!-- ══════════════════════════════════════════════
-     NOTIFICATION PANEL (dropdown sağ üst)
-══════════════════════════════════════════════ -->
+<!-- ═══════════════ NOTIFICATION PANEL ═══════════════ -->
 <div class="side-panel" id="notif-panel">
   <div class="side-panel-header">
     <span class="side-panel-title">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 17H2a3 3 0 0 0 3-3V9a7 7 0 0 1 14 0v5a3 3 0 0 0 3 3zm-8.27 4a2 2 0 0 1-3.46 0"/></svg>
       announcements
     </span>
-    <button class="panel-close-btn" id="notif-panel-close">✕</button>
+    <button class="panel-close-btn" id="notif-panel-close">&#x2715;</button>
   </div>
   <div class="notif-section" id="announcements-list">
     <div class="notif-empty">nothing to show</div>
@@ -108,7 +71,7 @@
   <div class="side-panel-divider"></div>
   <div class="side-panel-header" style="margin-top:8px;">
     <span class="side-panel-title">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
       notifications
     </span>
   </div>
@@ -117,46 +80,50 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     AUTH PANEL (dropdown sağ üst — user icon)
-══════════════════════════════════════════════ -->
+<!-- ═══════════════ AUTH PANEL ═══════════════ -->
 <div class="side-panel auth-panel" id="auth-panel">
-  <!-- LOGIN / REGISTER görünümü -->
   <div id="auth-panel-login">
     <div class="auth-panel-cols">
-      <!-- Register -->
       <div class="auth-col">
         <div class="auth-col-title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
           register
         </div>
         <input class="auth-input" id="signup-username" type="text" placeholder="username" autocorrect="off" autocapitalize="none" spellcheck="false" onkeydown="if(event.key==='Enter')doSignUp()">
         <input class="auth-input" id="signup-email" type="email" placeholder="email" onkeydown="if(event.key==='Enter')doSignUp()">
         <input class="auth-input" id="signup-pass" type="password" placeholder="password" onkeydown="if(event.key==='Enter')doSignUp()">
-        <button class="auth-panel-btn" id="signup-btn" onclick="doSignUp()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
+        <button class="auth-panel-btn" onclick="doSignUp()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>
           sign up
         </button>
         <div class="auth-msg" id="signup-msg"></div>
       </div>
-      <!-- Login -->
       <div class="auth-col">
         <div class="auth-col-title">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           login
         </div>
+        <div class="oauth-row">
+          <button class="oauth-btn" onclick="doOAuth('google')">
+            <svg width="15" height="15" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/></svg>
+            Google
+          </button>
+          <button class="oauth-btn" onclick="doOAuth('github')">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            GitHub
+          </button>
+        </div>
+        <div class="oauth-divider"><span>or</span></div>
         <input class="auth-input" id="signin-email" type="email" placeholder="email" onkeydown="if(event.key==='Enter')doSignIn()">
         <input class="auth-input" id="signin-pass" type="password" placeholder="password" onkeydown="if(event.key==='Enter')doSignIn()">
-        <button class="auth-panel-btn" id="signin-btn" onclick="doSignIn()">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
+        <button class="auth-panel-btn" onclick="doSignIn()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><polyline points="10 17 15 12 10 7"/><line x1="15" y1="12" x2="3" y2="12"/></svg>
           sign in
         </button>
         <div class="auth-msg" id="signin-msg"></div>
       </div>
     </div>
   </div>
-
-  <!-- PROFILE görünümü (giriş yapıldığında) -->
   <div id="auth-panel-profile" style="display:none;">
     <div class="profile-panel-top">
       <div class="profile-panel-avatar" id="pp-avatar">?</div>
@@ -166,53 +133,106 @@
       </div>
     </div>
     <div class="profile-panel-avatar-colors" id="pp-avatar-colors"></div>
-    <div class="profile-panel-stats" id="pp-stats">
-      <div class="notif-empty">loading...</div>
-    </div>
-    <button class="auth-panel-btn danger" id="signout-panel-btn" onclick="doSignOut()">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+    <div class="profile-panel-stats" id="pp-stats"><div class="notif-empty">loading...</div></div>
+    <button class="auth-panel-btn danger" onclick="doSignOut()">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       sign out
     </button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════════════════
-     INFO PANEL (i butonu)
-══════════════════════════════════════════════ -->
-<div class="side-panel" id="info-panel">
-  <div class="side-panel-header">
-    <span class="side-panel-title">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-      about typeradar
-    </span>
-    <button class="panel-close-btn" id="info-panel-close">✕</button>
-  </div>
-  <div class="info-panel-body">
-    <p class="info-desc">TypeRadar is a free, minimalist typing speed test inspired by the best tools in the space. Track your WPM, accuracy, and consistency across multiple modes and languages.</p>
-    <div class="info-section-title">features</div>
-    <ul class="info-list">
-      <li>⏱ time, words, quote, zen & custom modes</li>
-      <li>🌍 30+ languages</li>
-      <li>🎨 multiple themes & fonts</li>
-      <li>🏆 global leaderboard</li>
-      <li>👤 account & personal bests</li>
-      <li>📊 WPM + raw + error chart</li>
-    </ul>
-    <div class="info-section-title">shortcuts</div>
-    <div class="info-shortcuts">
-      <div class="info-shortcut"><kbd>Tab</kbd> restart test</div>
-      <div class="info-shortcut"><kbd>Esc</kbd> reset / close</div>
-      <div class="info-shortcut"><kbd>Shift + Enter</kbd> end zen mode</div>
+<div class="panel-overlay" id="panel-overlay"></div>
+
+<!-- ═══════════════ INFO SCREEN ═══════════════ -->
+<div id="info-screen" style="display:none;">
+  <div class="info-page">
+    <div class="info-hero">
+      <p class="info-tagline">Created with &#10084;&#65039; for typists everywhere. Launched in 2025.</p>
     </div>
-    <div class="info-version">TypeRadar v1.0 · made with ♥</div>
+    <div class="info-big-stats">
+      <div class="info-big-stat">
+        <div class="info-big-num" id="stat-tests-started">—</div>
+        <div class="info-big-unit">total</div>
+        <div class="info-big-label">tests started</div>
+      </div>
+      <div class="info-big-stat">
+        <div class="info-big-num" id="stat-typing-time">—</div>
+        <div class="info-big-unit">minutes</div>
+        <div class="info-big-label">total typing time</div>
+      </div>
+      <div class="info-big-stat">
+        <div class="info-big-num" id="stat-tests-completed">—</div>
+        <div class="info-big-unit">total</div>
+        <div class="info-big-label">tests completed</div>
+      </div>
+    </div>
+    <div class="info-about-section">
+      <div class="info-about-title">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16" stroke-width="2.5"/></svg>
+        about
+      </div>
+      <p class="info-about-text">TypeRadar is a minimalist and customizable typing test. It features many test modes, an account system to save your typing speed history, and user-configurable features such as themes, sounds, a smooth caret, and more. TypeRadar attempts to emulate the experience of natural keyboard typing during a typing test, by unobtrusively presenting the text prompts and displaying typed characters in-place, providing straightforward, real-time feedback on typos, speed, and accuracy.</p>
+      <p class="info-about-text">Test yourself in various modes, track your progress and improve your speed.</p>
+    </div>
+    <div class="info-features-grid">
+      <div class="info-feature-card"><div class="ifc-icon">⏱</div><div class="ifc-name">time mode</div><div class="ifc-desc">Type as many words as you can before the timer runs out</div></div>
+      <div class="info-feature-card"><div class="ifc-icon">A</div><div class="ifc-name">words mode</div><div class="ifc-desc">Complete a set number of words as fast as possible</div></div>
+      <div class="info-feature-card"><div class="ifc-icon">&#10077;</div><div class="ifc-name">quote mode</div><div class="ifc-desc">Type real quotes from books, movies and more</div></div>
+      <div class="info-feature-card"><div class="ifc-icon">&#9650;</div><div class="ifc-name">zen mode</div><div class="ifc-desc">No pressure — type whatever you want, no limits</div></div>
+      <div class="info-feature-card"><div class="ifc-icon">&#127758;</div><div class="ifc-name">30+ languages</div><div class="ifc-desc">Test your speed in your native language</div></div>
+      <div class="info-feature-card"><div class="ifc-icon">&#127942;</div><div class="ifc-name">leaderboard</div><div class="ifc-desc">Compete with typists from around the world</div></div>
+    </div>
+    <div class="info-shortcuts-section">
+      <div class="info-about-title">shortcuts</div>
+      <div class="info-shortcuts-grid">
+        <div class="info-shortcut-row"><kbd>Tab</kbd><span>restart test</span></div>
+        <div class="info-shortcut-row"><kbd>Esc</kbd><span>reset / go back</span></div>
+        <div class="info-shortcut-row"><kbd>Shift + Enter</kbd><span>end zen mode</span></div>
+      </div>
+    </div>
   </div>
 </div>
 
-<!-- Overlay (panel kapatmak için) -->
-<div class="panel-overlay" id="panel-overlay"></div>
+<!-- ═══════════════ LEADERBOARD SCREEN ═══════════════ -->
+<div id="leaderboard-screen" style="display:none;">
+  <div class="lb-page">
+    <div class="lb-page-sidebar">
+      <button class="lb-sidebar-btn active" id="lbs-alltime" onclick="switchLbTab('alltime',this)">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        all-time english
+      </button>
+    </div>
+    <div class="lb-page-main">
+      <div class="lb-page-top">
+        <h1 class="lb-page-title">All-time English Leaderboard</h1>
+        <div class="lb-page-tabs">
+          <button class="lb-page-tab active" onclick="loadLbPage('time',15,this)">time 15</button>
+          <button class="lb-page-tab" onclick="loadLbPage('time',30,this)">time 30</button>
+          <button class="lb-page-tab" onclick="loadLbPage('time',60,this)">time 60</button>
+          <button class="lb-page-tab" onclick="loadLbPage('time',120,this)">time 120</button>
+        </div>
+      </div>
+      <table class="lb-page-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>name</th>
+            <th>wpm</th>
+            <th>accuracy</th>
+            <th>raw</th>
+            <th>consistency</th>
+          </tr>
+        </thead>
+        <tbody id="lb-page-tbody">
+          <tr><td colspan="6" class="lb-loading-cell">loading...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
 
-<main>
-  <!-- TEST SCREEN -->
+<!-- ═══════════════ TEST + RESULT (main) ═══════════════ -->
+<main id="main-area">
   <div id="test-screen">
     <div class="config-bar">
       <div class="config-slide-group" id="extra-group">
@@ -243,7 +263,6 @@
         <button class="config-btn" onclick="setQuoteLen('thicc','ql-thicc')" id="ql-thicc">thicc</button>
       </div>
     </div>
-
     <div class="live-stats" id="live-stats">
       <div class="stat-item" id="stat-wpm"><div class="stat-label">wpm</div><div class="stat-value" id="live-wpm">0</div></div>
       <div class="stat-item" id="stat-acc"><div class="stat-label">acc</div><div class="stat-value" id="live-acc">100%</div></div>
@@ -251,127 +270,74 @@
       <div class="stat-item" id="stat-progress" style="display:none;"><div class="stat-label">words</div><div class="stat-value" id="live-progress">0/0</div></div>
       <div class="stat-item" id="stat-err"><div class="stat-label">err</div><div class="stat-value" id="live-err" style="color:var(--wrong);">0</div></div>
     </div>
-
     <div class="lang-dropdown-wrap" id="lang-dropdown-wrap">
       <button class="lang-indicator-btn" onclick="toggleLangDropdown()"><span id="lang-indicator-text">english</span></button>
       <div class="lang-dropdown" id="lang-dropdown">
         <div class="lang-search-wrap">
-          <span class="lang-search-icon">⌕</span>
+          <span class="lang-search-icon">&#9907;</span>
           <input class="lang-search" id="lang-search" type="text" placeholder="Language..." oninput="filterLangs(this.value)" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
         </div>
         <div class="lang-list" id="lang-list"></div>
       </div>
     </div>
-
     <div class="typing-container" id="typing-container">
-      <div id="words-display">
-        <div class="words-inner" id="words-inner"></div>
-      </div>
+      <div id="words-display"><div class="words-inner" id="words-inner"></div></div>
     </div>
-    <div class="click-hint" id="click-hint">👆 click or press any key to start typing</div>
-    <button class="refresh-btn" onclick="restart()" title="new words">↻</button>
-    <div class="caps-warning" id="caps-warning">⇪ caps lock is on</div>
+    <div class="click-hint" id="click-hint">&#128070; click or press any key to start typing</div>
+    <button class="refresh-btn" onclick="restart()" title="new words">&#8635;</button>
+    <div class="caps-warning" id="caps-warning">&#8682; caps lock is on</div>
   </div>
 
-  <!-- RESULT SCREEN -->
   <div id="result-screen">
     <div class="result-header">
       <div class="result-main-stats">
-        <div class="result-big-stat">
-          <div class="rbs-label">wpm</div>
-          <div class="rbs-value accent" id="res-wpm">0</div>
-        </div>
-        <div class="result-big-stat">
-          <div class="rbs-label">acc</div>
-          <div class="rbs-value accent2" id="res-acc">0%</div>
-        </div>
+        <div class="result-big-stat"><div class="rbs-label">wpm</div><div class="rbs-value accent" id="res-wpm">0</div></div>
+        <div class="result-big-stat"><div class="rbs-label">acc</div><div class="rbs-value accent2" id="res-acc">0%</div></div>
       </div>
       <div class="result-meta-col">
         <div class="rm-row"><span class="rm-label">test type</span><span class="rm-val" id="res-type">time 30</span></div>
         <div class="rm-row"><span class="rm-label">language</span><span class="rm-val" id="res-lang">english</span></div>
       </div>
     </div>
-
-    <div class="result-chart-wrap">
-      <canvas id="wpm-chart"></canvas>
-    </div>
-
+    <div class="result-chart-wrap"><canvas id="wpm-chart"></canvas></div>
     <div class="result-details">
       <div class="result-detail-item"><div class="label">raw</div><div class="val" id="res-raw">0</div></div>
       <div class="result-detail-item"><div class="label">characters</div><div class="val good" id="res-chars">—</div></div>
       <div class="result-detail-item"><div class="label">consistency</div><div class="val" id="res-consistency">0%</div></div>
       <div class="result-detail-item"><div class="label">time</div><div class="val" id="res-time">0s</div></div>
     </div>
-
     <div class="result-actions">
-      <button class="restart-btn" onclick="restart()">↺ restart</button>
-      <button class="share-btn" onclick="shareResult()">⬆ share</button>
+      <button class="restart-btn" onclick="restart()">&#8634; restart</button>
+      <button class="share-btn" onclick="shareResult()">&#11014; share</button>
     </div>
     <div class="share-toast" id="share-toast">copied!</div>
-    <div class="pb-badge" id="pb-badge">🎉 new personal best!</div>
+    <div class="pb-badge" id="pb-badge">&#127881; new personal best!</div>
   </div>
 </main>
 
-<footer><kbd>Tab</kbd> restart &nbsp;·&nbsp; <kbd>Esc</kbd> reset</footer>
-
-<!-- LEADERBOARD MODAL -->
-<div class="modal-overlay" id="leaderboard-modal">
-  <div class="modal">
-    <button class="modal-close" onclick="closeLeaderboard()">✕</button>
-    <h2 class="modal-title">🏆 leaderboard</h2>
-    <div class="lb-tabs">
-      <button class="lb-tab active" onclick="loadLeaderboard('time',30,this)">30s</button>
-      <button class="lb-tab" onclick="loadLeaderboard('time',60,this)">60s</button>
-      <button class="lb-tab" onclick="loadLeaderboard('time',120,this)">120s</button>
-      <button class="lb-tab" onclick="loadLeaderboard('words',30,this)">words</button>
-    </div>
-    <div class="lb-list" id="lb-list"><div class="lb-loading">loading...</div></div>
-  </div>
-</div>
-
-<!-- DAILY CHALLENGE MODAL -->
-<div class="modal-overlay" id="daily-modal">
-  <div class="modal modal-sm">
-    <button class="modal-close" onclick="closeDaily()">✕</button>
-    <h2 class="modal-title">📅 daily challenge</h2>
-    <div class="daily-date-badge" id="daily-date"></div>
-    <p style="color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:0.78rem;margin-bottom:16px;">Same quote for everyone today. Complete to appear on the daily board!</p>
-    <div id="daily-my-result" style="display:none;"></div>
-    <button class="auth-submit" id="daily-start-btn" onclick="startDaily()">start challenge</button>
-    <div class="daily-board-wrap">
-      <div class="lb-list" id="daily-board"></div>
-    </div>
-  </div>
-</div>
+<footer><kbd>Tab</kbd> restart &nbsp;&middot;&nbsp; <kbd>Esc</kbd> reset</footer>
 
 <!-- SETTINGS MODAL -->
 <div class="modal-overlay" id="settings-modal">
   <div class="modal">
-    <button class="modal-close" onclick="closeSettings()">✕</button>
+    <button class="modal-close" onclick="closeSettings()">&#x2715;</button>
     <h2 class="modal-title">settings</h2>
     <div class="settings-grid">
       <div class="settings-col">
-        <div class="setting-section">
-          <h3>font family</h3>
-          <div class="font-grid" id="font-grid"></div>
-        </div>
+        <div class="setting-section"><h3>font family</h3><div class="font-grid" id="font-grid"></div></div>
         <div class="setting-section">
           <h3>caret style</h3>
           <div class="caret-grid" id="caret-grid">
             <button class="caret-btn active" data-caret="line" onclick="setCaretStyle('line',this)">| line</button>
-            <button class="caret-btn" data-caret="block" onclick="setCaretStyle('block',this)">█ block</button>
+            <button class="caret-btn" data-caret="block" onclick="setCaretStyle('block',this)">&#9608; block</button>
             <button class="caret-btn" data-caret="underline" onclick="setCaretStyle('underline',this)">_ under</button>
           </div>
         </div>
         <div class="setting-section">
           <h3>special modes</h3>
           <div class="mode-grid" id="special-mode-selector">
-            <div class="mode-card" data-smode="blind" onclick="toggleSpecialMode(this,'blind')">
-              <div class="mode-icon">◌</div><div class="mode-name">blind</div><div class="mode-desc">letters hidden while typing</div>
-            </div>
-            <div class="mode-card" data-smode="confidence" onclick="toggleSpecialMode(this,'confidence')">
-              <div class="mode-icon">⌫</div><div class="mode-name">confidence</div><div class="mode-desc">no backspace allowed</div>
-            </div>
+            <div class="mode-card" data-smode="blind" onclick="toggleSpecialMode(this,'blind')"><div class="mode-icon">&#9676;</div><div class="mode-name">blind</div><div class="mode-desc">letters hidden while typing</div></div>
+            <div class="mode-card" data-smode="confidence" onclick="toggleSpecialMode(this,'confidence')"><div class="mode-icon">&#9003;</div><div class="mode-name">confidence</div><div class="mode-desc">no backspace allowed</div></div>
           </div>
         </div>
         <div class="setting-section">
@@ -389,21 +355,18 @@
         <div class="setting-section">
           <h3>custom text</h3>
           <textarea id="custom-text-input" rows="4" placeholder="type your custom text here..."></textarea>
-          <button class="save-btn" onclick="saveCustomText()">✓ save</button>
+          <button class="save-btn" onclick="saveCustomText()">&#10003; save</button>
         </div>
       </div>
       <div class="settings-col">
-        <div class="setting-section">
-          <h3>background theme</h3>
-          <div id="bg-theme-selector"></div>
-        </div>
+        <div class="setting-section"><h3>background theme</h3><div id="bg-theme-selector"></div></div>
         <div class="setting-section">
           <h3>color theme</h3>
           <div class="theme-grid" id="color-theme-selector">
             <div class="theme-card active" data-theme="classic" onclick="setColorTheme('classic')"><div class="preview" style="background:linear-gradient(90deg,#6af7b2 50%,#f76a8a 50%);"></div><div class="name">classic</div></div>
             <div class="theme-card" data-theme="rgb" onclick="setColorTheme('rgb')"><div class="preview" style="background:linear-gradient(90deg,#ff3b3b,#ff8c42,#ffd93b,#4caf7f,#3b7fff,#9d4cff);"></div><div class="name">rgb</div></div>
             <div class="theme-card" data-theme="matrix" onclick="setColorTheme('matrix')"><div class="preview" style="background:#0f0;"></div><div class="name">matrix</div></div>
-            <div class="theme-card" data-theme="neon" onclick="setColorTheme('neon')"><div class="preview" style="background:linear-gradient(90deg,#f0f,#0ff,#f0f);"></div><div class="name">neon</div></div>
+            <div class="theme-card" data-theme="neon" onclick="setColorTheme('neon')"><div class="preview" style="background:linear-gradient(90deg,#f0f,#0ff);"></div><div class="name">neon</div></div>
             <div class="theme-card" data-theme="fire" onclick="setColorTheme('fire')"><div class="preview" style="background:linear-gradient(90deg,#ff4500,#ffd700);"></div><div class="name">fire</div></div>
             <div class="theme-card" data-theme="ocean" onclick="setColorTheme('ocean')"><div class="preview" style="background:linear-gradient(90deg,#00ffff,#6a5acd);"></div><div class="name">ocean</div></div>
             <div class="theme-card" data-theme="purple" onclick="setColorTheme('purple')"><div class="preview" style="background:linear-gradient(90deg,#b87aff,#6a3aff);"></div><div class="name">purple</div></div>
@@ -417,7 +380,7 @@
   </div>
 </div>
 
-<button class="keyboard-activator" id="keyboard-btn" onclick="focusInput(true)">⌨️</button>
+<button class="keyboard-activator" id="keyboard-btn" onclick="focusInput(true)">&#9000;</button>
 <input type="text" id="hidden-input" style="position:fixed;top:-9999px;left:-9999px;opacity:0;height:1px;width:1px;" inputmode="text" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false">
 
 <script src="js/data.js"></script>
