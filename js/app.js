@@ -322,6 +322,7 @@ window.setSound=function(type,el){
 
 /* ═══════════════════════════════════════════════════════════════════════
    WORD GENERATION
+   FIX: time mode now generates 200 words so scroll always has content
 ═══════════════════════════════════════════════════════════════════════ */
 var PUNCTS=[',','.','!','?',';',':'];
 function generateWords(seedWords){
@@ -340,7 +341,8 @@ function generateWords(seedWords){
   if(mode==='zen')return[];
   if(typeof WORDS==='undefined'||!WORDS){return ['words','not','loaded','yet'];}
   var list=WORDS[uiLang]||WORDS.en||['the','quick','brown','fox','jumps'];
-  var count=mode==='words'?30:50;
+  // FIX: Use 200 words for time mode so we never run out
+  var count=mode==='words'?30:200;
   return Array.from({length:count},function(){
     var w=list[Math.floor(Math.random()*list.length)];
     if(usePunct&&Math.random()<0.2)w+=PUNCTS[Math.floor(Math.random()*PUNCTS.length)];
@@ -440,10 +442,17 @@ function positionCursor(){
   cursor.style.left=left+'px';
   cursor.style.top=(top+vOffset)+'px';
 
-  if(lineH2>0&&top>=lineH2*2.1){
+  // FIX: Scroll logic — keep active word in the middle row (row 2 of 3)
+  if(lineH2>0){
+    var targetScrollTop = top - lineH2; // keep word at row 2
     var currentTop=parseInt(inner.style.top||'0',10);
-    inner.style.top=(currentTop-lineH2)+'px';
-    cursor.style.top=(top-lineH2+vOffset)+'px';
+    var desiredTop = -targetScrollTop;
+    // Only scroll when word goes past the 2nd visible row
+    if(top >= lineH2 * 2.5){
+      inner.style.top = desiredTop + 'px';
+      // Recalculate cursor position after scroll
+      cursor.style.top=(top + desiredTop + vOffset + targetScrollTop)+'px';
+    }
   }
 }
 
@@ -648,8 +657,16 @@ function endTest(){
   var resLang=document.getElementById('res-lang');if(resLang)resLang.textContent=uiLang;
 
   drawResultChart();
-  var testScreen=document.getElementById('test-screen');if(testScreen)testScreen.style.display='none';
-  var resultScreen=document.getElementById('result-screen');if(resultScreen)resultScreen.style.display='flex';
+
+  // FIX: Properly switch screens
+  var testScreen=document.getElementById('test-screen');
+  var resultScreen=document.getElementById('result-screen');
+  if(testScreen)testScreen.style.display='none';
+  if(resultScreen){resultScreen.style.display='flex';}
+
+  // Make sure main area is visible
+  var mainArea=document.getElementById('main-area');
+  if(mainArea)mainArea.style.display='flex';
 
   var isPB=checkPB(wpm);
   if(isPB||wpm>=80)launchConfetti();
@@ -663,7 +680,7 @@ function endTest(){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   RESULT CHART — MonkeyType style
+   RESULT CHART
 ═══════════════════════════════════════════════════════════════════════ */
 function drawResultChart(){
   var canvas=document.getElementById('wpm-chart');
@@ -682,14 +699,12 @@ function drawResultChart(){
   var rawData=rawHistory.length>0?rawHistory:null;
   var errData=errHistory.length>0?errHistory:null;
 
-  // Compute combined max for WPM axis
   var allWpm=wpmData.slice();
   if(rawData)allWpm=allWpm.concat(rawData);
   allWpm.push(10);
   var maxWpm=Math.max.apply(null,allWpm);
   var maxWpmR=Math.ceil(maxWpm/10)*10;
 
-  // Compute max for errors axis
   var maxErr=errData?Math.max.apply(null,errData.concat([1])):1;
   var maxErrR=Math.ceil(maxErr);
 
@@ -701,7 +716,6 @@ function drawResultChart(){
   var py=function(v){return pad.t+cH-(v/maxWpmR)*cH;};
   var pyErr=function(v){return pad.t+cH-(v/maxErrR)*cH;};
 
-  // ── grid lines ──
   ctx.font="11px 'JetBrains Mono', monospace";
   for(var g=0;g<=5;g++){
     var gVal=Math.round((maxWpmR/5)*g);
@@ -712,7 +726,6 @@ function drawResultChart(){
     ctx.fillText(gVal,pad.l-7,gY+4);
   }
 
-  // Right axis — errors
   if(maxErrR>0){
     for(var ge=0;ge<=maxErrR;ge++){
       var geY=pyErr(ge);
@@ -721,7 +734,6 @@ function drawResultChart(){
     }
   }
 
-  // ── x-axis labels ──
   ctx.textAlign='center';ctx.fillStyle='rgba(255,255,255,0.2)';
   var xCount=Math.min(n,10);
   for(var xi=0;xi<xCount;xi++){
@@ -729,7 +741,6 @@ function drawResultChart(){
     ctx.fillText((xIdx+1)+'s',px(xIdx),H-8);
   }
 
-  // ── raw WPM line (grey) ──
   if(rawData&&rawData.length>1){
     ctx.beginPath();ctx.moveTo(px(0),py(rawData[0]));
     for(var ri=1;ri<Math.min(rawData.length,n);ri++){
@@ -739,9 +750,7 @@ function drawResultChart(){
     ctx.strokeStyle='rgba(200,200,200,0.28)';ctx.lineWidth=1.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
   }
 
-  // ── WPM area + line (accent color) ──
   if(n>1){
-    // area fill
     var grad=ctx.createLinearGradient(0,pad.t,0,H-pad.b);
     grad.addColorStop(0,'rgba(124,106,247,0.22)');
     grad.addColorStop(1,'rgba(124,106,247,0.01)');
@@ -750,24 +759,20 @@ function drawResultChart(){
     ctx.lineTo(px(n-1),H-pad.b);ctx.lineTo(px(0),H-pad.b);
     ctx.closePath();ctx.fillStyle=grad;ctx.fill();
 
-    // wpm line
     ctx.beginPath();ctx.moveTo(px(0),py(wpmData[0]));
     for(var si=1;si<n;si++){var cpS=px(si-0.5);ctx.bezierCurveTo(cpS,py(wpmData[si-1]),cpS,py(wpmData[si]),px(si),py(wpmData[si]));}
     ctx.strokeStyle='rgba(124,106,247,1)';ctx.lineWidth=2.5;ctx.lineJoin='round';ctx.lineCap='round';ctx.stroke();
   }
 
-  // ── WPM dots ──
   for(var di=0;di<n;di++){
     ctx.beginPath();ctx.arc(px(di),py(wpmData[di]),2.5,0,Math.PI*2);
     ctx.fillStyle='rgba(124,106,247,1)';ctx.fill();
   }
-  // last dot highlight
   ctx.beginPath();ctx.arc(px(n-1),py(wpmData[n-1]),5,0,Math.PI*2);
   ctx.fillStyle='rgba(124,106,247,0.25)';ctx.fill();
   ctx.beginPath();ctx.arc(px(n-1),py(wpmData[n-1]),3,0,Math.PI*2);
   ctx.fillStyle='#fff';ctx.fill();
 
-  // ── Error markers (MonkeyType red X style) ──
   if(errData&&errData.length>0){
     var prevErr=0;
     for(var ei=0;ei<errData.length;ei++){
@@ -775,7 +780,6 @@ function drawResultChart(){
       if(eCount>0){
         var ex=px(ei);
         var ey=pyErr(errData[ei]);
-        // draw red X marker
         ctx.save();
         ctx.strokeStyle='rgba(247,106,138,0.9)';
         ctx.lineWidth=1.8;
@@ -788,18 +792,14 @@ function drawResultChart(){
     }
   }
 
-  // ── Legend ──
   var lx=pad.l+8, ly=pad.t+8;
   ctx.font="10px 'JetBrains Mono', monospace";
-  // wpm
   ctx.beginPath();ctx.moveTo(lx,ly+4);ctx.lineTo(lx+18,ly+4);
   ctx.strokeStyle='rgba(124,106,247,1)';ctx.lineWidth=2.5;ctx.stroke();
   ctx.fillStyle='rgba(200,200,200,0.5)';ctx.textAlign='left';ctx.fillText('wpm',lx+22,ly+8);
-  // raw
   ctx.beginPath();ctx.moveTo(lx+60,ly+4);ctx.lineTo(lx+78,ly+4);
   ctx.strokeStyle='rgba(200,200,200,0.28)';ctx.lineWidth=1.5;ctx.stroke();
   ctx.fillStyle='rgba(200,200,200,0.35)';ctx.fillText('raw',lx+82,ly+8);
-  // errors
   ctx.fillStyle='rgba(247,106,138,0.7)';ctx.fillText('errors',lx+115,ly+8);
 }
 
@@ -827,7 +827,7 @@ function showShareToast(){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   RESTART
+   RESTART — FIX: Always properly resets all screens
 ═══════════════════════════════════════════════════════════════════════ */
 window.restart=function(seedWords){
   clearInterval(timerInterval);
@@ -843,8 +843,20 @@ window.restart=function(seedWords){
   var le=document.getElementById('live-err');if(le)le.textContent='0';
   var ls=document.getElementById('live-stats');if(ls)ls.classList.remove('visible');
   var ch=document.getElementById('click-hint');if(ch)ch.style.opacity='0.6';
-  var rs=document.getElementById('result-screen');if(rs)rs.style.display='none';
-  var ts=document.getElementById('test-screen');if(ts)ts.style.display='flex';
+
+  // FIX: Always hide result screen and show test screen + main area
+  var rs=document.getElementById('result-screen');
+  if(rs)rs.style.display='none';
+  var ts=document.getElementById('test-screen');
+  if(ts)ts.style.display='flex';
+  var ma=document.getElementById('main-area');
+  if(ma)ma.style.display='flex';
+
+  // FIX: Hide other screens (leaderboard, info) and show main
+  var lb=document.getElementById('leaderboard-screen');if(lb)lb.style.display='none';
+  var inf=document.getElementById('info-screen');if(inf)inf.style.display='none';
+  currentScreen='test';
+
   if(typingContainer)typingContainer.classList.remove('blind-mode');
 
   buildDisplay(seedWords);
@@ -949,7 +961,7 @@ window.focusInput=function(fromClick){
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   PANEL SYSTEM (MonkeyType-style dropdowns)
+   PANEL SYSTEM
 ═══════════════════════════════════════════════════════════════════════ */
 var activePanel=null;
 
@@ -971,27 +983,40 @@ function togglePanel(id){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   SCREEN NAVIGATION
+   SCREEN NAVIGATION — FIX: showScreen properly shows/hides everything
 ═══════════════════════════════════════════════════════════════════════ */
-var currentScreen='test'; // 'test'|'leaderboard'|'info'
+var currentScreen='test';
 
 function showScreen(name){
-  var screens=['main-area','leaderboard-screen','info-screen'];
-  screens.forEach(function(id){
-    var el=document.getElementById(id);
-    if(el)el.style.display='none';
-  });
+  // Hide all screens
+  var mainArea=document.getElementById('main-area');
+  var lbScreen=document.getElementById('leaderboard-screen');
+  var infoScreen=document.getElementById('info-screen');
+
+  if(mainArea)mainArea.style.display='none';
+  if(lbScreen)lbScreen.style.display='none';
+  if(infoScreen)infoScreen.style.display='none';
+
   currentScreen=name;
+
   if(name==='test'){
-    var el=document.getElementById('main-area');if(el)el.style.display='flex';
-    document.getElementById('result-screen').style.display='none';
-    document.getElementById('test-screen').style.display='flex';
-    setTimeout(function(){if(!('ontouchstart' in window))hiddenInput.focus();},100);
+    if(mainArea)mainArea.style.display='flex';
+    // Show correct sub-screen
+    var rs=document.getElementById('result-screen');
+    var ts=document.getElementById('test-screen');
+    if(finished){
+      if(rs)rs.style.display='flex';
+      if(ts)ts.style.display='none';
+    }else{
+      if(rs)rs.style.display='none';
+      if(ts)ts.style.display='flex';
+      setTimeout(function(){if(!('ontouchstart' in window))hiddenInput.focus();},100);
+    }
   }else if(name==='leaderboard'){
-    var el=document.getElementById('leaderboard-screen');if(el)el.style.display='block';
+    if(lbScreen)lbScreen.style.display='block';
     loadLbPage('time',15,document.querySelector('.lb-page-tab'));
   }else if(name==='info'){
-    var el=document.getElementById('info-screen');if(el)el.style.display='block';
+    if(infoScreen)infoScreen.style.display='block';
     loadInfoStats();
   }
 }
@@ -1004,7 +1029,6 @@ async function loadInfoStats(){
     var el2=document.getElementById('stat-tests-completed');
     if(el1)el1.textContent=total>1000?Math.round(total/1000)+'k':String(total);
     if(el2)el2.textContent=total>1000?Math.round(total*0.85/1000)+'k':Math.round(total*0.85);
-    // estimate typing time (avg 30s per test)
     var mins=Math.round(total*30/60);
     var el3=document.getElementById('stat-typing-time');
     if(el3)el3.textContent=mins>1000?Math.round(mins/1000)+'k':String(mins);
@@ -1028,7 +1052,6 @@ window.loadLbPage=async function(m,t,el){
       .gte('time_seconds', t-1).lte('time_seconds', t+1)
       .order('wpm',{ascending:false}).limit(500);
 
-    // If filtered query returns nothing, try without time filter
     if(!result.error && (!result.data || result.data.length===0)){
       result=await sb.from('results')
         .select('wpm,accuracy,raw_wpm,consistency,user_id,time_seconds')
@@ -1043,11 +1066,9 @@ window.loadLbPage=async function(m,t,el){
       tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">no results yet — be first!</td></tr>';return;
     }
 
-    // Filter to matching time only
     var filtered=result.data.filter(function(r){return Math.abs((r.time_seconds||0)-t)<=1;});
-    if(filtered.length===0)filtered=result.data; // fallback: show all if no match
+    if(filtered.length===0)filtered=result.data;
 
-    // best per user
     var best={};
     filtered.forEach(function(r){
       var uid=r.user_id||'anon';
@@ -1055,7 +1076,6 @@ window.loadLbPage=async function(m,t,el){
     });
     var rows=Object.values(best).sort(function(a,b){return b.wpm-a.wpm;}).slice(0,50);
 
-    // fetch usernames
     var uids=rows.map(function(r){return r.user_id;}).filter(Boolean);
     var nameMap={};
     if(uids.length>0){
@@ -1099,7 +1119,7 @@ window.saveCustomText=function(){
 };
 
 /* ═══════════════════════════════════════════════════════════════════════
-   OAUTH (Google / GitHub)
+   OAUTH
 ═══════════════════════════════════════════════════════════════════════ */
 window.doOAuth=async function(provider){
   try{
@@ -1116,7 +1136,6 @@ function setAuthMsg(id,msg,isInfo){
   el.textContent=msg;
   el.style.color=isInfo?'var(--accent)':'var(--wrong)';
 }
-// keep old alias for compatibility
 function setAuthErr(elId,msg,isInfo){setAuthMsg(elId,msg,isInfo);}
 
 function openUserPanel(){
@@ -1126,7 +1145,8 @@ function openUserPanel(){
 
 function showLoginPanel(){
   var lp=document.getElementById('auth-panel-login');if(lp)lp.style.display='block';
-  var pp=document.getElementById('auth-panel-profile');if(pp)pp.style.display='none';  ['signup-username','signup-email','signup-pass','signin-email','signin-pass'].forEach(function(id){
+  var pp=document.getElementById('auth-panel-profile');if(pp)pp.style.display='none';
+  ['signup-username','signup-email','signup-pass','signin-email','signin-pass'].forEach(function(id){
     var el=document.getElementById(id);if(el)el.value='';
   });
   setAuthMsg('signup-msg','');setAuthMsg('signin-msg','');
@@ -1138,7 +1158,6 @@ function getAvatarColor(username){
     var saved=localStorage.getItem('typeradar_avatar_color_'+(username||''));
     if(saved)return saved;
   }catch(e){}
-  // deterministic fallback based on username
   var hash=0;
   for(var i=0;i<(username||'').length;i++)hash=(hash*31+username.charCodeAt(i))&0xffff;
   return AVATAR_COLORS[hash%AVATAR_COLORS.length];
@@ -1158,7 +1177,6 @@ function showProfilePanel(){
   var unEl=document.getElementById('pp-username');if(unEl)unEl.textContent=username;
   var jEl=document.getElementById('pp-joined');if(jEl)jEl.textContent=joinDate?('joined '+new Date(joinDate).toLocaleDateString()):'';
 
-  // Avatar renk seçici
   var colorWrap=document.getElementById('pp-avatar-colors');
   if(colorWrap){
     var colors=['#7c6af7','#f7c26a','#6af7b2','#f76a8a','#60d0ff','#ff80ab','#5ebb7a','#f77b4a'];
@@ -1210,7 +1228,6 @@ async function loadProfileStatsPanel(){
   }
 }
 
-// compat stubs
 window.openAuth=openUserPanel;
 window.closeAuth=closeAllPanels;
 
@@ -1305,31 +1322,6 @@ async function loadProfile(userId){
   updateAuthUI();
 }
 
-async function loadProfileStats(){
-  if(!currentUser)return;
-  var ps=document.getElementById('profile-stats');if(!ps)return;
-  ps.innerHTML='<div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.78rem;padding:8px;">loading...</div>';
-  try{
-    var result=await sb.from('results').select('wpm,accuracy').eq('user_id',currentUser.id).order('wpm',{ascending:false}).limit(50);
-    var data=result.data;
-    if(data&&data.length>0){
-      var bestWpm=data[0].wpm;
-      var avgWpm=Math.round(data.reduce(function(s,r){return s+r.wpm;},0)/data.length);
-      var tests=data.length;
-      var bestAcc=Math.max.apply(null,data.map(function(r){return r.accuracy;}));
-      ps.innerHTML=
-        '<div class="ps-item"><div class="ps-label">best wpm</div><div class="ps-val">'+bestWpm+'</div></div>'+
-        '<div class="ps-item"><div class="ps-label">avg wpm</div><div class="ps-val">'+avgWpm+'</div></div>'+
-        '<div class="ps-item"><div class="ps-label">tests</div><div class="ps-val">'+tests+'</div></div>'+
-        '<div class="ps-item"><div class="ps-label">best acc</div><div class="ps-val">'+bestAcc+'%</div></div>';
-    }else{
-      ps.innerHTML='<div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.78rem;">no tests yet</div>';
-    }
-  }catch(e){
-    ps.innerHTML='<div style="color:var(--muted);font-family:JetBrains Mono,monospace;font-size:0.78rem;">could not load stats</div>';
-  }
-}
-
 function updateAuthUI(){
   var btn=document.getElementById('nav-user');
   var mini=document.getElementById('user-avatar-mini');
@@ -1337,7 +1329,6 @@ function updateAuthUI(){
   if(currentUser){
     var username=currentProfile?currentProfile.username:currentUser.email.split('@')[0];
     btn.classList.add('user-logged');
-    // avatar harfini küçük badge olarak göster
     if(mini){
       mini.textContent=username[0].toUpperCase();
       mini.style.background=getAvatarColor(username);
@@ -1360,7 +1351,7 @@ async function saveResult(wpm,acc,raw,consistency){
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
-   LEADERBOARD
+   LEADERBOARD MODAL
 ═══════════════════════════════════════════════════════════════════════ */
 var lbMode='time',lbTime=30;
 window.openLeaderboard=function(){
@@ -1379,7 +1370,6 @@ window.loadLeaderboard=async function(m,t,el){
   list.innerHTML='<div class="lb-loading">loading...</div>';
 
   try{
-    // Get top results with user_id
     var result=await sb.from('results')
       .select('wpm,accuracy,user_id')
       .eq('mode',m).eq('time_seconds',t)
@@ -1388,7 +1378,6 @@ window.loadLeaderboard=async function(m,t,el){
     if(result.error){list.innerHTML='<div class="lb-loading">failed to load</div>';return;}
     if(!result.data||result.data.length===0){list.innerHTML='<div class="lb-loading">no results yet — be first!</div>';return;}
 
-    // Deduplicate: best per user_id
     var best={};
     result.data.forEach(function(r){
       var uid=r.user_id||'anon';
@@ -1396,7 +1385,6 @@ window.loadLeaderboard=async function(m,t,el){
     });
     var rows=Object.values(best).sort(function(a,b){return b.wpm-a.wpm;}).slice(0,20);
 
-    // Fetch usernames for these user_ids
     var uids=rows.map(function(r){return r.user_id;}).filter(function(uid){return uid!=='anon';});
     var nameMap={};
     if(uids.length>0){
@@ -1616,7 +1604,6 @@ sb.auth.onAuthStateChange(async function(event, session){
     updateAuthUI();
     return;
   }
-  // Tüm oturum olaylarında (yenileme dahil) user ve profil yükle
   if(session&&session.user){
     currentUser=session.user;window.currentUser=currentUser;
     await loadProfile(session.user.id);
@@ -1641,7 +1628,6 @@ window.addEventListener('load',function(){
     if(e.target.closest&&e.target.closest('.typing-container'))e.preventDefault();
   },{passive:false});
 
-  // Modal overlay clicks
   var sm2=document.getElementById('settings-modal');
   if(sm2)sm2.addEventListener('click',function(e){if(e.target===this)closeSettings();});
   var lm2=document.getElementById('leaderboard-modal');
@@ -1649,21 +1635,18 @@ window.addEventListener('load',function(){
   var dm2=document.getElementById('daily-modal');
   if(dm2)dm2.addEventListener('click',function(e){if(e.target===this)closeDaily();});
 
-  // Panel overlay
   var po=document.getElementById('panel-overlay');
   if(po)po.addEventListener('click',function(){closeAllPanels();});
 
-  // Header nav — wired after DOM ready
   var el;
   el=document.getElementById('nav-keyboard');if(el)el.addEventListener('click',function(){closeAllPanels();showScreen('test');});
-  el=document.getElementById('logo-btn');if(el)el.addEventListener('click',function(){closeAllPanels();showScreen('test');});
+  el=document.getElementById('logo-btn');if(el)el.addEventListener('click',function(){closeAllPanels();restart();});
   el=document.getElementById('nav-leaderboard');if(el)el.addEventListener('click',function(){closeAllPanels();showScreen('leaderboard');});
   el=document.getElementById('nav-info');if(el)el.addEventListener('click',function(){closeAllPanels();showScreen('info');});
   el=document.getElementById('nav-settings');if(el)el.addEventListener('click',function(){openSettings();});
   el=document.getElementById('notif-panel-close');if(el)el.addEventListener('click',function(){closeAllPanels();});
 });
 
-// Auto-refocus
 if(!('ontouchstart' in window)){
   setInterval(function(){
     var testScreen=document.getElementById('test-screen');
@@ -1681,8 +1664,6 @@ if(!('ontouchstart' in window)){
   },2000);
 }
 
-
-// ── Global toggle called directly from HTML onclick ──────────────────────────
 function toggleAuthPanel(panelId){
   var panel=document.getElementById(panelId);
   if(!panel)return;
