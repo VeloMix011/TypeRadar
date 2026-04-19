@@ -49,7 +49,7 @@ header { width:100%; max-width:1250px; padding:16px 40px 0; display:flex; align-
 .panel-overlay.active { display:block; }
 
 /* ─── INFO & LEADERBOARD SCREENS ────────────────────────────────────────────── */
-#info-screen, #leaderboard-screen { width:100%; max-width:1250px; margin:0 auto; padding:24px 40px; }
+#info-screen, #leaderboard-screen { width:100%; max-width:1250px; margin:0 auto; padding:0; }
 .info-page { display:flex; flex-direction:column; gap:40px; }
 .info-hero { text-align:center; padding:20px 0 0; }
 .info-tagline { font-family:'JetBrains Mono',monospace; font-size:0.9rem; color:var(--muted); line-height:1.8; }
@@ -72,7 +72,7 @@ header { width:100%; max-width:1250px; padding:16px 40px 0; display:flex; align-
 .info-shortcut-row kbd { background:var(--surface2); border:1px solid var(--border); border-radius:4px; padding:3px 10px; color:var(--text); font-family:'JetBrains Mono',monospace; font-size:0.72rem; white-space:nowrap; }
 
 /* ─── LEADERBOARD PAGE ───────────────────────────────────────────────────────── */
-.lb-page { display:flex; gap:0; min-height:calc(100vh - 80px); }
+.lb-page { display:flex; gap:0; min-height:calc(100vh - 60px); width:100%; }
 .lb-page-sidebar { width:200px; flex-shrink:0; padding:20px 16px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:6px; }
 .lb-sidebar-btn { background:none; border:none; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:0.8rem; padding:10px 14px; border-radius:8px; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px; transition:all 0.15s; }
 .lb-sidebar-btn:hover { color:var(--text); background:var(--surface2); }
