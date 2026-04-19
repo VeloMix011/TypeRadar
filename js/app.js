@@ -1046,24 +1046,20 @@ window.loadLbPage=async function(m,t,el){
   tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">loading...</td></tr>';
 
   try{
-    var result=await sb.from('results')
-      .select('wpm,accuracy,raw_wpm,consistency,user_id,time_seconds')
-      .eq('mode',m)
-      .gte('time_seconds', t-1).lte('time_seconds', t+1)
-      .order('wpm',{ascending:false}).limit(500);
-
-    if(!result.error && (!result.data || result.data.length===0)){
-      result=await sb.from('results')
+    var result=await Promise.race([
+      sb.from('results')
         .select('wpm,accuracy,raw_wpm,consistency,user_id,time_seconds')
         .eq('mode',m)
-        .order('wpm',{ascending:false}).limit(500);
-    }
+        .order('wpm',{ascending:false})
+        .limit(500),
+      new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},8000);})
+    ]);
 
     if(result.error){
-      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">DB error: '+result.error.message+'</td></tr>';return;
+      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">hata: '+result.error.message+'</td></tr>';return;
     }
     if(!result.data||result.data.length===0){
-      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">no results yet — be first!</td></tr>';return;
+      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">henüz sonuç yok — ilk sen ol!</td></tr>';return;
     }
 
     var filtered=result.data.filter(function(r){return Math.abs((r.time_seconds||0)-t)<=1;});
@@ -1101,7 +1097,11 @@ window.loadLbPage=async function(m,t,el){
       '</tr>';
     }).join('');
   }catch(e){
-    tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">error: '+e.message+'</td></tr>';
+    if(e.message==='timeout'){
+      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">bağlantı zaman aşımı — Supabase\'i kontrol et</td></tr>';
+    }else{
+      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">hata: '+e.message+'</td></tr>';
+    }
   }
 };
 
