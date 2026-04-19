@@ -73,18 +73,18 @@ header { width:100%; max-width:1250px; padding:16px 40px 0; display:flex; align-
 
 /* ─── LEADERBOARD PAGE ───────────────────────────────────────────────────────── */
 .lb-page { display:flex; gap:0; min-height:calc(100vh - 60px); width:100%; }
-.lb-page-sidebar { width:200px; flex-shrink:0; padding:20px 16px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:6px; }
+.lb-page-sidebar { width:180px; flex-shrink:0; padding:20px 16px; border-right:1px solid var(--border); display:flex; flex-direction:column; gap:6px; }
 .lb-sidebar-btn { background:none; border:none; color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:0.8rem; padding:10px 14px; border-radius:8px; cursor:pointer; text-align:left; display:flex; align-items:center; gap:8px; transition:all 0.15s; }
 .lb-sidebar-btn:hover { color:var(--text); background:var(--surface2); }
 .lb-sidebar-btn.active { background:var(--accent); color:#fff; }
-.lb-page-main { flex:1; padding:20px 28px; }
+.lb-page-main { flex:1; padding:20px 28px; min-width:0; }
 .lb-page-top { display:flex; align-items:center; justify-content:space-between; margin-bottom:24px; flex-wrap:wrap; gap:12px; }
 .lb-page-title { font-family:'JetBrains Mono',monospace; font-size:1.4rem; font-weight:300; color:var(--text); }
-.lb-page-tabs { display:flex; gap:6px; }
+.lb-page-tabs { display:flex; gap:6px; flex-wrap:wrap; }
 .lb-page-tab { background:none; border:1px solid var(--border); color:var(--muted); font-family:'JetBrains Mono',monospace; font-size:0.75rem; padding:6px 14px; border-radius:6px; cursor:pointer; transition:all 0.15s; }
 .lb-page-tab:hover { color:var(--text); border-color:var(--text); }
 .lb-page-tab.active { color:var(--accent); border-color:var(--accent); background:var(--glow); }
-.lb-page-table { width:100%; border-collapse:collapse; }
+.lb-page-table { width:100%; border-collapse:collapse; table-layout:fixed; }
 .lb-page-table th { font-family:'JetBrains Mono',monospace; font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.1em; padding:8px 12px; border-bottom:1px solid var(--border); text-align:left; }
 .lb-page-table th:not(:nth-child(2)) { text-align:right; }
 .lb-page-table td { font-family:'JetBrains Mono',monospace; font-size:0.85rem; color:var(--text); padding:12px 12px; border-bottom:1px solid rgba(42,42,50,0.5); text-align:right; }
@@ -97,7 +97,7 @@ header { width:100%; max-width:1250px; padding:16px 40px 0; display:flex; align-
 .lb-rank-cell.bronze { color:#cd7f32; }
 .lb-user-cell { font-weight:500; }
 .lb-wpm-cell { color:var(--accent) !important; font-weight:500; }
-.lb-loading-cell { text-align:center; padding:40px !important; color:var(--muted); font-size:0.8rem; }
+.lb-loading-cell { text-align:center !important; padding:40px !important; color:var(--muted); font-size:0.8rem; }
 
 /* ─── OAUTH ──────────────────────────────────────────────────────────────────── */
 .oauth-row { display:flex; gap:6px; margin-bottom:8px; }
