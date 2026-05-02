@@ -1088,7 +1088,11 @@ window.loadLbPage=async function(m,t,el){
       tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">henüz sonuç yok — ilk sen ol!</td></tr>';return;
     }
 
-    var filtered=result.data.filter(function(r){return Math.abs((r.time_seconds||0)-t)<=1;});
+    var filtered=result.data.filter(function(r){
+      if(!t)return true;
+      var ts=r.time_seconds||0;
+      return ts===t||ts===t-1||ts===t+1||Math.abs(ts-t)<=2;
+    });
     if(filtered.length===0)filtered=result.data;
 
     var best={};
@@ -1105,10 +1109,10 @@ window.loadLbPage=async function(m,t,el){
       if(pRes.data)pRes.data.forEach(function(p){nameMap[p.id]=p.username;});
     }
 
-    var myUsername=currentProfile?currentProfile.username:null;
+    var myUid=currentUser?currentUser.id:null;
     tbody.innerHTML=rows.map(function(r,i){
       var uname=nameMap[r.user_id]||'anonymous';
-      var isMe=myUsername&&uname===myUsername;
+      var isMe=myUid&&r.user_id===myUid;
       var rankCell=i===0?'<td class="lb-rank-cell gold">&#129351;</td>':
                    i===1?'<td class="lb-rank-cell silver">&#129352;</td>':
                    i===2?'<td class="lb-rank-cell bronze">&#129353;</td>':
@@ -1368,7 +1372,7 @@ window.submitOAuthUsername=async function(){
   var msg=document.getElementById('oauth-username-msg');
   if(!inp||!currentUser)return;
   var username=inp.value.trim();
-  if(!username||username.length<3){if(msg)msg.textContent='En az 3 karakter olmalı';return;}
+  if(!username||username.length<5){if(msg)msg.textContent='En az 5 karakter olmalı';return;}
   if(username.length>20){if(msg)msg.textContent='En fazla 20 karakter';return;}
   if(!/^[a-zA-Z0-9_]+$/.test(username)){if(msg)msg.textContent='Sadece harf, rakam ve _ kullanılabilir';return;}
   if(msg)msg.textContent='...';
@@ -1671,7 +1675,14 @@ sb.auth.onAuthStateChange(async function(event, session){
   }
   if(session&&session.user){
     currentUser=session.user;window.currentUser=currentUser;
-    await loadProfile(session.user.id);
+    // Sayfa tam yüklendikten sonra profil yükle (modal için)
+    if(document.readyState==='complete'){
+      await loadProfile(session.user.id);
+    }else{
+      window.addEventListener('load',async function(){
+        await loadProfile(session.user.id);
+      },{once:true});
+    }
   }
 });
 
