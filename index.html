@@ -347,11 +347,11 @@
 <footer><kbd>Tab</kbd> restart &nbsp;&middot;&nbsp; <kbd>Esc</kbd> reset</footer>
 
 <!-- USERNAME MODAL (Google OAuth) -->
-<div class="modal-overlay" id="username-modal" style="display:none;">
+<div class="modal-overlay" id="username-modal" style="display:none;z-index:9999;">
   <div class="modal" style="max-width:360px;">
     <h2 class="modal-title">choose a username</h2>
     <p style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--muted);margin-bottom:16px;">this will appear on the leaderboard</p>
-    <input class="auth-input" id="oauth-username-input" type="text" placeholder="username" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="20" onkeydown="if(event.key==='Enter')submitOAuthUsername()">
+    <input class="auth-input" id="oauth-username-input" type="text" placeholder="username" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="20" style="pointer-events:all;" onkeydown="if(event.key==='Enter')submitOAuthUsername()">
     <div class="auth-msg" id="oauth-username-msg"></div>
     <button class="auth-panel-btn" onclick="submitOAuthUsername()" style="margin-top:12px;width:100%;">confirm</button>
   </div>
