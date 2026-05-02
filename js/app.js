@@ -1367,14 +1367,32 @@ async function loadProfile(userId){
   updateAuthUI();
 }
 
+// Live icon update on username input
+document.addEventListener('DOMContentLoaded', function() {
+  var uInp = document.getElementById('oauth-username-input');
+  if(uInp) {
+    uInp.addEventListener('input', function() {
+      var icon = document.getElementById('oauth-username-icon');
+      var val = uInp.value.trim();
+      if(!icon) return;
+      if(val.length === 0) { icon.textContent = ''; icon.style.color = ''; }
+      else if(val.length >= 5 && val.length <= 20 && /^[a-zA-Z0-9_]+$/.test(val)) {
+        icon.textContent = '✓'; icon.style.color = 'var(--correct)';
+      } else {
+        icon.textContent = '✕'; icon.style.color = 'var(--wrong)';
+      }
+    });
+  }
+});
+
 window.submitOAuthUsername=async function(){
   var inp=document.getElementById('oauth-username-input');
   var msg=document.getElementById('oauth-username-msg');
   if(!inp||!currentUser)return;
   var username=inp.value.trim();
-  if(!username||username.length<5){if(msg)msg.textContent='En az 5 karakter olmalı';return;}
-  if(username.length>20){if(msg)msg.textContent='En fazla 20 karakter';return;}
-  if(!/^[a-zA-Z0-9_]+$/.test(username)){if(msg)msg.textContent='Sadece harf, rakam ve _ kullanılabilir';return;}
+  if(!username||username.length<5){if(msg)msg.textContent='username must be at least 5 characters';return;}
+  if(username.length>20){if(msg)msg.textContent='username must be 20 characters or less';return;}
+  if(!/^[a-zA-Z0-9_]+$/.test(username)){if(msg)msg.textContent='only letters, numbers and _ allowed';return;}
   if(msg)msg.textContent='...';
   var pr=await sb.from('profiles').insert({id:currentUser.id,username:username});
   if(pr.error){
