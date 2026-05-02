@@ -675,6 +675,9 @@ function endTest(){
 
   if(isDailyMode&&currentUser){
     saveDailyResult(wpm,acc);
+  var xpReward=awardXP(rawWpm,acc);
+  updateUserStats(rawWpm,acc,elapsed);
+  var analyticsReport=generateAnalyticsReport();
     isDailyMode=false;
   }
 }
@@ -923,6 +926,7 @@ function processKey(key){
     wordHistory.push({input:currentInput,wasCorrect:wasCorrect,locked:wasCorrect});
     var pwe=document.getElementById('word-'+currentWordIndex);
     if(pwe)pwe.classList.toggle('has-error',!wasCorrect);
+      recordCharError(key);
     var len2=Math.min(currentInput.length,wordStr.length);
     for(var j=0;j<len2;j++){if(currentInput[j]===wordStr[j])totalCorrectChars++;else totalWrongChars++;}
     totalWrongChars+=Math.max(0,wordStr.length-currentInput.length);
@@ -936,6 +940,7 @@ function processKey(key){
     if(mode==='zen'){
       var weZ=document.getElementById('word-'+currentWordIndex);if(!weZ)return;
       var leZ=document.createElement('span');leZ.className='letter zen-letter correct theme-'+colorTheme;leZ.textContent=key;weZ.appendChild(leZ);
+    recordKeystroke(key);
       currentInput+=key;positionCursor();return;
     }
     if(currentInput.length>=wordStr.length+5)return;
