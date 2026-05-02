@@ -1072,13 +1072,17 @@ window.loadLbPage=async function(m,t,el){
   tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">loading...</td></tr>';
 
   try{
+    // Sorguyu direkt time_seconds ile filtrele, timeout'u artır
+    var query=sb.from('results')
+      .select('wpm,accuracy,raw_wpm,consistency,user_id,time_seconds')
+      .eq('mode',m)
+      .eq('time_seconds',t)
+      .order('wpm',{ascending:false})
+      .limit(100);
+
     var result=await Promise.race([
-      sb.from('results')
-        .select('wpm,accuracy,raw_wpm,consistency,user_id,time_seconds')
-        .eq('mode',m)
-        .order('wpm',{ascending:false})
-        .limit(500),
-      new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},8000);})
+      query,
+      new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},20000);})
     ]);
 
     if(result.error){
@@ -1088,15 +1092,8 @@ window.loadLbPage=async function(m,t,el){
       tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">henüz sonuç yok — ilk sen ol!</td></tr>';return;
     }
 
-    var filtered=result.data.filter(function(r){
-      if(!t)return true;
-      var ts=r.time_seconds||0;
-      return ts===t||ts===t-1||ts===t+1||Math.abs(ts-t)<=2;
-    });
-    if(filtered.length===0)filtered=result.data;
-
     var best={};
-    filtered.forEach(function(r){
+    result.data.forEach(function(r){
       var uid=r.user_id||'anon';
       if(!best[uid]||r.wpm>best[uid].wpm)best[uid]=r;
     });
