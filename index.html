@@ -348,12 +348,15 @@
 
 <!-- USERNAME MODAL (Google OAuth) -->
 <div class="modal-overlay" id="username-modal" style="display:none;z-index:9999;">
-  <div class="modal" style="max-width:360px;">
-    <h2 class="modal-title">choose a username</h2>
-    <p style="font-family:'JetBrains Mono',monospace;font-size:0.8rem;color:var(--muted);margin-bottom:16px;">this will appear on the leaderboard</p>
-    <input class="auth-input" id="oauth-username-input" type="text" placeholder="username" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="20" style="pointer-events:all;" onkeydown="if(event.key==='Enter')submitOAuthUsername()">
+  <div class="modal" style="max-width:400px;">
+    <h2 class="modal-title">Account name</h2>
+    <p style="font-family:'JetBrains Mono',monospace;font-size:0.85rem;color:var(--muted);margin-bottom:16px;">Please enter a username before continuing</p>
+    <div style="position:relative;display:flex;align-items:center;">
+      <input class="auth-input" id="oauth-username-input" type="text" placeholder="username" autocorrect="off" autocapitalize="none" spellcheck="false" maxlength="20" style="pointer-events:all;padding-right:40px;width:100%;box-sizing:border-box;" onkeydown="if(event.key==='Enter')submitOAuthUsername()">
+      <span id="oauth-username-icon" style="position:absolute;right:12px;font-size:1rem;pointer-events:none;"></span>
+    </div>
     <div class="auth-msg" id="oauth-username-msg"></div>
-    <button class="auth-panel-btn" onclick="submitOAuthUsername()" style="margin-top:12px;width:100%;">confirm</button>
+    <button class="auth-panel-btn" onclick="submitOAuthUsername()" style="margin-top:16px;width:100%;">continue</button>
   </div>
 </div>
 
