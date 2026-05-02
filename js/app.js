@@ -1082,7 +1082,7 @@ window.loadLbPage=async function(m,t,el){
 
     var result=await Promise.race([
       query,
-      new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},20000);})
+      new Promise(function(_,rej){setTimeout(function(){rej(new Error('timeout'));},30000);})
     ]);
 
     if(result.error){
@@ -1125,9 +1125,9 @@ window.loadLbPage=async function(m,t,el){
     }).join('');
   }catch(e){
     if(e.message==='timeout'){
-      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">bağlantı zaman aşımı — Supabase\'i kontrol et</td></tr>';
+      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">bağlantı yavaş, <a href="#" style="color:var(--accent)" onclick="loadLbPage(\''+m+'\','+t+',null);return false;">tekrar dene</a></td></tr>';
     }else{
-      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">hata: '+e.message+'</td></tr>';
+      tbody.innerHTML='<tr><td colspan="6" class="lb-loading-cell">hata: '+e.message+' — <a href="#" style="color:var(--accent)" onclick="loadLbPage(\''+m+'\','+t+',null);return false;">tekrar dene</a></td></tr>';
     }
   }
 };
