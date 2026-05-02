@@ -108,6 +108,7 @@ function calculateLevel(xp) {
 
 // Award XP based on test performance
 function awardXP(wpm, accuracy) {
+  const prevLevel = userLevel;
   const baseXP = Math.round(wpm * accuracy / 100);
   const bonus = accuracy > 95 ? Math.round(baseXP * 0.2) : 0;
   const totalXP = baseXP + bonus;
@@ -120,7 +121,7 @@ function awardXP(wpm, accuracy) {
     localStorage.setItem('typeradar_user_level', userLevel);
   } catch (e) {}
   
-  return { totalXP, bonus, newLevel: userLevel };
+  return { totalXP, bonus, newLevel: userLevel, leveledUp: userLevel > prevLevel };
 }
 
 // Load user stats from localStorage
@@ -199,30 +200,31 @@ function displayAnalyticsReport(report) {
   
   if (errorProneDiv) errorProneDiv.textContent = errorText;
   
-  // Show analytics section if in developer mode
-  if (currentMode === 'code') {
-    analyticsSection.style.display = 'block';
-  }
+  // Always show analytics section (handled by app.js endTest)
+  // analyticsSection visibility is controlled from app.js
 }
 
 // Display XP reward after test
 function displayXPReward(xpReward) {
-  const xpRewardDisplay = document.getElementById('xp-reward-display');
-  const xpEarnedAmount = document.getElementById('xp-earned-amount');
-  const levelUpMessage = document.getElementById('level-up-message');
+  var xpRewardDisplay = document.getElementById('xp-reward-display');
+  var xpEarnedAmount = document.getElementById('xp-earned-amount');
+  var levelUpMessage = document.getElementById('level-up-message');
   
   if (!xpRewardDisplay) return;
   
   xpRewardDisplay.style.display = 'block';
-  if (xpEarnedAmount) xpEarnedAmount.textContent = xpReward.totalXP;
+  if (xpEarnedAmount) xpEarnedAmount.textContent = '+' + xpReward.totalXP;
   
-  // Show level up message if level increased
+  // Show level up message if a level up occurred
   if (levelUpMessage) {
-    if (xpReward.newLevel > userLevel - 1) {
+    if (xpReward.leveledUp) {
+      levelUpMessage.textContent = '🎉 Level Up! Now Lv. ' + xpReward.newLevel;
       levelUpMessage.style.display = 'block';
-      setTimeout(() => {
+      setTimeout(function() {
         levelUpMessage.style.display = 'none';
-      }, 3000);
+      }, 4000);
+    } else {
+      levelUpMessage.style.display = 'none';
     }
   }
   
