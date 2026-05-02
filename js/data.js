@@ -527,3 +527,70 @@ const QUOTES = [
   "If you can dream it you can do it always remember that this whole thing was started with a dream and a mouse and the belief that imagination and hard work have absolutely no limits whatsoever.",
   "Believe you can and you are halfway there the other half is showing up every single day putting in the work staying consistent even when the results are slow and the path is unclear and long."
 ];
+
+// ═══════════════════════════════════════════════════════════════════════
+// CODE SNIPPETS FOR DEVELOPER MODE
+// ═══════════════════════════════════════════════════════════════════════
+
+const CODE_SNIPPETS = {
+  javascript: [
+    "const greet = (name) => `Hello, ${name}!`;",
+    "function fibonacci(n) { return n <= 1 ? n : fibonacci(n-1) + fibonacci(n-2); }",
+    "const users = data.filter(u => u.age > 18).map(u => u.name);",
+    "async function fetchData(url) { const res = await fetch(url); return res.json(); }",
+    "class Calculator { add(a, b) { return a + b; } subtract(a, b) { return a - b; } }",
+    "const debounce = (fn, delay) => { let timer; return (...args) => { clearTimeout(timer); timer = setTimeout(() => fn(...args), delay); }; }",
+    "const memoize = (fn) => { const cache = {}; return (x) => cache[x] ?? (cache[x] = fn(x)); };",
+    "Promise.all([fetch('/api/users'), fetch('/api/posts')]).then(([u, p]) => [u.json(), p.json()]);",
+    "const obj = { a: 1, b: 2, c: 3 }; const { a, ...rest } = obj;",
+    "Array.from({length: 5}, (_, i) => i * 2);"
+  ],
+  python: [
+    "def factorial(n): return 1 if n <= 1 else n * factorial(n - 1)",
+    "squares = [x**2 for x in range(10) if x % 2 == 0]",
+    "with open('file.txt', 'r') as f: content = f.read()",
+    "import json; data = json.loads('{\"key\": \"value\"}')",
+    "def decorator(func): def wrapper(*args, **kwargs): return func(*args, **kwargs); return wrapper",
+    "class Animal: def __init__(self, name): self.name = name",
+    "lambda x: x**2 if x > 0 else 0",
+    "try: result = 10 / 0 except ZeroDivisionError: result = None",
+    "import requests; response = requests.get('https://api.example.com/data')",
+    "def merge_dicts(d1, d2): return {**d1, **d2}"
+  ],
+  cpp: [
+    "#include <iostream> using namespace std; int main() { cout << \"Hello, World!\"; return 0; }",
+    "int factorial(int n) { return n <= 1 ? 1 : n * factorial(n - 1); }",
+    "vector<int> nums = {1, 2, 3, 4, 5}; sort(nums.begin(), nums.end());",
+    "class Point { public: int x, y; Point(int x, int y) : x(x), y(y) {} };",
+    "for (auto& item : container) { cout << item << endl; }",
+    "auto lambda = [](int x) { return x * x; };",
+    "template<typename T> T max(T a, T b) { return a > b ? a : b; }",
+    "std::string str = \"Hello\"; str.append(\" World\");",
+    "std::map<string, int> map; map[\"key\"] = 42;",
+    "std::unique_ptr<int> ptr(new int(42));"
+  ],
+  rust: [
+    "fn main() { println!(\"Hello, world!\"); }",
+    "fn add(a: i32, b: i32) -> i32 { a + b }",
+    "let numbers: Vec<i32> = (1..10).collect();",
+    "let result = match value { 1 => \"one\", 2 => \"two\", _ => \"other\" };",
+    "struct Person { name: String, age: u32 }",
+    "impl Person { fn new(name: String, age: u32) -> Person { Person { name, age } } }",
+    "let closure = |x| x * 2;",
+    "Result<T, E> and Option<T> for error handling",
+    "for item in &vec { println!(\"{}\", item); }",
+    "let s = String::from(\"hello\"); let len = s.len();"
+  ],
+  sql: [
+    "SELECT * FROM users WHERE age > 18 ORDER BY name;",
+    "INSERT INTO users (name, email) VALUES ('John', 'john@example.com');",
+    "UPDATE users SET age = 25 WHERE id = 1;",
+    "DELETE FROM users WHERE id = 5;",
+    "SELECT COUNT(*) as total FROM orders WHERE status = 'completed';",
+    "SELECT u.name, COUNT(o.id) FROM users u LEFT JOIN orders o ON u.id = o.user_id GROUP BY u.id;",
+    "CREATE TABLE users (id INT PRIMARY KEY, name VARCHAR(100), email VARCHAR(100));",
+    "ALTER TABLE users ADD COLUMN phone VARCHAR(20);",
+    "SELECT DISTINCT category FROM products WHERE price > 100;",
+    "SELECT * FROM users LIMIT 10 OFFSET 20;"
+  ]
+};
