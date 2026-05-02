@@ -297,9 +297,9 @@ footer kbd { background:var(--surface2); border:1px solid var(--border); border-
 .lb-list::-webkit-scrollbar { width:4px; }
 .lb-list::-webkit-scrollbar-thumb { background:var(--border); border-radius:4px; }
 .lb-loading { font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--muted); text-align:center; padding:32px; }
-.lb-row { display:flex; align-items:center; gap:12px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 16px; transition:border-color 0.15s; }
-.lb-row:hover { border-color:var(--accent); }
-.lb-row.me { border-color:var(--accent); background:var(--glow); }
+.lb-list .lb-row { display:flex; align-items:center; gap:12px; background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:12px 16px; transition:border-color 0.15s; }
+.lb-list .lb-row:hover { border-color:var(--accent); }
+.lb-list .lb-row.me { border-color:var(--accent); background:var(--glow); }
 .lb-rank { font-family:'JetBrains Mono',monospace; font-size:0.8rem; color:var(--muted); min-width:28px; text-align:center; }
 .lb-rank.gold { color:#ffd700; font-size:1rem; }
 .lb-rank.silver { color:#c0c0c0; font-size:1rem; }
