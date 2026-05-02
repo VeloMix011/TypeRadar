@@ -1339,6 +1339,15 @@ async function loadProfile(userId){
     var result=await sb.from('profiles').select('*').eq('id',userId).single();
     if(result.error||!result.data){
       currentProfile=null;
+      // OAuth kullanıcısı — kullanıcı adı sormak için modal aç
+      var modal=document.getElementById('username-modal');
+      if(modal){
+        modal.style.display='flex';
+        setTimeout(function(){
+          var inp=document.getElementById('oauth-username-input');
+          if(inp)inp.focus();
+        },100);
+      }
     }else{
       currentProfile=result.data;
     }
@@ -1347,6 +1356,30 @@ async function loadProfile(userId){
   }
   updateAuthUI();
 }
+
+window.submitOAuthUsername=async function(){
+  var inp=document.getElementById('oauth-username-input');
+  var msg=document.getElementById('oauth-username-msg');
+  if(!inp||!currentUser)return;
+  var username=inp.value.trim();
+  if(!username||username.length<3){if(msg)msg.textContent='En az 3 karakter olmalı';return;}
+  if(username.length>20){if(msg)msg.textContent='En fazla 20 karakter';return;}
+  if(!/^[a-zA-Z0-9_]+$/.test(username)){if(msg)msg.textContent='Sadece harf, rakam ve _ kullanılabilir';return;}
+  if(msg)msg.textContent='...';
+  var pr=await sb.from('profiles').insert({id:currentUser.id,username:username});
+  if(pr.error){
+    if(pr.error.code==='23505'){
+      var alt=username+'_'+(Math.floor(Math.random()*9000)+1000);
+      var pr2=await sb.from('profiles').insert({id:currentUser.id,username:alt});
+      if(pr2.error){if(msg)msg.textContent='Bu kullanıcı adı alınmış';return;}
+    }else{
+      if(msg)msg.textContent='Hata: '+pr.error.message;return;
+    }
+  }
+  var modal=document.getElementById('username-modal');
+  if(modal)modal.style.display='none';
+  await loadProfile(currentUser.id);
+};
 
 function updateAuthUI(){
   var btn=document.getElementById('nav-user');
