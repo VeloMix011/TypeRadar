@@ -137,6 +137,13 @@
     </div>
     <div class="profile-panel-avatar-colors" id="pp-avatar-colors"></div>
     <div class="profile-panel-stats" id="pp-stats"><div class="notif-empty">loading...</div></div>
+    <div class="profile-panel-level">
+      <div class="level-badge" id="user-level-badge">Lv. 1</div>
+      <div class="xp-bar">
+        <div class="xp-fill" id="user-xp-fill" style="width: 0%"></div>
+        <div class="xp-text" id="user-xp-text">0 XP</div>
+      </div>
+    </div>
     <button class="auth-panel-btn danger" onclick="doSignOut()">
       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
       sign out
@@ -314,6 +321,23 @@
       <button class="share-btn" onclick="shareResult()">&#11014; share</button>
     </div>
     <div class="share-toast" id="share-toast">copied!</div>
+    <div class="result-analytics" id="result-analytics" style="display:none;">
+      <h3>character analysis</h3>
+      <div class="analytics-grid">
+        <div class="analytics-box">
+          <div class="analytics-label">slowest characters</div>
+          <div class="analytics-content" id="slowest-chars">—</div>
+        </div>
+        <div class="analytics-box">
+          <div class="analytics-label">most error-prone</div>
+          <div class="analytics-content" id="error-prone-chars">—</div>
+        </div>
+      </div>
+      <div class="xp-reward" id="xp-reward-display" style="display:none;">
+        <div class="xp-earned">+<span id="xp-earned-amount">0</span> XP</div>
+        <div class="level-up" id="level-up-message" style="display:none;">🎉 Level Up!</div>
+      </div>
+    </div>
     <div class="pb-badge" id="pb-badge">&#127881; new personal best!</div>
   </div>
 </main>
@@ -341,6 +365,16 @@
           <div class="mode-grid" id="special-mode-selector">
             <div class="mode-card" data-smode="blind" onclick="toggleSpecialMode(this,'blind')"><div class="mode-icon">&#9676;</div><div class="mode-name">blind</div><div class="mode-desc">letters hidden while typing</div></div>
             <div class="mode-card" data-smode="confidence" onclick="toggleSpecialMode(this,'confidence')"><div class="mode-icon">&#9003;</div><div class="mode-name">confidence</div><div class="mode-desc">no backspace allowed</div></div>
+          </div>
+        </div>
+        <div class="setting-section">
+          <h3>developer mode</h3>
+          <div class="mode-grid" id="developer-mode-selector">
+            <div class="mode-card" data-lang="javascript" onclick="window.selectDeveloperMode('javascript')"><div class="mode-icon">{ }</div><div class="mode-name">javascript</div><div class="mode-desc">JS code snippets</div></div>
+            <div class="mode-card" data-lang="python" onclick="window.selectDeveloperMode('python')"><div class="mode-icon">🐍</div><div class="mode-name">python</div><div class="mode-desc">Python code</div></div>
+            <div class="mode-card" data-lang="cpp" onclick="window.selectDeveloperMode('cpp')"><div class="mode-icon">++</div><div class="mode-name">c++</div><div class="mode-desc">C++ code</div></div>
+            <div class="mode-card" data-lang="rust" onclick="window.selectDeveloperMode('rust')"><div class="mode-icon">⚙️</div><div class="mode-name">rust</div><div class="mode-desc">Rust code</div></div>
+            <div class="mode-card" data-lang="sql" onclick="window.selectDeveloperMode('sql')"><div class="mode-icon">🗄️</div><div class="mode-name">sql</div><div class="mode-desc">SQL queries</div></div>
           </div>
         </div>
         <div class="setting-section">
@@ -388,5 +422,6 @@
 
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
+<script src="js/enhancements.js"></script>
 </body>
 </html>
