@@ -1404,6 +1404,14 @@ window.submitOAuthUsername=async function(){
       if(msg)msg.textContent='Hata: '+pr.error.message;return;
     }
   }
+  // Yeni hesap — XP'yi sıfırla
+  try{
+    localStorage.removeItem('typeradar_user_xp');
+    localStorage.removeItem('typeradar_user_level');
+    localStorage.removeItem('typeradar_user_stats');
+  }catch(e){}
+  if(typeof userXP!=='undefined'){userXP=0;userLevel=1;}
+  if(typeof updateLevelDisplay==='function')updateLevelDisplay();
   var modal=document.getElementById('username-modal');
   if(modal)modal.style.display='none';
   await loadProfile(currentUser.id);
@@ -1688,19 +1696,20 @@ sb.auth.onAuthStateChange(async function(event, session){
   if(event==='SIGNED_OUT'||!session||!session.user){
     currentUser=null;
     currentProfile=null;
+    // Çıkışta XP'yi sıfırla
+    try{
+      localStorage.removeItem('typeradar_user_xp');
+      localStorage.removeItem('typeradar_user_level');
+      localStorage.removeItem('typeradar_user_stats');
+    }catch(e){}
+    if(typeof userXP!=='undefined'){userXP=0;userLevel=1;}
     updateAuthUI();
     return;
   }
   if(session&&session.user){
     currentUser=session.user;window.currentUser=currentUser;
-    // Sayfa tam yüklendikten sonra profil yükle (modal için)
-    if(document.readyState==='complete'){
-      await loadProfile(session.user.id);
-    }else{
-      window.addEventListener('load',async function(){
-        await loadProfile(session.user.id);
-      },{once:true});
-    }
+    // Modal hemen açılsın — gecikme olmadan
+    await loadProfile(session.user.id);
   }
 });
 
