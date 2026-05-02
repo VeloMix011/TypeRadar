@@ -8,7 +8,7 @@ const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON, {
     persistSession: true,
     storageKey: "typeradar_auth",
     autoRefreshToken: true,
-    detectSessionInUrl: false
+    detectSessionInUrl: true
   }
 });
 
@@ -327,6 +327,19 @@ window.setSound=function(type,el){
 var PUNCTS=[',','.','!','?',';',':'];
 function generateWords(seedWords){
   if(seedWords)return seedWords;
+  // Developer mode: use code snippets as words
+  if(typeof currentMode!=='undefined' && currentMode==='code' && typeof CODE_SNIPPETS!=='undefined'){
+    var lang = typeof currentCodeLanguage!=='undefined' ? currentCodeLanguage : 'javascript';
+    var snippets = CODE_SNIPPETS[lang];
+    if(snippets && snippets.length){
+      var result=[];
+      while(result.length<30){
+        var snippet=snippets[Math.floor(Math.random()*snippets.length)];
+        snippet.split(' ').forEach(function(w){if(w.length>0)result.push(w);});
+      }
+      return result.slice(0,30);
+    }
+  }
   if(mode==='quote'){
     if(typeof QUOTES==='undefined'||!QUOTES||!QUOTES.length){return ['quotes','not','loaded','yet'];}
     var pool=QUOTES;
@@ -675,11 +688,19 @@ function endTest(){
 
   if(isDailyMode&&currentUser){
     saveDailyResult(wpm,acc);
+    isDailyMode=false;
+  }
+
+  // Always award XP and show analytics
   var xpReward=awardXP(rawWpm,acc);
   updateUserStats(rawWpm,acc,elapsed);
   var analyticsReport=generateAnalyticsReport();
-    isDailyMode=false;
-  }
+  displayXPReward(xpReward);
+  displayAnalyticsReport(analyticsReport);
+
+  // Show analytics section always (not just dev mode)
+  var analyticsSection=document.getElementById('result-analytics');
+  if(analyticsSection)analyticsSection.style.display='block';
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
@@ -926,7 +947,7 @@ function processKey(key){
     wordHistory.push({input:currentInput,wasCorrect:wasCorrect,locked:wasCorrect});
     var pwe=document.getElementById('word-'+currentWordIndex);
     if(pwe)pwe.classList.toggle('has-error',!wasCorrect);
-      recordCharError(key);
+    if(!wasCorrect)recordCharError(' ');
     var len2=Math.min(currentInput.length,wordStr.length);
     for(var j=0;j<len2;j++){if(currentInput[j]===wordStr[j])totalCorrectChars++;else totalWrongChars++;}
     totalWrongChars+=Math.max(0,wordStr.length-currentInput.length);
