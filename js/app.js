@@ -1192,7 +1192,7 @@ function getAvatarColor(username){
 function showProfilePanel(){
   var lp=document.getElementById('auth-panel-login');if(lp)lp.style.display='none';
   var pp=document.getElementById('auth-panel-profile');if(pp)pp.style.display='block';
-  var username=currentProfile?currentProfile.username:(currentUser?currentUser.email.split('@')[0]:'?');
+  var username=currentProfile?currentProfile.username:(currentUser?'...':'?');
   var joinDate=currentProfile?currentProfile.created_at:(currentUser?currentUser.created_at:'');
 
   var avEl=document.getElementById('pp-avatar');
@@ -1343,13 +1343,19 @@ async function loadProfile(userId){
       var modal=document.getElementById('username-modal');
       if(modal){
         modal.style.display='flex';
-        setTimeout(function(){
-          var inp=document.getElementById('oauth-username-input');
-          if(inp)inp.focus();
-        },100);
+        // Input'u hemen aktif et, gecikme olmadan
+        var inp=document.getElementById('oauth-username-input');
+        if(inp){
+          inp.disabled=false;
+          inp.value='';
+          inp.focus();
+        }
       }
     }else{
       currentProfile=result.data;
+      // Modal açıksa kapat
+      var modal=document.getElementById('username-modal');
+      if(modal)modal.style.display='none';
     }
   }catch(e){
     currentProfile=null;
@@ -1386,7 +1392,7 @@ function updateAuthUI(){
   var mini=document.getElementById('user-avatar-mini');
   if(!btn)return;
   if(currentUser){
-    var username=currentProfile?currentProfile.username:currentUser.email.split('@')[0];
+    var username=currentProfile?currentProfile.username:'?';
     btn.classList.add('user-logged');
     if(mini){
       mini.textContent=username[0].toUpperCase();
